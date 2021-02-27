@@ -89,8 +89,8 @@
 		<item>Сброс</item>
 		<item>Чит-коды</item>
 		<item>Сменить диск</item>
-		<item>Настройки</item>
-		<item>Сменить экранный контроллер</item>
+		<item>Настроить экранный контроллер</item>
+		<item>Настройки эмулятора</item>
 	</string-array>
 	<string-array name="settings_cdrom_read_speedup_entries">
 		<item>Нет (двойная скорость)</item>
@@ -107,8 +107,8 @@
 	<string-array name="settings_touchscreen_controller_view_entries">
 		<item>Нет</item>
 		<item>Цифровой</item>
-		<item>Аналоговый с одним стиком</item>
-		<item>Аналоговый с двумя стиками</item>
+		<item>Аналоговый, один джойстик</item>
+		<item>Аналоговый, два джойстика</item>
 	</string-array>
 	<string-array name="settings_audio_backend_entries">
 		<item>Нет (без звука)</item>
