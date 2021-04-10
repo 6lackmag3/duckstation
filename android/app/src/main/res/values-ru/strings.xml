@@ -236,15 +236,15 @@
 	<string name="settings_achievements_enable">Включить достижения</string>
     	<string name="settings_summary_achievements_enable">Если опция включена и выполнен вход в аккаунт, DuckStation будет искать достижения при запуске игр.</string>
     	<string name="settings_achievements_challenge_mode">Режим хардкора</string>
-    	<string name="settings_summary_achievements_challenge_mode">Соревновательный режим. Отключает сохранение состояния, чит-коды, возможность замедления, но удваивает количество получаемых очков достижений. Нельзя включить во время игры.</string>
+    	<string name="settings_summary_achievements_challenge_mode">Соревновательный режим. Отключает сохранение состояния, чит-коды, возможность замедления, но удваивает количество получаемых очков достижений. Не может быть включен во время игры.</string>
     	<string name="settings_achievements_rich_presence">Расширенный статус</string>
     	<string name="settings_summary_achievements_rich_presence">Если поддерживается, собирать и отсылать на сервер расширенную информацию.</string>
     	<string name="settings_achievements_username">Имя пользователя</string>
     	<string name="settings_achievements_token_generation_time">Время генерации маркера доступа</string>
     	<string name="settings_achievements_login">Вход</string>
-    	<string name="settings_summary_achievements_login">Войти в аккаунт для получения достижений.</string>
+    	<string name="settings_summary_achievements_login">Войти в учётную запись для получения достижений.</string>
     	<string name="settings_achievements_register">Регистрация</string>
-    	<string name="settings_summary_achievements_register">Открыть ссылку для создания нового аккаунта.</string>
+    	<string name="settings_summary_achievements_register">Открыть ссылку для создания новой учётной записи.</string>
     	<string name="settings_achievements_logout">Выход</string>
     	<string name="settings_summary_achievements_logout">Выйти из аккаунта. Получение достижений будет остановлено.</string>
     	<string name="settings_achievements_view_profile">Просмотр профиля</string>
@@ -265,7 +265,7 @@
     	<string name="achievement_title_challenge_mode_format_string">%s (Режим хардкора)</string>
     	<string name="settings_achievements_disclaimer">DuckStation использует RetroAchievements (retroachievements.org) для отслеживания прогресса и получения данных о достижениях.</string>
     	<string name="settings_achievements_confirm_logout_title">Подтвердите выход</string>
-    	<string name="settings_achievements_confirm_logout_message">Завершение сеанса отключит получение достижений до следующего входа в аккаунт. Открытые ранее достижения потеряны не будут.</string>
+    	<string name="settings_achievements_confirm_logout_message">Завершение сеанса отключит получение достижений до следующего входа в учётную запись. Открытые ранее достижения не будут утеряны.</string>
 	<string name="controller_binding_device_for_vibration">Вибрация для устройства</string>
     	<string name="controller_settings_tab_settings">Настройки</string>
     	<string name="controller_settings_tab_hotkeys">Горячие клавиши</string>
@@ -330,4 +330,9 @@
 	<string name="update_notes_message_version_controller_update">В текущем обновлении DuckStation добавлена поддержка подключения нескольких геймпадов с вибрацией, клавиатур, возможность привязки кнопок громкости.\n\nТребуется перенастроить привязки геймпадов, иначе они не будут функционировать. Выполнить этой сейчас?</string>
 	<string name="settings_osd_show_show_inputs">Показывать нажатия контроллера</string>
     	<string name="settings_summary_osd_show_inputs">Показывать системное состояние контроллера в левом нижнем углу экрана.</string>
+	<string name="touchscreen_controller_edit_menu">Меню редактора</string>
+    	<string name="settings_achievements_category">Учётная запись</string>
+    	<string name="settings_achievements_global_settings">Глобальные настройки</string>
+    	<string name="settings_category_achievements">Настройки достижений</string>
+    	<string name="settings_multitap_mode">Режим Multitap</string>
 </resources>
