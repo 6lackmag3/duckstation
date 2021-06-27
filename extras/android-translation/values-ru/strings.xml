@@ -365,4 +365,8 @@
         <string name="menu_edit_game_directories_force_saf">Вкл. Scoped Storage</string>
 	<string name="settings_expand_to_cutout">Добавлять область выреза</string>
     	<string name="settings_summary_expand_to_cutout">Расширяет изображение, используя область выреза.</string>
+	<string name="settings_axis_scale">Масштаб осей</string>
+    	<string name="memory_card_editor_undelete_success">Восстановлено сохранение \'%s\'.</string>
+    	<string name="memory_card_editor_undelete_failed">Не удалось восстановить сохранение \'%s\'. Данные могли быть частично перезаписаны.</string>
+    	<string name="memory_card_editor_permanently_delete_confirm">Действительно удалить сохранение \'%s\' без возможности восстановления? Данное действие нельзя отменить.</string>
 </resources>
