@@ -22,6 +22,9 @@ public:
   SetupWizardDialog();
   ~SetupWizardDialog();
 
+protected:
+  bool eventFilter(QObject* object, QEvent* event) override;
+
 private:
   enum Page : u32
   {
@@ -64,6 +67,7 @@ private:
 
   void onDirectoryListContextMenuRequested(const QPoint& point);
   void onAddSearchDirectoryButtonClicked();
+  void promptAndAddSearchDirectory(const QString& dir);
   void onRemoveSearchDirectoryButtonClicked();
   void onSearchDirectoryListSelectionChanged();
   void refreshDirectoryList();

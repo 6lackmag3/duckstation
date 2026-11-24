@@ -74,6 +74,7 @@ static const PGXPValue& ValidateAndLoadMem(u32 addr, u32 value);
 static void ValidateAndLoadMem16(PGXPValue& dest, u32 addr, u32 value, bool sign);
 
 static void CPU_MTC2(u32 reg, const PGXPValue& value, u32 val);
+template<InstructionFunct funct>
 static void CPU_BITWISE(Instruction instr, u32 rdVal, u32 rsVal, u32 rtVal);
 static void CPU_SLL(Instruction instr, u32 rtVal, u32 sh);
 static void CPU_SRx(Instruction instr, u32 rtVal, u32 sh, bool sign, bool is_variable);
@@ -541,6 +542,163 @@ float CPU::PGXP::GTE_NCLIP()
     nclip += (nclip < 0.0f ? -1.0f : 1.0f);
 
   return nclip;
+}
+
+void CPU::PGXP::GTE_MVMVA(u32 inst_bits, const u32 old_ir[3])
+{
+  // [MAC1,MAC2,MAC3] = (Tx*1000h + Mx1*Vx + Mx2*Vy + Mx3*Vz) SAR (sf*12), [IR1,IR2,IR3] = [MAC1,MAC2,MAC3]
+  static constexpr u32 V0 = offsetof(GTE::Regs, V0) / sizeof(u32);
+  static constexpr u32 IR1 = offsetof(GTE::Regs, IR1) / sizeof(u32);
+  static constexpr u32 MAC1 = offsetof(GTE::Regs, MAC1) / sizeof(u32);
+  static constexpr u32 BK = offsetof(GTE::Regs, BK) / sizeof(u32);
+  static constexpr u32 LLM = offsetof(GTE::Regs, LLM) / sizeof(u32);
+  static constexpr u32 LCM = offsetof(GTE::Regs, LCM) / sizeof(u32);
+
+  const GTE::Instruction inst{inst_bits};
+  const GTE::Regs& regs = g_state.gte_regs;
+  const u32 matrix = (inst.mvmva_multiply_matrix == 1) ? LLM : LCM;
+  DebugAssert(TracksMVMVAMatrix(inst.mvmva_multiply_matrix));
+  const u32 vector = inst.mvmva_multiply_vector;
+  const u32 translation = inst.mvmva_translation_vector;
+
+  // Packed halves can have different validity, so each component is read separately.
+  static constexpr auto get_component = [](u32 index, bool high, u32 native, bool* precise) -> double {
+    PGXPValue& val = g_state.pgxp_gte[index];
+    val.Validate(native);
+
+    const double native_component = high ? HIWORD_S16(native) : LOWORD_S16(native);
+    if (!(val.flags & (high ? VALID_Y : VALID_X)))
+      return native_component;
+
+    // CPU arithmetic may leave the precise half in the other signed representation.
+    double result = high ? val.y : val.x;
+    if (result - native_component > 32768.0)
+      result -= 65536.0;
+    else if (result - native_component < -32768.0)
+      result += 65536.0;
+
+    *precise = true;
+    return result;
+  };
+
+  // IR is also an output, so read all three inputs before writing any results.
+  double v[3];
+  s16 native_v[3];
+  bool v_precise[3] = {};
+  for (u32 i = 0; i < 3; i++)
+  {
+    const u32 index = (vector == 3) ? (IR1 + i) : (V0 + vector * 2 + i / 2);
+    const u32 native = (vector == 3) ? old_ir[i] : regs.r32[index];
+    const bool high = (vector != 3 && i == 1);
+    native_v[i] = high ? HIWORD_S16(native) : LOWORD_S16(native);
+    v[i] = get_component(index, high, native, &v_precise[i]);
+  }
+
+  const double scale = static_cast<double>(1u << inst.GetShift());
+  for (u32 row = 0; row < 3; row++)
+  {
+    PGXPValue& mac = g_state.pgxp_gte[MAC1 + row];
+    PGXPValue& ir = g_state.pgxp_gte[IR1 + row];
+    mac = {};
+    ir = {};
+    mac.value = regs.r32[MAC1 + row];
+    ir.value = regs.r32[IR1 + row];
+
+    // MAC overflow needs hardware-specific wrapping, so fall back. The old precise values are already cleared, so they
+    // can't come back if the native result happens to match them.
+    if (regs.FLAG.bits & ((1u << (30 - row)) | (1u << (27 - row))))
+      continue;
+
+    double result = 0.0;
+    s64 native_result = 0;
+    bool precise = false;
+    u8 z_halves[5] = {};
+    if (translation < 2)
+    {
+      const s32 native = (translation == 0) ? regs.TR[row] : regs.BK[row];
+      native_result = static_cast<s64>(native) * 4096;
+      result = static_cast<double>(native);
+      if (translation == 1)
+      {
+        PGXPValue& val = g_state.pgxp_gte[BK + row];
+        val.Validate(static_cast<u32>(native));
+
+        const double precise_t = f16Unsign(val.x) + static_cast<double>(val.y) * 65536.0;
+        if ((val.flags & VALID_XY) == VALID_XY)
+        {
+          result = precise_t;
+          precise = true;
+        }
+      }
+      result *= 4096.0;
+    }
+
+    // With FC selected, the translation and first column only affect the flags, not MAC/IR.
+    for (u32 col = (translation == 2) ? 1 : 0; col < 3; col++)
+    {
+      const u32 offset = row * 3 + col;
+      const u32 index = matrix + offset / 2;
+      const bool high = (offset & 1) != 0;
+      const s16 native_m = high ? HIWORD_S16(regs.r32[index]) : LOWORD_S16(regs.r32[index]);
+      bool m_precise = false;
+      const double m = get_component(index, high, regs.r32[index], &m_precise);
+      result += m * v[col];
+      native_result += static_cast<s64>(native_m) * native_v[col];
+      precise |= (m_precise && v[col] != 0.0) || (v_precise[col] && m != 0.0);
+
+      // Track which halves of the precise matrix words contribute, see below.
+      if (m_precise && v[col] != 0.0)
+        z_halves[offset / 2] |= high ? 2 : 1;
+    }
+    result /= scale;
+    native_result >>= inst.GetShift();
+
+    // MAC is only 32 bits, the native result wraps.
+    if (!precise || native_result < INT_MIN || native_result > INT_MAX || result < static_cast<double>(INT_MIN) ||
+        result > static_cast<double>(INT_MAX))
+    {
+      continue;
+    }
+
+    const double hi = std::floor(result / 65536.0);
+    mac.x = static_cast<float>(f16Sign(result - hi * 65536.0));
+    mac.y = static_cast<float>(hi);
+    mac.flags = VALID_XY | VALID_TAINTED_Z;
+
+    // Games that put screen coordinates in the light/colour matrix weight them to interpolate, e.g. Ape Escape's
+    // subdivision computes (s0*z0 + s1*z1) / (z0+z1) for the projected midpoint. Its depth is the average depth of the
+    // coordinates, which packing them in pairs already gives per matrix word, see CPU_BITWISE(). The word only has one
+    // depth for both halves, so it only applies when both are weighted, not when one is selected. This is approximate:
+    // the depth of a point interpolated with weights w is sum(w) / sum(w/z), which is only the average when the weights
+    // are proportional to the depths (as in Ape Escape), e.g. weights (3,1) on depths (100,300) give 120, not 200.
+    float z_sum = 0.0f;
+    u32 z_count = 0;
+    bool z_valid = true;
+    for (u32 word = 0; word < std::size(z_halves); word++)
+    {
+      if (z_halves[word] == 0)
+        continue;
+
+      const PGXPValue& val = g_state.pgxp_gte[matrix + word];
+      z_valid &= (z_halves[word] == 3 && (val.flags & VALID_Z));
+      z_sum += val.z;
+      z_count++;
+    }
+
+    if (z_valid && z_count > 0)
+    {
+      mac.z = z_sum / static_cast<float>(z_count);
+      mac.flags |= VALID_Z;
+    }
+
+    // IR saturates to the same range as native, which makes a saturated IR exactly the native value.
+    const double ir_result = std::clamp(result, inst.lm ? 0.0 : -32768.0, 32767.0);
+    const double ir_hi = std::floor(ir_result / 65536.0);
+    ir.x = static_cast<float>(f16Sign(ir_result - ir_hi * 65536.0));
+    ir.y = static_cast<float>(ir_hi);
+    ir.z = mac.z;
+    ir.flags = mac.flags;
+  }
 }
 
 void CPU::PGXP::GTE_GPF_GPL(const u32 old_ir[3], const u32* old_mac, u8 shift)
@@ -1378,6 +1536,7 @@ void CPU::PGXP::CPU_SUB(Instruction instr, u32 rsVal, u32 rtVal)
   GetRdValue(instr) = prdVal;
 }
 
+template<CPU::InstructionFunct funct>
 ALWAYS_INLINE_RELEASE void CPU::PGXP::CPU_BITWISE(Instruction instr, u32 rdVal, u32 rsVal, u32 rtVal)
 {
   // Rd = Rs & Rt
@@ -1386,23 +1545,47 @@ ALWAYS_INLINE_RELEASE void CPU::PGXP::CPU_BITWISE(Instruction instr, u32 rdVal, 
 
   // Prefer a source with a precise value when the half is unchanged.
   float x, y;
+  const PGXPValue* x_src = nullptr;
+  const PGXPValue* y_src = nullptr;
   if (LOWORD_U16(rdVal) == 0)
     x = 0.0f;
   else if (LOWORD_U16(rdVal) == LOWORD_U16(rsVal) && (prsVal.flags & VALID_X))
-    x = prsVal.x;
+    x = (x_src = &prsVal)->x;
   else if (LOWORD_U16(rdVal) == LOWORD_U16(rtVal) && (prtVal.flags & VALID_X))
-    x = prtVal.x;
+    x = (x_src = &prtVal)->x;
   else
     x = static_cast<float>(LOWORD_S16(rdVal));
 
   if (HIWORD_U16(rdVal) == 0)
     y = 0.0f;
   else if (HIWORD_U16(rdVal) == HIWORD_U16(rsVal) && (prsVal.flags & VALID_Y))
-    y = prsVal.y;
+    y = (y_src = &prsVal)->y;
   else if (HIWORD_U16(rdVal) == HIWORD_U16(rtVal) && (prtVal.flags & VALID_Y))
-    y = prtVal.y;
+    y = (y_src = &prtVal)->y;
   else
     y = static_cast<float>(HIWORD_S16(rdVal));
+
+  // Tekken 3 halves packed vertices to average them with sra 1, then clears the bit of Y that the shift moved into X
+  // with and 0xFFFF7FFF. The shift keeps the whole value, so the cleared bits are the remainder of Y, and it is only
+  // the exact half with them. X keeps its offset from native, which is otherwise lost when its top bit was set. Only
+  // for 3D values, clearing the top bits of a shift by 1-4, and when Y isn't only sign bits, otherwise the shift has
+  // put the fraction of Y in X. An unshifted vertex with negative X looks the same, and its sign extension is taken
+  // as Y's remainder, but no game has been seen to mask one like this.
+  if constexpr (funct == InstructionFunct::and_)
+  {
+    const bool rt_is_mask = (HIWORD_U16(rtVal) == 0xFFFF);
+    const u32 maskVal = rt_is_mask ? rtVal : rsVal;
+    const u32 srcVal = rt_is_mask ? rsVal : rtVal;
+    const PGXPValue& src = rt_is_mask ? prsVal : prtVal;
+    const u16 mask = LOWORD_U16(maskVal);
+    if (HIWORD_U16(maskVal) == 0xFFFF && mask >= 0x0FFF && mask != 0xFFFF && (mask & (mask + 1)) == 0 &&
+        HIWORD_S16(srcVal) != 0 && HIWORD_S16(srcVal) != -1 && (src.flags & VALID_ALL) == VALID_ALL)
+    {
+      x = static_cast<float>(LOWORD_S16(rdVal)) + (src.x - static_cast<float>(LOWORD_S16(srcVal)));
+      y = src.y + static_cast<float>(LOWORD_U16(srcVal) & ~mask) / static_cast<float>(USHRT_MAX + 1);
+      x_src = y_src = &src;
+    }
+  }
 
   // An exact zero has no precision to give, e.g. to a not, but a zero result from one is exact. Except with NOR, where
   // the result is only zero because of the other value.
@@ -1411,12 +1594,19 @@ ALWAYS_INLINE_RELEASE void CPU::PGXP::CPU_BITWISE(Instruction instr, u32 rdVal, 
   const u32 src_flags = (rs_zero ? 0 : prsVal.flags) | (rt_zero ? 0 : prtVal.flags);
 
   // Why not write directly to prdVal? Because it might be the same as the source.
-  u32 flags =
-    ((src_flags & VALID_XY) || (rdVal == 0 && (rs_zero || rt_zero) && instr.r.funct != InstructionFunct::nor)) ?
-      (VALID_XY | VALID_TAINTED_Z) :
-      0;
+  u32 flags = ((src_flags & VALID_XY) || (rdVal == 0 && (rs_zero || rt_zero) && funct != InstructionFunct::nor)) ?
+                (VALID_XY | VALID_TAINTED_Z) :
+                0;
+  float z;
+  SelectZ(z, flags, prsVal, prtVal);
+
+  // Packing halves from two values, e.g. the X of two vertices, can only hold one depth. Use the average, which is the
+  // depth of the midpoint when the halves are interpolated, as in Ape Escape's subdivision.
+  if (BITWISE_AVERAGE_PACKED_DEPTH && x_src && y_src && x_src != y_src && (x_src->flags & y_src->flags & VALID_Z))
+    z = 0.5f * (x_src->z + y_src->z);
+
   PGXPValue& prdVal = GetRdValue(instr);
-  SelectZ(prdVal.z, flags, prsVal, prtVal);
+  prdVal.z = z;
   prdVal.x = x;
   prdVal.y = y;
   prdVal.flags = flags;
@@ -1429,7 +1619,7 @@ void CPU::PGXP::CPU_AND_(Instruction instr, u32 rsVal, u32 rtVal)
 
   // Rd = Rs & Rt
   const u32 rdVal = rsVal & rtVal;
-  CPU_BITWISE(instr, rdVal, rsVal, rtVal);
+  CPU_BITWISE<InstructionFunct::and_>(instr, rdVal, rsVal, rtVal);
 }
 
 void CPU::PGXP::CPU_OR_(Instruction instr, u32 rsVal, u32 rtVal)
@@ -1444,7 +1634,7 @@ void CPU::PGXP::CPU_OR_(Instruction instr, u32 rsVal, u32 rtVal)
   else if (rsVal == 0)
     CPU_MOVE(static_cast<u32>(instr.r.rd.GetValue()), static_cast<u32>(instr.r.rt.GetValue()), rtVal);
   else
-    CPU_BITWISE(instr, rsVal | rtVal, rsVal, rtVal);
+    CPU_BITWISE<InstructionFunct::or_>(instr, rsVal | rtVal, rsVal, rtVal);
 }
 
 void CPU::PGXP::CPU_XOR_(Instruction instr, u32 rsVal, u32 rtVal)
@@ -1454,13 +1644,13 @@ void CPU::PGXP::CPU_XOR_(Instruction instr, u32 rsVal, u32 rtVal)
   // Rd = Rs ^ Rt
   // See CPU_OR_(). XOR with itself is exactly zero, even when the source is natively zero.
   if (instr.r.rs == instr.r.rt)
-    CPU_BITWISE(instr, 0, rsVal, rtVal);
+    CPU_BITWISE<InstructionFunct::xor_>(instr, 0, rsVal, rtVal);
   else if (rtVal == 0 && !IsExactZero(g_state.pgxp_gpr[static_cast<u8>(instr.r.rs.GetValue())], rsVal))
     CPU_MOVE(static_cast<u32>(instr.r.rd.GetValue()), static_cast<u32>(instr.r.rs.GetValue()), rsVal);
   else if (rsVal == 0)
     CPU_MOVE(static_cast<u32>(instr.r.rd.GetValue()), static_cast<u32>(instr.r.rt.GetValue()), rtVal);
   else
-    CPU_BITWISE(instr, rsVal ^ rtVal, rsVal, rtVal);
+    CPU_BITWISE<InstructionFunct::xor_>(instr, rsVal ^ rtVal, rsVal, rtVal);
 }
 
 void CPU::PGXP::CPU_NOR(Instruction instr, u32 rsVal, u32 rtVal)
@@ -1469,7 +1659,7 @@ void CPU::PGXP::CPU_NOR(Instruction instr, u32 rsVal, u32 rtVal)
 
   // Rd = Rs NOR Rt
   const u32 rdVal = ~(rsVal | rtVal);
-  CPU_BITWISE(instr, rdVal, rsVal, rtVal);
+  CPU_BITWISE<InstructionFunct::nor>(instr, rdVal, rsVal, rtVal);
 }
 
 void CPU::PGXP::CPU_SLT(Instruction instr, u32 rsVal, u32 rtVal)

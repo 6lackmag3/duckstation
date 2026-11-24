@@ -60,8 +60,9 @@ static constexpr u32 THREAD_SPIN_TIME_US = 50;
 static constexpr u32 THREAD_SPIN_TIME_US = 200;
 #endif
 
-static bool Reconfigure(std::optional<GPURenderer> renderer, bool upload_vram, std::optional<bool> fullscreen,
-                        std::optional<bool> start_fullscreen_ui, bool recreate_device, Error* error);
+static bool Reconfigure(std::optional<GPURenderer> renderer, std::optional<bool> enable_2mb_vram, bool upload_vram,
+                        std::optional<bool> fullscreen, std::optional<bool> start_fullscreen_ui, bool recreate_device,
+                        Error* error);
 
 // NOTE: Use with care! The handler needs to manually run the destructor.
 template<class T, typename... Args>
@@ -86,12 +87,13 @@ static void RenderWindowResizedOnThread();
 static bool CheckExclusiveFullscreenOnThread();
 
 static void ReconfigureOnThread(VideoThreadReconfigureCommand* cmd);
-static bool CreateGPUBackendOnThread(bool hardware_renderer, bool upload_vram, const GPUSettings* old_settings,
-                                     GPURenderer* out_renderer, Error* error);
+static bool CreateGPUBackendOnThread(bool hardware_renderer, bool enable_2mb_vram, bool upload_vram,
+                                     const GPUSettings* old_settings, GPURenderer* out_renderer, Error* error);
 static void DestroyGPUBackendOnThread();
 static void DestroyGPUPresenterOnThread();
 
 static void SetThreadEnabled(bool enabled);
+static void BindDeviceToThread(bool bind_to_thread);
 static void UpdateSettingsOnThread(GPUSettings&& new_settings);
 static void UpdateGameInfoOnThread(VideoThreadUpdateGameInfoCommand* cmd);
 static void GameInfoChanged(bool serial_changed);
@@ -329,6 +331,9 @@ ALWAYS_INLINE s32 GetThreadWakeCount(s32 state)
 
 void VideoThread::WakeThread()
 {
+  // Must not wake the video thread while disabled, it would read run_idle_flag, which is owned by the core thread.
+  DebugAssert(s_state.use_thread);
+
   // If sleeping, state will be <0, otherwise this will increment the pending work count.
   // We add 2 so that there's a positive work count if we were sleeping, otherwise the thread would go to sleep.
   if (s_state.thread_wake_count.fetch_add(2, std::memory_order_release) < 0)
@@ -483,7 +488,7 @@ void VideoThread::VideoThreadEntryPoint()
       DebugAssert((read_ptr + cmd->size) <= COMMAND_QUEUE_SIZE);
       read_ptr += cmd->size;
 
-      if (cmd->type > VideoThreadCommandType::Shutdown) [[likely]]
+      if (cmd->type > VideoThreadCommandType::EnableThread) [[likely]]
       {
         DebugAssert(s_state.gpu_backend);
         s_state.gpu_backend->HandleCommand(cmd);
@@ -551,6 +556,27 @@ void VideoThread::VideoThreadEntryPoint()
         }
         break;
 
+        case VideoThreadCommandType::EnableThread:
+        {
+          DebugAssert(read_ptr == write_ptr);
+          VideoThreadEnableThreadCommand* ccmd = static_cast<VideoThreadEnableThreadCommand*>(cmd);
+          BindDeviceToThread(ccmd->thread_enabled);
+
+          if (!ccmd->thread_enabled)
+          {
+            // The core thread is taking over. Clear run idle so that we sleep at the top of the loop instead of
+            // running idle on a device we no longer own. The core thread re-evaluates it via UpdateRunIdle() once
+            // synced, and owns the flag while disabled. We don't read it again until the next EnableThread command
+            // wakes us, which is safe because nothing else can wake us while the thread is disabled (see WakeThread()).
+            s_state.run_idle_flag = false;
+            s_state.command_fifo_read_ptr.store(read_ptr, std::memory_order_release);
+            ResetCommandFIFO();
+            read_ptr = s_state.command_fifo_read_ptr.load(std::memory_order_relaxed);
+            write_ptr = s_state.command_fifo_write_ptr.load(std::memory_order_relaxed);
+          }
+        }
+        break;
+
           DefaultCaseIsUnreachable();
       }
     }
@@ -584,8 +610,9 @@ void VideoThread::DoRunIdle()
     s_state.gpu_backend->RestoreDeviceContext();
 }
 
-bool VideoThread::Reconfigure(std::optional<GPURenderer> renderer, bool upload_vram, std::optional<bool> fullscreen,
-                              std::optional<bool> start_fullscreen_ui, bool recreate_device, Error* error)
+bool VideoThread::Reconfigure(std::optional<GPURenderer> renderer, std::optional<bool> enable_2mb_vram,
+                              bool upload_vram, std::optional<bool> fullscreen, std::optional<bool> start_fullscreen_ui,
+                              bool recreate_device, Error* error)
 {
   INFO_LOG("Reconfiguring video thread.");
 
@@ -605,6 +632,7 @@ bool VideoThread::Reconfigure(std::optional<GPURenderer> renderer, bool upload_v
   cmd->present_skip_mode = System::GetEffectivePresentSkipMode();
   cmd->force_recreate_device = recreate_device;
   cmd->upload_vram = upload_vram;
+  cmd->enable_2mb_vram = enable_2mb_vram;
   cmd->error_ptr = error;
   cmd->out_result = &result;
   cmd->out_created_renderer = &created_renderer;
@@ -646,7 +674,7 @@ bool VideoThread::StartFullscreenUI(bool fullscreen, Error* error)
     return true;
   }
 
-  return Reconfigure(std::nullopt, false, fullscreen, true, false, error);
+  return Reconfigure(std::nullopt, std::nullopt, false, fullscreen, true, false, error);
 }
 
 bool VideoThread::IsFullscreenUIRequested()
@@ -663,7 +691,7 @@ void VideoThread::StopFullscreenUI()
     return;
   }
 
-  Reconfigure(std::nullopt, false, std::nullopt, false, false, nullptr);
+  Reconfigure(std::nullopt, std::nullopt, false, std::nullopt, false, false, nullptr);
 }
 
 std::optional<GPURenderer> VideoThread::GetRequestedRenderer()
@@ -677,14 +705,31 @@ GPUBackend* VideoThread::GetGPUBackend()
   return s_state.gpu_backend.get();
 }
 
-bool VideoThread::CreateGPUBackend(GPURenderer renderer, bool upload_vram, std::optional<bool> fullscreen, Error* error)
+bool VideoThread::CreateGPUBackend(GPURenderer renderer, std::optional<bool> enable_2mb_vram, bool upload_vram,
+                                   std::optional<bool> fullscreen, Error* error)
 {
-  return Reconfigure(renderer, upload_vram, fullscreen, std::nullopt, false, error);
+  return Reconfigure(renderer, enable_2mb_vram, upload_vram, fullscreen, std::nullopt, false, error);
 }
 
 void VideoThread::DestroyGPUBackend()
 {
-  Reconfigure(std::nullopt, false, std::nullopt, std::nullopt, false, nullptr);
+  Reconfigure(std::nullopt, std::nullopt, false, std::nullopt, std::nullopt, false, nullptr);
+}
+
+void VideoThread::CreateNullBackendForTests()
+{
+  if (!s_state.command_fifo_data)
+    s_state.command_fifo_data =
+      Common::make_unique_aligned_for_overwrite<u8[]>(HOST_CACHE_LINE_SIZE, COMMAND_QUEUE_SIZE);
+  s_state.use_thread = false;
+  s_state.gpu_backend = GPUBackend::CreateNullBackend(false);
+  if (!s_state.gpu_backend->Initialize(false, nullptr)) [[unlikely]]
+    Panic("Failed to initialize null GPU backend");
+}
+
+void VideoThread::DestroyNullBackendForTests()
+{
+  s_state.gpu_backend.reset();
 }
 
 bool VideoThread::HasGPUBackend()
@@ -855,8 +900,8 @@ void VideoThread::DestroyDeviceOnThread(bool preserve_imgui_state)
   s_state.per_present_vsync = false;
 }
 
-bool VideoThread::CreateGPUBackendOnThread(bool hardware_renderer, bool upload_vram, const GPUSettings* old_settings,
-                                           GPURenderer* out_renderer, Error* error)
+bool VideoThread::CreateGPUBackendOnThread(bool hardware_renderer, bool enable_2mb_vram, bool upload_vram,
+                                           const GPUSettings* old_settings, GPURenderer* out_renderer, Error* error)
 {
   Error local_error;
 
@@ -885,9 +930,9 @@ bool VideoThread::CreateGPUBackendOnThread(bool hardware_renderer, bool upload_v
   ImGuiManager::UpdateDebugWindowConfig(g_gpu_settings.debug_window_visibility);
 
   if (hardware_renderer)
-    s_state.gpu_backend = GPUBackend::CreateHardwareBackend();
+    s_state.gpu_backend = GPUBackend::CreateHardwareBackend(enable_2mb_vram);
   else
-    s_state.gpu_backend = GPUBackend::CreateSoftwareBackend();
+    s_state.gpu_backend = GPUBackend::CreateSoftwareBackend(enable_2mb_vram);
 
   bool okay = s_state.gpu_backend->Initialize(upload_vram, &local_error);
   if (!okay)
@@ -905,7 +950,7 @@ bool VideoThread::CreateGPUBackendOnThread(bool hardware_renderer, bool upload_v
           local_error.GetDescription()));
 
       hardware_renderer = false;
-      s_state.gpu_backend = GPUBackend::CreateSoftwareBackend();
+      s_state.gpu_backend = GPUBackend::CreateSoftwareBackend(enable_2mb_vram);
       if (!s_state.gpu_backend->Initialize(upload_vram, &local_error))
         Panic("Failed to initialize fallback software renderer");
 
@@ -955,6 +1000,7 @@ void VideoThread::ReconfigureOnThread(VideoThreadReconfigureCommand* cmd)
 
   // Readback old VRAM for hardware renderers.
   const bool had_renderer = static_cast<bool>(s_state.gpu_backend);
+  const bool enable_2mb_vram = cmd->enable_2mb_vram.value_or(had_renderer && s_state.gpu_backend->Is2MBVRAMEnabled());
   if (had_renderer && cmd->renderer.has_value() && cmd->upload_vram)
   {
     GPUBackendReadVRAMCommand read_cmd;
@@ -963,7 +1009,7 @@ void VideoThread::ReconfigureOnThread(VideoThreadReconfigureCommand* cmd)
     read_cmd.x = 0;
     read_cmd.y = 0;
     read_cmd.width = VRAM_WIDTH;
-    read_cmd.height = VRAM_HEIGHT;
+    read_cmd.height = static_cast<u16>(s_state.gpu_backend->GetVRAMHeight());
     s_state.gpu_backend->HandleCommand(&read_cmd);
   }
 
@@ -1018,8 +1064,8 @@ void VideoThread::ReconfigureOnThread(VideoThreadReconfigureCommand* cmd)
       g_gpu_settings.gpu_resolution_scale = GPU::CalculateAutomaticResolutionScale();
 
     // Do we want a renderer?
-    if (CreateGPUBackendOnThread(cmd->renderer.value() != GPURenderer::Software, cmd->upload_vram, &old_settings,
-                                 cmd->out_created_renderer, cmd->error_ptr))
+    if (CreateGPUBackendOnThread(cmd->renderer.value() != GPURenderer::Software, enable_2mb_vram, cmd->upload_vram,
+                                 &old_settings, cmd->out_created_renderer, cmd->error_ptr))
     {
       *cmd->out_result = VideoThreadReconfigureCommand::Result::Success;
       INFO_LOG("GPU backend created in {:.2f}ms", timer.GetTimeMilliseconds());
@@ -1119,49 +1165,49 @@ void VideoThread::SetThreadEnabled(bool enabled)
   if (s_state.use_thread == enabled)
     return;
 
-  if (s_state.use_thread)
-    SyncThread(false);
-
-  // Was anything active?
-  if (!g_gpu_device)
+  // Update GPU thread state. If we're enabling, this will bind it to the GPU thread.
+  VideoThreadEnableThreadCommand* cmd = static_cast<VideoThreadEnableThreadCommand*>(
+    AllocateCommand(VideoThreadCommandType::EnableThread, sizeof(VideoThreadEnableThreadCommand)));
+  cmd->thread_enabled = enabled;
+  if (enabled)
   {
-    // Thread should be idle. Just reset the FIFO.
-    s_state.use_thread = enabled;
-    ResetCommandFIFO();
-    return;
+    // Enabling GPU thread. FIFO is empty and at zero, since commands are executed directly when disabled.
+    BindDeviceToThread(false);
+    s_state.use_thread = true;
+    PushCommandAndSync(cmd, false);
+  }
+  else
+  {
+    // Disabling GPU thread. use_thread must still be set so that we wait for the video thread to unbind the device.
+    PushCommandAndSync(cmd, false);
+    s_state.use_thread = false;
+    BindDeviceToThread(true);
+
+    // Video thread cleared run idle, re-evaluate it on the core thread.
+    UpdateRunIdle();
   }
 
-  const bool fullscreen_state = s_state.fullscreen_state;
-  const bool requested_fullscreen_ui = s_state.requested_fullscreen_ui;
-  const std::optional<GPURenderer> requested_renderer = s_state.requested_renderer;
+  INFO_COLOR_LOG(StrongYellow, "GPU thread is now {}.", enabled ? "enabled" : "disabled");
+}
 
-  // Force VRAM download, we're recreating.
-  if (requested_renderer.has_value())
+void VideoThread::BindDeviceToThread(bool bind_to_thread)
+{
+  // If we're enabling, bind to us. Otherwise unbind.
+  if (g_gpu_device)
   {
-    GPUBackendReadVRAMCommand* cmd = GPUBackend::NewReadVRAMCommand();
-    cmd->x = 0;
-    cmd->y = 0;
-    cmd->width = VRAM_WIDTH;
-    cmd->height = VRAM_HEIGHT;
-    PushCommand(cmd);
-  }
-
-  // Shutdown reconfigure.
-  Reconfigure(std::nullopt, false, false, false, false, nullptr);
-
-  // Thread should be idle at this point. Reset the FIFO.
-  ResetCommandFIFO();
-
-  // Update state and reconfigure again.
-  s_state.use_thread = enabled;
-
-  Error error;
-  if (!Reconfigure(requested_renderer, requested_renderer.has_value(), fullscreen_state, requested_fullscreen_ui, true,
-                   &error))
-  {
-    std::string message = fmt::format("Reconfigure failed: {}", error.GetDescription());
-    ERROR_LOG(message);
-    RunOnThreadAndSync([message = std::move(message)]() { ReportFatalErrorAndShutdown(message); });
+    if (bind_to_thread)
+    {
+      Error bind_error;
+      if (!g_gpu_device->BindToCurrentThread(&bind_error))
+      {
+        ERROR_LOG("Failed to bind GPU device to new thread: {}", bind_error.GetDescription());
+        Panic("Failed to bind GPU device to new thread.");
+      }
+    }
+    else
+    {
+      g_gpu_device->UnbindFromCurrentThread();
+    }
   }
 }
 
@@ -1260,16 +1306,24 @@ void VideoThread::UpdateSettings(bool gpu_settings_changed, bool device_settings
   // thread should be a device setting
   if (thread_changed)
   {
-    DebugAssert(device_settings_changed);
     SetThreadEnabled(g_settings.gpu_use_thread);
+
+    // skip update if nothing else changed
+    if (!gpu_settings_changed && !device_settings_changed)
+    {
+      // but we do need to set our new flag otherwise the osd won't pick it up
+      g_gpu_settings.gpu_use_thread = g_settings.gpu_use_thread;
+      return;
+    }
   }
-  else if (device_settings_changed)
+
+  if (device_settings_changed)
   {
     INFO_LOG("Reconfiguring after device settings changed.");
 
     Error error;
-    if (!Reconfigure(s_state.requested_renderer, s_state.requested_renderer.has_value(), std::nullopt, std::nullopt,
-                     true, &error)) [[unlikely]]
+    if (!Reconfigure(s_state.requested_renderer, std::nullopt, s_state.requested_renderer.has_value(), std::nullopt,
+                     std::nullopt, true, &error)) [[unlikely]]
     {
       Host::ReportErrorAsync("Error", fmt::format("Failed to recreate GPU device: {}", error.GetDescription()));
     }
@@ -1377,7 +1431,7 @@ void VideoThread::ReportFatalErrorAndShutdown(std::string_view reason)
   ERROR_LOG("Switching to null renderer: {}", reason);
   VideoPresenter::ClearDisplayTexture();
   s_state.gpu_backend.reset();
-  s_state.gpu_backend = GPUBackend::CreateNullBackend();
+  s_state.gpu_backend = GPUBackend::CreateNullBackend(false); // VRAM size doesn't matter, commands are dropped
   if (!s_state.gpu_backend->Initialize(false, nullptr)) [[unlikely]]
     Panic("Failed to initialize null GPU backend");
 }

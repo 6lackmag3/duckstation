@@ -13,6 +13,7 @@
 #include "gpu_hw_texture_cache.h"
 #include "gpu_sw_rasterizer.h"
 #include "host.h"
+#include "imgui_overlays.h"
 #include "interrupt_controller.h"
 #include "performance_counters.h"
 #include "settings.h"
@@ -46,6 +47,7 @@
 #include "common/string_util.h"
 
 #include "IconsEmoji.h"
+#include "IconsFontAwesome.h"
 #include "fmt/format.h"
 #include "imgui.h"
 
@@ -82,11 +84,18 @@ enum : u32
 
 enum : u16
 {
-  NTSC_TICKS_PER_LINE = 3413,
+  // Line lengths are in half GPU ticks, NTSC lines are 3412.5 ticks.
+  NTSC_HALF_TICKS_PER_LINE = 6825,
   NTSC_TOTAL_LINES = 263,
-  PAL_TICKS_PER_LINE = 3406,
+  PAL_HALF_TICKS_PER_LINE = 6810,
   PAL_TOTAL_LINES = 314,
+
+  // The line counter is 10 bits, a line past the end of the field runs on until it wraps.
+  LINE_COUNTER_WRAP = 1024,
 };
+
+// Positions within a GPU tick are in units of the CPU to GPU clock divider. Half and quarter ticks are exact.
+static constexpr u64 CRTC_SUBTICKS_PER_TICK = 451584;
 
 enum : u16
 {
@@ -108,8 +117,10 @@ enum : u16
   PAL_OVERSCAN_VERTICAL_ACTIVE_END = 298,
 };
 
-static constexpr size_t MAX_BLIT_BUFFER_SIZE = ((VRAM_WIDTH * VRAM_HEIGHT) / 2); // blit buffer is in words
-static constexpr size_t MAX_POLYLINE_BUFFER_SIZE = 0x200000; // this is more of just a sanity check...
+static constexpr size_t MAX_BLIT_BUFFER_SIZE = ((VRAM_WIDTH * VRAM_1MB_HEIGHT) / 2); // blit buffer is in words
+
+// Sanity check for unterminated polylines, sized to share the save state reservation with the blit buffer.
+static constexpr size_t MAX_POLYLINE_BUFFER_SIZE = VRAM_1MB_SIZE / sizeof(u64);
 
 } // namespace
 
@@ -119,8 +130,8 @@ static bool IsDisplayDisabled();
 /// Returns true if interlaced rendering is enabled and force progressive scan is disabled.
 static bool IsInterlacedRenderingEnabled();
 
-/// Returns the number of pending GPU ticks.
-static TickCount GetPendingCRTCTicks();
+/// Returns the number of pending GPU subticks.
+static u64 GetPendingCRTCSubTicks();
 static TickCount GetPendingCommandTicks();
 static TickCount GetTicksUntilLine(u32 line);
 
@@ -129,14 +140,18 @@ static bool IsCommandCompletionPending();
 
 static float ComputeHorizontalFrequency();
 static float ComputeVerticalFrequency();
+static u64 GetCRTCLineSubTicks();
+static u64 GetCRTCFieldSubTicks();
+static u64 GetCRTCBeamSubTicks();
 
 // Ticks for hblank/vblank.
 static void CRTCTickEvent(void*, TickCount ticks);
 static void CommandTickEvent(void*, TickCount ticks);
 static void FrameDoneEvent(void*, TickCount ticks);
 
-static TickCount CRTCTicksToSystemTicks(TickCount crtc_ticks, TickCount fractional_ticks);
-static TickCount SystemTicksToCRTCTicks(TickCount sysclk_ticks, TickCount* fractional_ticks);
+static u64 GetCRTCSubTicksPerSystemTick();
+static TickCount CRTCSubTicksToSystemTicks(u64 subticks);
+static std::pair<TickCount, TickCount> SystemTicksToCRTCTicks(TickCount sysclk_ticks, TickCount fractional_ticks);
 
 static bool DumpVRAMToFile(std::string path, u32 width, u32 height, u32 stride, const void* buffer, bool remove_alpha,
                            Error* error = nullptr);
@@ -166,17 +181,20 @@ static void UpdateGPUIdle();
 /// Updates drawing area that's suitable for clamping.
 static void SetClampedDrawingArea();
 
+/// Changes the physical VRAM size by recreating the backend. The caller must reset the GPU or load state afterwards.
+static void Set2MBVRAM(bool enabled);
+
 /// Sets/decodes GP0(E1h) (set draw mode).
 static void SetDrawMode(u16 bits);
 
-/// Sets/decodes polygon/rectangle texture palette value.
-static void SetTexturePalette(u16 bits);
+/// Decodes a polygon/rectangle texture palette value, masking the upper VRAM bit if it is not addressable.
+static GPUTexturePaletteReg DecodeTexturePalette(u16 bits);
 
 /// Sets/decodes texture window bits.
 static void SetTextureWindow(u32 value);
 
 static u32 ReadGPUREAD();
-static void FinishVRAMWrite();
+static void FinishVRAMWrite(bool write_partial_row = true);
 
 /// Returns the number of vertices in the buffered poly-line.
 static u32 GetPolyLineVertexCount();
@@ -244,6 +262,7 @@ struct CRTCState
   struct Regs
   {
     static constexpr u32 DISPLAY_ADDRESS_START_MASK = 0b111'11111111'11111110;
+    static constexpr u32 DISPLAY_ADDRESS_START_MASK_2MB = 0b1111'11111111'11111110;
     static constexpr u32 HORIZONTAL_DISPLAY_RANGE_MASK = 0b11111111'11111111'11111111;
     static constexpr u32 VERTICAL_DISPLAY_RANGE_MASK = 0b1111'11111111'11111111;
 
@@ -251,7 +270,7 @@ struct CRTCState
     {
       u32 display_address_start;
       BitField<u32, u16, 0, 10> X;
-      BitField<u32, u16, 10, 9> Y;
+      BitField<u32, u16, 10, 10> Y;
     };
     union
     {
@@ -299,13 +318,12 @@ struct CRTCState
   u16 horizontal_active_end;
 
   u16 horizontal_total;
+  TickCount horizontal_total_fraction; // in subticks, for NTSC's half tick
   u16 vertical_total;
 
   u16 current_scanline;
   TickCount fractional_ticks;
   TickCount current_tick_in_scanline;
-
-  TickCount fractional_dot_ticks; // only used when timer0 is enabled
 
   bool in_hblank;
   bool in_vblank;
@@ -313,6 +331,9 @@ struct CRTCState
   /// 0 if the currently-displayed field is on odd lines (1,3,5,...) or 1 if even (2,4,6,...)
   u8 interlaced_field;
   u8 interlaced_display_field;
+
+  /// Interlace was turned on after the field's end was decided, so the line counter runs on until it wraps.
+  bool frame_end_missed;
 
   /// 0 if the currently-displayed field is on an even line in VRAM, otherwise 1.
   u8 active_line_lsb;
@@ -333,7 +354,8 @@ struct Locals
   bool console_is_pal : 1 = false;
   bool vblank_end_cheats_enabled : 1 = false;
 
-  bool enable_upper_vram = false;
+  bool enable_2mb_vram = false;
+  bool upper_vram_active = false;
   bool drawing_area_changed = false;
   bool texture_enable_mask = false;
   bool force_raw_texture = false;
@@ -342,7 +364,6 @@ struct Locals
   bool texture_y_flip = false;
 
   GPUDrawModeReg draw_mode_reg = {};
-  GPUTexturePaletteReg texture_palette_reg = {}; // from vertex
   u32 texture_window_reg = 0;
   GPUTextureWindow texture_window = {};
 
@@ -399,6 +420,24 @@ struct Locals
 } // namespace
 
 ALIGN_TO_CACHE_LINE static Locals s_locals;
+
+/// Returns true if the upper 1MB of VRAM is present and enabled through GP1(09h).
+ALWAYS_INLINE static bool IsUpperVRAMAddressable()
+{
+  return (s_locals.upper_vram_active && s_locals.enable_2mb_vram);
+}
+
+/// Returns the number of VRAM lines that commands can currently address. Coordinates wrap at this height.
+ALWAYS_INLINE static u32 GetAddressableVRAMHeight()
+{
+  return IsUpperVRAMAddressable() ? VRAM_2MB_HEIGHT : VRAM_1MB_HEIGHT;
+}
+
+/// Returns the mask for wrapping Y coordinates at the addressable height.
+ALWAYS_INLINE static u32 GetAddressableVRAMHeightMask()
+{
+  return IsUpperVRAMAddressable() ? VRAM_2MB_HEIGHT_MASK : VRAM_1MB_HEIGHT_MASK;
+}
 
 } // namespace GPU
 
@@ -488,19 +527,21 @@ static_assert(s_GP0_command_table[0x02].num_words == 3 && s_GP0_command_table[0x
 #else
 #define VRAM_STORAGE_ALIGNMENT HOST_PAGE_SIZE
 #endif
-alignas(VRAM_STORAGE_ALIGNMENT) u16 g_vram[VRAM_SIZE / sizeof(u16)];
+alignas(VRAM_STORAGE_ALIGNMENT) u16 g_vram[VRAM_WIDTH * VRAM_2MB_HEIGHT];
 u16 g_gpu_clut[GPU_CLUT_SIZE];
 
 void GPU::Initialize()
 {
-  s_locals.crtc_tick_event.Activate();
-
   s_locals.force_progressive_scan = (g_settings.display_deinterlacing_mode == DisplayDeinterlacingMode::Progressive);
   s_locals.max_run_ahead = g_settings.gpu_max_run_ahead_cycles;
   s_locals.console_is_pal = System::IsPALRegion();
+  // The backend was created with this VRAM size, so set it before Reset() to avoid recreating the backend.
+  s_locals.enable_2mb_vram = (g_settings.gpu_vram_size != GPUVRAMSize::Default);
   s_locals.texture_enable_mask = !g_settings.gpu_disable_textures;
   s_locals.force_raw_texture = g_settings.gpu_disable_vertex_lighting;
-  UpdateCRTCConfig();
+
+  // VRAM is cleared by the backend when it is created.
+  Reset(false);
 }
 
 void GPU::Shutdown()
@@ -585,11 +626,13 @@ std::pair<u32, u32> GPU::GetFullDisplayResolution()
 
 void GPU::Reset(bool clear_vram)
 {
+  // Changes to the VRAM size setting take effect on reset.
+  Set2MBVRAM(g_settings.gpu_vram_size != GPUVRAMSize::Default);
+
   s_locals.GPUSTAT.bits = 0x14802000;
-  s_locals.enable_upper_vram = false;
+  s_locals.upper_vram_active = (g_settings.gpu_vram_size == GPUVRAMSize::Expanded2MBForced);
   s_locals.GPUREAD_latch = 0;
   s_locals.crtc_state.fractional_ticks = 0;
-  s_locals.crtc_state.fractional_dot_ticks = 0;
   s_locals.crtc_state.current_tick_in_scanline = 0;
   s_locals.crtc_state.current_scanline = 0;
   s_locals.crtc_state.in_hblank = false;
@@ -597,6 +640,7 @@ void GPU::Reset(bool clear_vram)
   Timers::SetGate(HBLANK_TIMER_INDEX, true);
   s_locals.crtc_state.interlaced_field = 0;
   s_locals.crtc_state.interlaced_display_field = 0;
+  s_locals.crtc_state.frame_end_missed = false;
   s_locals.crtc_state.scanout_start_row = 0;
 
   // Cancel VRAM writes.
@@ -609,6 +653,13 @@ void GPU::Reset(bool clear_vram)
 
   SoftReset();
 
+  // VRAM transfers before the next draw need the addressable height, which is updated with the drawing area.
+  PrepareForDraw();
+
+  // GP1(00h) selects NTSC, but at power-on the BIOS will set the console's region, which fast boot skips.
+  s_locals.GPUSTAT.pal_mode = System::IsPALRegion();
+  UpdateCRTCConfig();
+
   // Can skip the VRAM clear if it's not a hardware reset.
   if (clear_vram)
     GPUBackend::PushCommand(GPUBackend::NewClearVRAMCommand());
@@ -617,7 +668,7 @@ void GPU::Reset(bool clear_vram)
 void GPU::SoftReset()
 {
   if (s_locals.blitter_state == BlitterState::WritingVRAM)
-    FinishVRAMWrite();
+    FinishVRAMWrite(false);
 
   s_locals.GPUSTAT.interrupt_request = false;
   InterruptController::SetLineState(InterruptController::IRQ::GPU, false);
@@ -635,7 +686,7 @@ void GPU::SoftReset()
   s_locals.GPUSTAT.horizontal_resolution_2 = 0;
   s_locals.GPUSTAT.horizontal_resolution_1 = 0;
   s_locals.GPUSTAT.vertical_resolution = false;
-  s_locals.GPUSTAT.pal_mode = System::IsPALRegion();
+  s_locals.GPUSTAT.pal_mode = false;
   s_locals.GPUSTAT.display_area_color_depth_24 = false;
   s_locals.GPUSTAT.vertical_interlace = false;
   s_locals.GPUSTAT.interlaced_field = 1u;
@@ -658,7 +709,6 @@ void GPU::SoftReset()
   s_locals.blit_remaining_words = 0;
   s_locals.texture_window_reg = 0xFFFFFFFFu;
   SetDrawMode(0);
-  SetTexturePalette(0);
   SetTextureWindow(0);
   InvalidateCLUT();
   UpdateDMARequest();
@@ -671,13 +721,15 @@ void GPU::ResetCRTCTiming(bool was_in_hblank)
 {
   // Hardware restarts the video timing at the start of the line before line 0, i.e. the last line of an odd field,
   // so the next field is even. Blanking is level-triggered: a reset during active display raises the vblank IRQ
-  // immediately, a reset during vblank does not. Same for the hblank timer tick.
+  // immediately, a reset during vblank does not. Same for the hblank timer tick. The last line of the counter is the
+  // line before line 0 in every mode, so a mode change before it ends doesn't move it.
   CRTCState& cs = s_locals.crtc_state;
-  cs.current_scanline = cs.vertical_total - 1;
+  cs.current_scanline = LINE_COUNTER_WRAP - 1;
   cs.current_tick_in_scanline = 0;
   cs.fractional_ticks = 0;
   cs.interlaced_field = 1;
   cs.interlaced_display_field = 0;
+  cs.frame_end_missed = false;
   s_locals.GPUSTAT.display_line_lsb = false;
 
   UpdateCRTCHBlankFlag();
@@ -697,7 +749,7 @@ bool GPU::DoState(StateWrapper& sw)
   if (sw.IsWriting())
   {
     // Need to ensure our copy of VRAM is good.
-    ReadVRAM(0, 0, VRAM_WIDTH, VRAM_HEIGHT);
+    ReadVRAM(0, 0, VRAM_WIDTH, Truncate16(GetVRAMHeight()));
   }
 
   // The display size is replaced when loading, so we need the previous size to detect resolution changes.
@@ -707,7 +759,12 @@ bool GPU::DoState(StateWrapper& sw)
   sw.Do(&s_locals.GPUSTAT.bits);
 
   sw.Do(&s_locals.draw_mode_reg.bits);
-  sw.Do(&s_locals.texture_palette_reg.bits);
+  if (sw.GetVersion() < 102) [[unlikely]]
+  {
+    // texture_palette_reg
+    DebugAssert(sw.IsReading());
+    sw.SkipBytes(sizeof(u16));
+  }
   sw.Do(&s_locals.texture_window_reg);
 
   if (sw.GetVersion() < 62) [[unlikely]]
@@ -735,7 +792,8 @@ bool GPU::DoState(StateWrapper& sw)
   if (sw.GetVersion() < 87) [[unlikely]]
     sw.SkipBytes(1); // console_is_pal
 
-  sw.Do(&s_locals.enable_upper_vram);
+  sw.Do(&s_locals.upper_vram_active);
+  s_locals.upper_vram_active |= (sw.IsReading() && g_settings.gpu_vram_size == GPUVRAMSize::Expanded2MBForced);
 
   sw.Do(&s_locals.crtc_state.regs.display_address_start);
   sw.Do(&s_locals.crtc_state.regs.horizontal_display_range);
@@ -762,12 +820,14 @@ bool GPU::DoState(StateWrapper& sw)
   sw.Do(&s_locals.crtc_state.fractional_ticks);
   sw.Do(&s_locals.crtc_state.current_tick_in_scanline);
   s_locals.crtc_state.current_scanline = Truncate16(sw.DoValue(static_cast<u32>(s_locals.crtc_state.current_scanline)));
-  sw.DoEx(&s_locals.crtc_state.fractional_dot_ticks, 46, 0);
+  if (sw.GetVersion() >= 46 && sw.GetVersion() < 99) [[unlikely]]
+    sw.SkipBytes(sizeof(TickCount)); // fractional_dot_ticks, dots are counted from the line position since version 99
   sw.Do(&s_locals.crtc_state.in_hblank);
   sw.Do(&s_locals.crtc_state.in_vblank);
   sw.Do(&s_locals.crtc_state.interlaced_field);
   sw.Do(&s_locals.crtc_state.interlaced_display_field);
   sw.Do(&s_locals.crtc_state.active_line_lsb);
+  sw.DoEx(&s_locals.crtc_state.frame_end_missed, 100, false);
 
   sw.Do(&s_locals.blitter_state, BlitterState::DrawingPolyLine);
   sw.Do(&s_locals.pending_command_ticks);
@@ -823,28 +883,44 @@ bool GPU::DoState(StateWrapper& sw)
   if (!sw.DoMarker("GPU-VRAM"))
     return false;
 
+  // Like the RAM size, the VRAM size of the state takes priority over the setting.
+  u16 vram_height = Truncate16(GetVRAMHeight());
+  sw.DoEx(&vram_height, 101, static_cast<u16>(VRAM_1MB_HEIGHT));
+  if (vram_height != VRAM_1MB_HEIGHT && vram_height != VRAM_2MB_HEIGHT) [[unlikely]]
+  {
+    ERROR_LOG("Invalid VRAM height in save state: {}", vram_height);
+    return false;
+  }
+
+  const u32 vram_size = VRAM_WIDTH * vram_height * sizeof(u16);
   if (sw.IsReading())
   {
+    if (vram_height != GetVRAMHeight())
+    {
+      WARNING_LOG("Save state has {} MB VRAM, switching from {} MB.", vram_height / VRAM_1MB_HEIGHT,
+                  GetVRAMHeight() / VRAM_1MB_HEIGHT);
+      Set2MBVRAM(vram_height == VRAM_2MB_HEIGHT);
+    }
+
     // Need to calculate the TC data size. But skip over VRAM first, we'll grab it later.
     const size_t vram_start_pos = sw.GetPosition();
-    sw.SkipBytes(VRAM_SIZE);
+    sw.SkipBytes(vram_size);
     u32 tc_data_size;
     if (!GPUTextureCache::GetStateSize(sw, &tc_data_size)) [[unlikely]]
       return false;
 
     // Now we can actually allocate FIFO storage, and push it to the GPU thread.
     GPUBackendLoadStateCommand* cmd = static_cast<GPUBackendLoadStateCommand*>(VideoThread::AllocateCommand(
-      VideoThreadCommandType::LoadState, sizeof(GPUBackendLoadStateCommand) + tc_data_size));
+      VideoThreadCommandType::LoadState, sizeof(GPUBackendLoadStateCommand) + vram_size + tc_data_size));
     std::memcpy(cmd->clut_data, load_clut_data, sizeof(cmd->clut_data));
-    std::memcpy(cmd->vram_data, sw.GetData() + vram_start_pos, VRAM_SIZE);
     cmd->texture_cache_state_version = sw.GetVersion();
     cmd->texture_cache_state_size = tc_data_size;
-    if (tc_data_size > 0)
-      std::memcpy(cmd->texture_cache_state, sw.GetData() + vram_start_pos + VRAM_SIZE, tc_data_size);
+    std::memcpy(cmd->vram_data, sw.GetData() + vram_start_pos, vram_size + tc_data_size);
     VideoThread::PushCommand(cmd);
 
     s_locals.drawing_area_changed = true;
     SetClampedDrawingArea();
+    PrepareForDraw();
     UpdateDMARequest();
     UpdateCRTCConfig(old_vram_width, old_vram_height);
     UpdateCommandTickEvent();
@@ -852,7 +928,7 @@ bool GPU::DoState(StateWrapper& sw)
   else // if not memory state
   {
     // write vram
-    sw.DoBytes(g_vram, VRAM_SIZE);
+    sw.DoBytes(g_vram, vram_size);
 
     // write TC data, we have to be super careful here, since we're reading GPU thread state...
     GPUTextureCache::DoState(sw, false);
@@ -866,15 +942,14 @@ void GPU::DoMemoryState(StateWrapper& sw, System::MemorySaveState& mss)
   sw.Do(&s_locals.GPUSTAT.bits);
 
   sw.DoBytes(&s_locals.draw_mode_reg, sizeof(s_locals.draw_mode_reg));
-  sw.DoBytes(&s_locals.texture_palette_reg, sizeof(s_locals.texture_palette_reg));
   sw.DoBytes(&s_locals.texture_window_reg, sizeof(s_locals.texture_window_reg));
   sw.DoBytes(&s_locals.texture_window, sizeof(s_locals.texture_window));
-  // sw.DoBytes(&s_locals.texture_x_flip, sizeof(s_locals.texture_x_flip));
-  // sw.DoBytes(&s_locals.texture_y_flip, sizeof(s_locals.texture_y_flip));
+  sw.DoBytes(&s_locals.texture_x_flip, sizeof(s_locals.texture_x_flip));
+  sw.DoBytes(&s_locals.texture_y_flip, sizeof(s_locals.texture_y_flip));
   sw.DoBytes(&s_locals.drawing_area, sizeof(s_locals.drawing_area));
   sw.DoBytes(&s_locals.drawing_offset, sizeof(s_locals.drawing_offset));
 
-  sw.Do(&s_locals.enable_upper_vram);
+  sw.Do(&s_locals.upper_vram_active);
 
   sw.DoBytes(&s_locals.crtc_state, sizeof(s_locals.crtc_state));
 
@@ -899,6 +974,7 @@ void GPU::DoMemoryState(StateWrapper& sw, System::MemorySaveState& mss)
   {
     s_locals.drawing_area_changed = true;
     SetClampedDrawingArea();
+    PrepareForDraw();
     UpdateDMARequest();
     UpdateCRTCConfig();
     UpdateCommandTickEvent();
@@ -917,12 +993,20 @@ void GPU::UpdateDMARequest()
   switch (s_locals.blitter_state)
   {
     case BlitterState::Idle:
+    {
       s_locals.GPUSTAT.ready_to_send_vram = false;
-      // In GP0 DMA mode, the next block is requested while at most one word is queued.
+
+      // In GP0 DMA mode, the next block is requested while at most one word is queued. Polygons and lines drop the
+      // request from their command word until all parameters are in, so a DMA block ending inside one hangs.
+      const u32 queued = s_locals.fifo.GetSize();
+      const u32 waiting_type =
+        (queued > 0 && queued < s_GP0_command_table[FifoPeek(0) >> 24].num_words) ? (FifoPeek(0) >> 29) : 0;
       s_locals.GPUSTAT.ready_to_receive_dma =
-        (s_locals.fifo.GetSize() <= BoolToUInt32(s_locals.GPUSTAT.dma_direction == GPUDMADirection::CPUtoGP0) ||
-         s_locals.fifo.GetSize() < s_locals.command_total_words);
-      break;
+        (waiting_type != 1 && waiting_type != 2) &&
+        (queued <= BoolToUInt32(s_locals.GPUSTAT.dma_direction == GPUDMADirection::CPUtoGP0) ||
+         queued < s_locals.command_total_words);
+    }
+    break;
 
     case BlitterState::WritingVRAM:
       s_locals.GPUSTAT.ready_to_send_vram = false;
@@ -930,13 +1014,15 @@ void GPU::UpdateDMARequest()
       break;
 
     case BlitterState::ReadingVRAM:
+      // Queued words wait for the read to finish, and the next block is only requested while none are queued.
       s_locals.GPUSTAT.ready_to_send_vram = true;
-      s_locals.GPUSTAT.ready_to_receive_dma = false;
+      s_locals.GPUSTAT.ready_to_receive_dma = s_locals.fifo.IsEmpty();
       break;
 
     case BlitterState::DrawingPolyLine:
+      // Held until the terminator, so a DMA block ending inside a poly-line hangs.
       s_locals.GPUSTAT.ready_to_send_vram = false;
-      s_locals.GPUSTAT.ready_to_receive_dma = (s_locals.fifo.GetSize() < FIFO_SIZE);
+      s_locals.GPUSTAT.ready_to_receive_dma = false;
       break;
 
     default:
@@ -960,7 +1046,10 @@ void GPU::UpdateDMARequest()
     {
       if (s_locals.blitter_state != BlitterState::Idle)
       {
-        dma_request = s_locals.GPUSTAT.ready_to_receive_dma;
+        // A pending VRAM read takes one slot.
+        dma_request = (s_locals.blitter_state == BlitterState::ReadingVRAM) ?
+                        ((s_locals.fifo.GetSize() + 1) < FIFO_MODE_FULL_WORDS) :
+                        (s_locals.fifo.GetSize() < FIFO_SIZE);
         break;
       }
 
@@ -1131,24 +1220,25 @@ TickCount GPU::GetCRTCFrequency()
   return s_locals.console_is_pal ? 53203425 : 53693175;
 }
 
-TickCount GPU::CRTCTicksToSystemTicks(TickCount gpu_ticks, TickCount fractional_ticks)
+u64 GPU::GetCRTCSubTicksPerSystemTick()
 {
-  // convert to master clock, rounding up as we want to overshoot not undershoot
-  if (!s_locals.console_is_pal)
-    return static_cast<TickCount>((u64(gpu_ticks) * u64(451584) + fractional_ticks + u64(715908)) / u64(715909));
-  else
-    return static_cast<TickCount>((u64(gpu_ticks) * u64(451584) + fractional_ticks + u64(709378)) / u64(709379));
+  return s_locals.console_is_pal ? 709379 : 715909;
 }
 
-TickCount GPU::SystemTicksToCRTCTicks(TickCount sysclk_ticks, TickCount* fractional_ticks)
+TickCount GPU::CRTCSubTicksToSystemTicks(u64 subticks)
 {
-  u64 mul = u64(sysclk_ticks);
-  mul *= !s_locals.console_is_pal ? u64(715909) : u64(709379);
-  mul += u64(*fractional_ticks);
+  // convert to master clock, rounding up as we want to overshoot not undershoot
+  // deliberately uses the if to enable optimization of the integer divide
+  if (!s_locals.console_is_pal)
+    return static_cast<TickCount>((subticks + (715909 - 1)) / 715909);
+  else
+    return static_cast<TickCount>((subticks + (709379 - 1)) / 709379);
+}
 
-  const TickCount ticks = static_cast<TickCount>(mul / u64(451584));
-  *fractional_ticks = static_cast<TickCount>(mul % u64(451584));
-  return ticks;
+std::pair<TickCount, TickCount> GPU::SystemTicksToCRTCTicks(TickCount sysclk_ticks, TickCount fractional_ticks)
+{
+  const u64 mul = u64(sysclk_ticks) * GetCRTCSubTicksPerSystemTick() + u64(fractional_ticks);
+  return {static_cast<TickCount>(mul / CRTC_SUBTICKS_PER_TICK), static_cast<TickCount>(mul % CRTC_SUBTICKS_PER_TICK)};
 }
 
 void GPU::AddCommandTicks(TickCount ticks)
@@ -1163,23 +1253,33 @@ void GPU::SynchronizeCRTC()
   s_locals.crtc_tick_event.InvokeEarlyNoReschedule();
 }
 
-float GPU::ComputeHorizontalFrequency()
+u64 GPU::GetCRTCLineSubTicks()
 {
   const CRTCState& cs = s_locals.crtc_state;
-  TickCount fractional_ticks = 0;
-  return static_cast<float>(
-    static_cast<double>(SystemTicksToCRTCTicks(System::GetTicksPerSecond(), &fractional_ticks)) /
-    static_cast<double>(cs.horizontal_total));
+  return u64(cs.horizontal_total) * CRTC_SUBTICKS_PER_TICK + u64(cs.horizontal_total_fraction);
+}
+
+u64 GPU::GetCRTCFieldSubTicks()
+{
+  const CRTCState& cs = s_locals.crtc_state;
+  return GetCRTCLineSubTicks() *
+         ((cs.current_scanline < cs.vertical_total && !cs.frame_end_missed) ? cs.vertical_total : LINE_COUNTER_WRAP);
+}
+
+float GPU::ComputeHorizontalFrequency()
+{
+  return static_cast<float>(static_cast<double>(u64(System::GetTicksPerSecond()) * GetCRTCSubTicksPerSystemTick()) /
+                            static_cast<double>(GetCRTCLineSubTicks()));
 }
 
 float GPU::ComputeVerticalFrequency()
 {
+  // Interlaced fields alternate between the long and short field, so use the average of the two.
   const CRTCState& cs = s_locals.crtc_state;
-  const TickCount ticks_per_frame = cs.horizontal_total * cs.vertical_total;
-  TickCount fractional_ticks = 0;
-  return static_cast<float>(
-    static_cast<double>(SystemTicksToCRTCTicks(System::GetTicksPerSecond(), &fractional_ticks)) /
-    static_cast<double>(ticks_per_frame));
+  const double lines = s_locals.GPUSTAT.vertical_interlace ? (cs.vertical_total + cs.interlaced_field - 0.5) :
+                                                             static_cast<double>(cs.vertical_total);
+  return static_cast<float>(static_cast<double>(u64(System::GetTicksPerSecond()) * GetCRTCSubTicksPerSystemTick()) /
+                            (static_cast<double>(GetCRTCLineSubTicks()) * lines));
 }
 
 float GPU::ComputePixelAspectRatio()
@@ -1327,7 +1427,8 @@ void GPU::UpdateCRTCConfig(u16 old_vram_width, u16 old_vram_height)
 
   const u16 old_vertical_total = cs.vertical_total;
   cs.vertical_total = s_locals.GPUSTAT.pal_mode ? PAL_TOTAL_LINES : NTSC_TOTAL_LINES;
-  cs.horizontal_total = s_locals.GPUSTAT.pal_mode ? PAL_TICKS_PER_LINE : NTSC_TICKS_PER_LINE;
+  u16 half_ticks_per_line = s_locals.GPUSTAT.pal_mode ? PAL_HALF_TICKS_PER_LINE : NTSC_HALF_TICKS_PER_LINE;
+  cs.horizontal_total = half_ticks_per_line / 2;
   cs.horizontal_active_start = s_locals.GPUSTAT.pal_mode ? PAL_HORIZONTAL_ACTIVE_START : NTSC_HORIZONTAL_ACTIVE_START;
   cs.horizontal_active_end = s_locals.GPUSTAT.pal_mode ? PAL_HORIZONTAL_ACTIVE_END : NTSC_HORIZONTAL_ACTIVE_END;
 
@@ -1344,39 +1445,39 @@ void GPU::UpdateCRTCConfig(u16 old_vram_width, u16 old_vram_height)
   if (s_locals.GPUSTAT.pal_mode && g_settings.gpu_force_video_timing == ForceVideoTimingMode::NTSC)
   {
     // scale to NTSC parameters
-    cs.horizontal_display_start =
-      static_cast<u16>((static_cast<u32>(cs.horizontal_display_start) * NTSC_TICKS_PER_LINE) / PAL_TICKS_PER_LINE);
+    cs.horizontal_display_start = static_cast<u16>(
+      (static_cast<u32>(cs.horizontal_display_start) * NTSC_HALF_TICKS_PER_LINE) / PAL_HALF_TICKS_PER_LINE);
     cs.horizontal_display_end = static_cast<u16>(
-      ((static_cast<u32>(cs.horizontal_display_end) * NTSC_TICKS_PER_LINE) + (PAL_TICKS_PER_LINE - 1)) /
-      PAL_TICKS_PER_LINE);
+      ((static_cast<u32>(cs.horizontal_display_end) * NTSC_HALF_TICKS_PER_LINE) + (PAL_HALF_TICKS_PER_LINE - 1)) /
+      PAL_HALF_TICKS_PER_LINE);
     cs.vertical_display_start =
       static_cast<u16>((static_cast<u32>(cs.vertical_display_start) * NTSC_TOTAL_LINES) / PAL_TOTAL_LINES);
     cs.vertical_display_end = static_cast<u16>(
       ((static_cast<u32>(cs.vertical_display_end) * NTSC_TOTAL_LINES) + (PAL_TOTAL_LINES - 1)) / PAL_TOTAL_LINES);
 
     cs.vertical_total = NTSC_TOTAL_LINES;
-    cs.current_scanline %= NTSC_TOTAL_LINES;
-    cs.horizontal_total = NTSC_TICKS_PER_LINE;
-    cs.current_tick_in_scanline %= NTSC_TICKS_PER_LINE;
+    half_ticks_per_line = NTSC_HALF_TICKS_PER_LINE;
   }
   else if (!s_locals.GPUSTAT.pal_mode && g_settings.gpu_force_video_timing == ForceVideoTimingMode::PAL)
   {
     // scale to PAL parameters
-    cs.horizontal_display_start =
-      static_cast<u16>((static_cast<u32>(cs.horizontal_display_start) * PAL_TICKS_PER_LINE) / NTSC_TICKS_PER_LINE);
+    cs.horizontal_display_start = static_cast<u16>(
+      (static_cast<u32>(cs.horizontal_display_start) * PAL_HALF_TICKS_PER_LINE) / NTSC_HALF_TICKS_PER_LINE);
     cs.horizontal_display_end = static_cast<u16>(
-      ((static_cast<u32>(cs.horizontal_display_end) * PAL_TICKS_PER_LINE) + (NTSC_TICKS_PER_LINE - 1)) /
-      NTSC_TICKS_PER_LINE);
+      ((static_cast<u32>(cs.horizontal_display_end) * PAL_HALF_TICKS_PER_LINE) + (NTSC_HALF_TICKS_PER_LINE - 1)) /
+      NTSC_HALF_TICKS_PER_LINE);
     cs.vertical_display_start =
       static_cast<u16>((static_cast<u32>(cs.vertical_display_start) * PAL_TOTAL_LINES) / NTSC_TOTAL_LINES);
     cs.vertical_display_end = static_cast<u16>(
       ((static_cast<u32>(cs.vertical_display_end) * PAL_TOTAL_LINES) + (NTSC_TOTAL_LINES - 1)) / NTSC_TOTAL_LINES);
 
     cs.vertical_total = PAL_TOTAL_LINES;
-    cs.current_scanline %= PAL_TOTAL_LINES;
-    cs.horizontal_total = PAL_TICKS_PER_LINE;
-    cs.current_tick_in_scanline %= PAL_TICKS_PER_LINE;
+    half_ticks_per_line = PAL_HALF_TICKS_PER_LINE;
   }
+
+  // Interlaced fields alternate between 263 and 262 lines in NTSC, 313 and 312 in PAL. The odd field is the short one.
+  if (s_locals.GPUSTAT.vertical_interlace)
+    cs.vertical_total = cs.vertical_total - BoolToUInt16(cs.vertical_total == PAL_TOTAL_LINES) - cs.interlaced_field;
 
   cs.horizontal_display_start =
     static_cast<u16>(System::ScaleTicksToOverclock(static_cast<TickCount>(cs.horizontal_display_start)));
@@ -1386,14 +1487,30 @@ void GPU::UpdateCRTCConfig(u16 old_vram_width, u16 old_vram_height)
     static_cast<u16>(System::ScaleTicksToOverclock(static_cast<TickCount>(cs.horizontal_active_start)));
   cs.horizontal_active_end =
     static_cast<u16>(System::ScaleTicksToOverclock(static_cast<TickCount>(cs.horizontal_active_end)));
-  cs.horizontal_total = static_cast<u16>(System::ScaleTicksToOverclock(static_cast<TickCount>(cs.horizontal_total)));
 
-  cs.current_tick_in_scanline %= cs.horizontal_total;
+  // Scale the whole line in subticks, so NTSC's half tick survives overclocking.
+  u64 line_subticks = u64(half_ticks_per_line) * (CRTC_SUBTICKS_PER_TICK / 2);
+  if (g_settings.cpu_overclock_active)
+  {
+    line_subticks = (line_subticks * g_settings.cpu_overclock_numerator + (g_settings.cpu_overclock_denominator - 1)) /
+                    g_settings.cpu_overclock_denominator;
+  }
+  cs.horizontal_total = static_cast<u16>(line_subticks / CRTC_SUBTICKS_PER_TICK);
+  cs.horizontal_total_fraction = static_cast<TickCount>(line_subticks % CRTC_SUBTICKS_PER_TICK);
+
+  const u64 position =
+    (u64(cs.current_tick_in_scanline) * CRTC_SUBTICKS_PER_TICK + u64(cs.fractional_ticks)) % line_subticks;
+  cs.current_tick_in_scanline = static_cast<TickCount>(position / CRTC_SUBTICKS_PER_TICK);
+  cs.fractional_ticks = static_cast<TickCount>(position % CRTC_SUBTICKS_PER_TICK);
   UpdateCRTCHBlankFlag();
 
-  // The last line stays the last line, so the line before line 0 after GP1(00h) survives a mode change.
-  cs.current_scanline = (cs.current_scanline == old_vertical_total - 1) ? (cs.vertical_total - 1) :
-                                                                          (cs.current_scanline % cs.vertical_total);
+  // Switching between NTSC and PAL keeps the line within the field. Switching interlace leaves the line counter alone,
+  // even if it is now past the end, and a line already past the end keeps running on until the counter wraps.
+  if (cs.current_scanline < old_vertical_total && !cs.frame_end_missed &&
+      (old_vertical_total > NTSC_TOTAL_LINES) != (cs.vertical_total > NTSC_TOTAL_LINES))
+  {
+    cs.current_scanline %= cs.vertical_total;
+  }
 
   System::SetVideoFrameRate(ComputeVerticalFrequency());
 
@@ -1411,7 +1528,7 @@ void GPU::UpdateCRTCDisplayParameters(u16 old_vram_width, u16 old_vram_height)
   CRTCState& cs = s_locals.crtc_state;
   const DisplayCropMode crop_mode = g_settings.display_crop_mode;
 
-  const u16 horizontal_total = s_locals.GPUSTAT.pal_mode ? PAL_TICKS_PER_LINE : NTSC_TICKS_PER_LINE;
+  const u16 horizontal_total = (s_locals.GPUSTAT.pal_mode ? PAL_HALF_TICKS_PER_LINE : NTSC_HALF_TICKS_PER_LINE) / 2;
   const u16 vertical_total = s_locals.GPUSTAT.pal_mode ? PAL_TOTAL_LINES : NTSC_TOTAL_LINES;
   const u16 horizontal_display_start =
     (std::min<u16>(cs.regs.X1, horizontal_total) / cs.dot_clock_divider) * cs.dot_clock_divider;
@@ -1557,12 +1674,13 @@ void GPU::UpdateCRTCDisplayParameters(u16 old_vram_width, u16 old_vram_height)
   if (vertical_display_start >= cs.vertical_visible_start)
   {
     cs.display_origin_top = (vertical_display_start - cs.vertical_visible_start) << y_shift;
-    cs.display_vram_top = cs.regs.Y;
+    cs.display_vram_top = cs.regs.Y & GetAddressableVRAMHeightMask();
   }
   else
   {
     cs.display_origin_top = 0;
-    cs.display_vram_top = (cs.regs.Y + ((cs.vertical_visible_start - vertical_display_start) << y_shift)) % VRAM_HEIGHT;
+    cs.display_vram_top =
+      (cs.regs.Y + ((cs.vertical_visible_start - vertical_display_start) << y_shift)) & GetAddressableVRAMHeightMask();
   }
 
   if (vertical_display_end <= cs.vertical_visible_end)
@@ -1646,11 +1764,9 @@ bool GPU::IsInPALMode()
   return s_locals.GPUSTAT.pal_mode;
 }
 
-ALWAYS_INLINE_RELEASE TickCount GPU::GetPendingCRTCTicks()
+ALWAYS_INLINE_RELEASE u64 GPU::GetPendingCRTCSubTicks()
 {
-  const TickCount pending_sysclk_ticks = s_locals.crtc_tick_event.GetTicksSinceLastExecution();
-  TickCount fractional_ticks = s_locals.crtc_state.fractional_ticks;
-  return SystemTicksToCRTCTicks(pending_sysclk_ticks, &fractional_ticks);
+  return u64(s_locals.crtc_tick_event.GetTicksSinceLastExecution()) * GetCRTCSubTicksPerSystemTick();
 }
 
 ALWAYS_INLINE_RELEASE TickCount GPU::GetPendingCommandTicks()
@@ -1664,9 +1780,11 @@ ALWAYS_INLINE_RELEASE TickCount GPU::GetPendingCommandTicks()
 ALWAYS_INLINE_RELEASE TickCount GPU::GetTicksUntilLine(u32 line)
 {
   const CRTCState& cs = s_locals.crtc_state;
-  line = line ? line : cs.vertical_total;
+  const u32 wrap_line =
+    (cs.current_scanline < cs.vertical_total && !cs.frame_end_missed) ? cs.vertical_total : LINE_COUNTER_WRAP;
+  line = line ? line : wrap_line;
   return static_cast<TickCount>((line > cs.current_scanline) ? (line - cs.current_scanline) :
-                                                               (cs.vertical_total - cs.current_scanline + line));
+                                                               (wrap_line - cs.current_scanline + line));
 }
 
 void GPU::RescheduleCRTC()
@@ -1683,30 +1801,50 @@ void GPU::RescheduleCRTC()
   if (Timers::IsExternalIRQEnabled(HBLANK_TIMER_INDEX))
     lines_until_event = std::min(lines_until_event, Timers::GetTicksUntilIRQ(HBLANK_TIMER_INDEX));
 
-  TickCount ticks_until_event = lines_until_event * cs.horizontal_total - cs.current_tick_in_scanline;
+  const u64 line_subticks = GetCRTCLineSubTicks();
+  const u64 position = u64(cs.current_tick_in_scanline) * CRTC_SUBTICKS_PER_TICK + u64(cs.fractional_ticks);
+  u64 subticks_until_event = u64(lines_until_event) * line_subticks - position;
   if (Timers::IsExternalIRQEnabled(DOT_TIMER_INDEX))
   {
-    const TickCount dots_until_irq = Timers::GetTicksUntilIRQ(DOT_TIMER_INDEX);
-    const TickCount ticks_until_irq = (dots_until_irq * cs.dot_clock_divider) - cs.fractional_dot_ticks;
-    ticks_until_event = std::min(ticks_until_event, std::max<TickCount>(ticks_until_irq, 0));
+    // Dots restart on every line, and PAL 320's partial dot counts at the end of the line, see CRTCTickEvent().
+    const u64 dots_until_irq = static_cast<u64>(std::max<TickCount>(Timers::GetTicksUntilIRQ(DOT_TIMER_INDEX), 0));
+    const u64 subticks_per_dot = u64(cs.dot_clock_divider) * CRTC_SUBTICKS_PER_TICK;
+    const u64 dots_per_line = line_subticks / subticks_per_dot +
+                              BoolToUInt64(cs.dot_clock_divider == 8 && cs.vertical_total > NTSC_TOTAL_LINES);
+    const u64 line_dot = position / subticks_per_dot;
+    u64 subticks_until_irq;
+    if (dots_until_irq <= (dots_per_line - line_dot))
+    {
+      subticks_until_irq =
+        std::max(std::min((line_dot + dots_until_irq) * subticks_per_dot, line_subticks), position) - position;
+    }
+    else
+    {
+      const u64 next_line_dots = dots_until_irq - (dots_per_line - line_dot);
+      const u64 full_lines = (next_line_dots - 1) / dots_per_line;
+      subticks_until_irq = (line_subticks - position) + full_lines * line_subticks +
+                           std::min((next_line_dots - full_lines * dots_per_line) * subticks_per_dot, line_subticks);
+    }
+    subticks_until_event = std::min(subticks_until_event, subticks_until_irq);
   }
 
   if (Timers::IsSyncEnabled(DOT_TIMER_INDEX))
   {
     // This could potentially be optimized to skip the time the gate is active, if we're resetting and free running.
     // But realistically, I've only seen sync off (most games), or reset+pause on gate (Konami Lightgun games).
-    TickCount ticks_until_hblank_start_or_end;
+    u64 subticks_until_hblank_start_or_end;
     if (cs.current_tick_in_scanline >= cs.horizontal_active_end)
-      ticks_until_hblank_start_or_end = cs.horizontal_total - cs.current_tick_in_scanline + cs.horizontal_active_start;
+      subticks_until_hblank_start_or_end =
+        line_subticks - position + cs.horizontal_active_start * CRTC_SUBTICKS_PER_TICK;
     else if (cs.current_tick_in_scanline < cs.horizontal_active_start)
-      ticks_until_hblank_start_or_end = cs.horizontal_active_start - cs.current_tick_in_scanline;
+      subticks_until_hblank_start_or_end = cs.horizontal_active_start * CRTC_SUBTICKS_PER_TICK - position;
     else
-      ticks_until_hblank_start_or_end = cs.horizontal_active_end - cs.current_tick_in_scanline;
+      subticks_until_hblank_start_or_end = cs.horizontal_active_end * CRTC_SUBTICKS_PER_TICK - position;
 
-    ticks_until_event = std::min(ticks_until_event, ticks_until_hblank_start_or_end);
+    subticks_until_event = std::min(subticks_until_event, subticks_until_hblank_start_or_end);
   }
 
-  s_locals.crtc_tick_event.Schedule(CRTCTicksToSystemTicks(ticks_until_event, cs.fractional_ticks));
+  s_locals.crtc_tick_event.Schedule(CRTCSubTicksToSystemTicks(subticks_until_event));
 }
 
 void GPU::SetVBlankEndCheatsEnabled(bool enabled)
@@ -1729,8 +1867,9 @@ bool GPU::IsCRTCScanlinePending()
 {
   // TODO: Most of these should be fields, not lines.
   CRTCState& cs = s_locals.crtc_state;
-  const TickCount ticks = (GetPendingCRTCTicks() + cs.current_tick_in_scanline);
-  return (ticks >= cs.horizontal_total);
+  const u64 position =
+    u64(cs.current_tick_in_scanline) * CRTC_SUBTICKS_PER_TICK + u64(cs.fractional_ticks) + GetPendingCRTCSubTicks();
+  return (position >= GetCRTCLineSubTicks());
 }
 
 ALWAYS_INLINE void GPU::UpdateCRTCHBlankFlag()
@@ -1794,19 +1933,28 @@ void GPU::CRTCTickEvent(void*, TickCount ticks)
 
   // convert cpu/master clock to GPU ticks, accounting for partial cycles because of the non-integer divider
   const TickCount prev_tick = cs.current_tick_in_scanline;
-  const TickCount gpu_ticks = SystemTicksToCRTCTicks(ticks, &cs.fractional_ticks);
+  const u64 prev_position = u64(prev_tick) * CRTC_SUBTICKS_PER_TICK + u64(cs.fractional_ticks);
+  const auto [gpu_ticks, fractional_ticks] = SystemTicksToCRTCTicks(ticks, cs.fractional_ticks);
+  cs.fractional_ticks = fractional_ticks;
   cs.current_tick_in_scanline += gpu_ticks;
+
+  const u64 line_subticks = GetCRTCLineSubTicks();
+  u64 position = u64(cs.current_tick_in_scanline) * CRTC_SUBTICKS_PER_TICK + u64(cs.fractional_ticks);
 
   if (Timers::IsUsingExternalClock(DOT_TIMER_INDEX))
   {
-    cs.fractional_dot_ticks += gpu_ticks;
-    const TickCount dots = cs.fractional_dot_ticks / cs.dot_clock_divider;
-    cs.fractional_dot_ticks = cs.fractional_dot_ticks % cs.dot_clock_divider;
+    // The dot clock restarts on every line, so Timer 0 only counts the dots completed in each line, rounded down.
+    // Except PAL 320, which counts 426 like NTSC: the partial dot at the end of the line counts as one.
+    const u64 subticks_per_dot = u64(cs.dot_clock_divider) * CRTC_SUBTICKS_PER_TICK;
+    const u64 dots_per_line = line_subticks / subticks_per_dot +
+                              BoolToUInt64(cs.dot_clock_divider == 8 && cs.vertical_total > NTSC_TOTAL_LINES);
+    const u64 lines = position / line_subticks;
+    const u64 dots =
+      lines * dots_per_line + (position % line_subticks) / subticks_per_dot - prev_position / subticks_per_dot;
     if (dots > 0)
-      Timers::AddTicks(DOT_TIMER_INDEX, dots);
+      Timers::AddTicks(DOT_TIMER_INDEX, static_cast<TickCount>(dots));
   }
-
-  if (cs.current_tick_in_scanline < cs.horizontal_total)
+  if (position < line_subticks)
   {
     // short path when we execute <1 line.. this shouldn't occur often, except when gated (konami lightgun games).
     UpdateCRTCHBlankFlag();
@@ -1823,8 +1971,10 @@ void GPU::CRTCTickEvent(void*, TickCount ticks)
     return;
   }
 
-  u32 lines_to_draw = cs.current_tick_in_scanline / cs.horizontal_total;
-  cs.current_tick_in_scanline %= cs.horizontal_total;
+  u32 lines_to_draw = static_cast<u32>(position / line_subticks);
+  position %= line_subticks;
+  cs.current_tick_in_scanline = static_cast<TickCount>(position / CRTC_SUBTICKS_PER_TICK);
+  cs.fractional_ticks = static_cast<TickCount>(position % CRTC_SUBTICKS_PER_TICK);
 #if 0
   WARNING_LOG("Old line: {}, new line: {}, drawing {}", cs.current_scanline, cs.current_scanline + lines_to_draw,
               lines_to_draw);
@@ -1848,17 +1998,18 @@ void GPU::CRTCTickEvent(void*, TickCount ticks)
   bool frame_done = false;
   while (lines_to_draw > 0)
   {
-    const u32 lines_to_draw_this_loop =
-      std::min(lines_to_draw, static_cast<u32>(cs.vertical_total - cs.current_scanline));
+    // A mode change can leave the line past the end of the field, it then runs on until the counter wraps.
+    const u32 wrap_line =
+      (cs.current_scanline < cs.vertical_total && !cs.frame_end_missed) ? cs.vertical_total : LINE_COUNTER_WRAP;
+    const u32 lines_to_draw_this_loop = std::min(lines_to_draw, wrap_line - cs.current_scanline);
     const u32 prev_scanline = cs.current_scanline;
     cs.current_scanline = Truncate16(cs.current_scanline + lines_to_draw_this_loop);
-    DebugAssert(cs.current_scanline <= cs.vertical_total);
     lines_to_draw -= lines_to_draw_this_loop;
 
     // Vblank starts when the scan reaches Y2 and ends when it reaches Y1, the current line isn't compared against the
     // range. Line 0 is reached at the wrap. If both are passed, apply them in scan order, Y2 wins on the same line.
-    const u32 start_line = cs.vertical_display_start ? cs.vertical_display_start : cs.vertical_total;
-    const u32 end_line = cs.vertical_display_end ? cs.vertical_display_end : cs.vertical_total;
+    const u32 start_line = cs.vertical_display_start ? cs.vertical_display_start : wrap_line;
+    const u32 end_line = cs.vertical_display_end ? cs.vertical_display_end : wrap_line;
     const bool reached_start = (prev_scanline < start_line && cs.current_scanline >= start_line);
     const bool reached_end = (prev_scanline < end_line && cs.current_scanline >= end_line);
     if (reached_start && (!reached_end || start_line < end_line))
@@ -1868,23 +2019,29 @@ void GPU::CRTCTickEvent(void*, TickCount ticks)
     if (reached_start && reached_end && end_line < start_line)
       SetCRTCVBlank(false);
 
-    // the 480i display field was latched at vblank start, which may have been before the switch to 480i
-    const u8 next_field =
-      s_locals.GPUSTAT.InInterleaved480iMode() ? cs.interlaced_display_field : (cs.interlaced_field ^ 1u);
-
-    // v2 GPUs change bit 13 at the start of the last line, and hold it while interlace is off
-    if (s_locals.GPUSTAT.vertical_interlace && prev_scanline < (cs.vertical_total - 1u) &&
+    // v2 GPUs change bit 13 at the start of the last line, to the inverse of the next field. It holds while interlace
+    // is off, or the line counter runs past the field, so the field does too.
+    if (s_locals.GPUSTAT.vertical_interlace && !cs.frame_end_missed && prev_scanline < (cs.vertical_total - 1u) &&
         cs.current_scanline >= (cs.vertical_total - 1u))
     {
-      s_locals.GPUSTAT.interlaced_field = BoolToUInt8(!ConvertToBoolUnchecked(next_field));
+      s_locals.GPUSTAT.interlaced_field = ConvertToBoolUnchecked(cs.interlaced_field);
     }
 
     // past the end of vblank?
-    if (cs.current_scanline == cs.vertical_total)
+    if (cs.current_scanline == wrap_line)
     {
-      // start the new frame
+      // start the new frame, interlaced odd fields are one line shorter
+      const u8 new_field = BoolToUInt8(!s_locals.GPUSTAT.interlaced_field);
+      if (s_locals.GPUSTAT.vertical_interlace)
+        cs.vertical_total = cs.vertical_total + cs.interlaced_field - new_field;
       cs.current_scanline = 0;
-      cs.interlaced_field = s_locals.GPUSTAT.vertical_interlace ? next_field : 0;
+      cs.interlaced_field = new_field;
+      cs.frame_end_missed = false;
+
+      // The display field is switched early at vblank start for drawing, but that may have been before the switch to
+      // 480i, or vblank may not have started in this field.
+      if (s_locals.GPUSTAT.InInterleaved480iMode())
+        cs.interlaced_display_field = new_field;
     }
   }
 
@@ -1897,9 +2054,10 @@ void GPU::CRTCTickEvent(void*, TickCount ticks)
   }
   else
   {
+    // Bit 31 is the parity of the VRAM row being displayed, with Y1 showing row Y, and of Y itself outside the display.
     cs.active_line_lsb = 0;
-    s_locals.GPUSTAT.display_line_lsb =
-      !cs.in_vblank && ConvertToBoolUnchecked((cs.regs.Y + cs.current_scanline) & u32(1));
+    s_locals.GPUSTAT.display_line_lsb = ConvertToBoolUnchecked(
+      (cs.regs.Y + (cs.in_vblank ? 0u : (cs.current_scanline - cs.vertical_display_start))) & u32(1));
   }
 
   RescheduleCRTC();
@@ -1950,8 +2108,7 @@ void GPU::UpdateCommandTickEvent()
   {
     // Wake up early to release the DMA request if a polygon is holding it.
     // Both are relative to the last execution, so take off the time that has passed since then.
-    const TickCount ticks =
-      (s_locals.dreq_hold_ticks > 0) ? s_locals.dreq_hold_ticks : s_locals.pending_command_ticks;
+    const TickCount ticks = (s_locals.dreq_hold_ticks > 0) ? s_locals.dreq_hold_ticks : s_locals.pending_command_ticks;
     s_locals.command_tick_event.SetIntervalAndSchedule(std::max(ticks - GetPendingCommandTicks(), 1));
   }
 }
@@ -1962,10 +2119,9 @@ u8 GPU::UpdateOrGetGPUBusyPct()
   if ((s_locals.GPUSTAT.pal_mode ? (frame_number % 50) : (frame_number % 60)) != 0) [[likely]]
     return s_locals.last_gpu_busy_pct;
 
-  const double busy_frac =
-    static_cast<double>(s_locals.active_ticks_since_last_update) /
-    (static_cast<double>(System::ScaleTicksToOverclock(System::MASTER_CLOCK)) *
-     (ComputeVerticalFrequency() / (s_locals.GPUSTAT.pal_mode ? 50.0f : 60.0f)));
+  const double busy_frac = static_cast<double>(s_locals.active_ticks_since_last_update) /
+                           (static_cast<double>(System::ScaleTicksToOverclock(System::MASTER_CLOCK)) *
+                            (ComputeVerticalFrequency() / (s_locals.GPUSTAT.pal_mode ? 50.0f : 60.0f)));
   const double usage_pct = busy_frac * 100.0;
 
   DEBUG_LOG("PSX GPU Usage: {:.2f}% [{:.0f} cycles avg per frame]", usage_pct,
@@ -2038,37 +2194,34 @@ bool GPU::ConvertDisplayCoordinatesToBeamTicksAndLines(const GSVector2& display_
   return true;
 }
 
+u64 GPU::GetCRTCBeamSubTicks()
+{
+  // Fields differ in length, so catch up first, pending ticks could have crossed into the next field.
+  SynchronizeCRTC();
+
+  const CRTCState& cs = s_locals.crtc_state;
+  const u64 position = cs.current_scanline * GetCRTCLineSubTicks() +
+                       u64(cs.current_tick_in_scanline) * CRTC_SUBTICKS_PER_TICK + u64(cs.fractional_ticks) +
+                       GetPendingCRTCSubTicks();
+  return position % GetCRTCFieldSubTicks();
+}
+
 void GPU::GetBeamPosition(u32* out_ticks, u32* out_line)
 {
-  const u32 current_tick = (GetPendingCRTCTicks() + s_locals.crtc_state.current_tick_in_scanline);
-  *out_line = (s_locals.crtc_state.current_scanline + (current_tick / s_locals.crtc_state.horizontal_total)) %
-              s_locals.crtc_state.vertical_total;
-  *out_ticks = current_tick % s_locals.crtc_state.horizontal_total;
+  const u64 line_subticks = GetCRTCLineSubTicks();
+  const u64 position = GetCRTCBeamSubTicks();
+  *out_line = static_cast<u32>(position / line_subticks);
+  *out_ticks = static_cast<u32>((position % line_subticks) / CRTC_SUBTICKS_PER_TICK);
 }
 
 TickCount GPU::GetSystemTicksUntilTicksAndLine(u32 ticks, u32 line)
 {
-  u32 current_tick, current_line;
-  GetBeamPosition(&current_tick, &current_line);
+  const u64 current_position = GetCRTCBeamSubTicks();
+  u64 target_position = line * GetCRTCLineSubTicks() + u64(ticks) * CRTC_SUBTICKS_PER_TICK;
+  if (target_position < current_position)
+    target_position += GetCRTCFieldSubTicks();
 
-  u32 ticks_to_target;
-  if (ticks >= current_tick)
-  {
-    ticks_to_target = ticks - current_tick;
-  }
-  else
-  {
-    ticks_to_target = (s_locals.crtc_state.horizontal_total - current_tick) + ticks;
-    current_line = (current_line + 1) % s_locals.crtc_state.vertical_total;
-  }
-
-  const u32 lines_to_target =
-    (line >= current_line) ? (line - current_line) : ((s_locals.crtc_state.vertical_total - current_line) + line);
-
-  const TickCount total_ticks_to_target =
-    static_cast<TickCount>((lines_to_target * s_locals.crtc_state.horizontal_total) + ticks_to_target);
-
-  return CRTCTicksToSystemTicks(total_ticks_to_target, s_locals.crtc_state.fractional_ticks);
+  return CRTCSubTicksToSystemTicks(target_position - current_position);
 }
 
 u16 GPU::GetCRTCActiveStartLine()
@@ -2086,13 +2239,13 @@ u32 GPU::ReadGPUREAD()
   if (s_locals.blitter_state != BlitterState::ReadingVRAM)
     return s_locals.GPUREAD_latch;
 
-  // Read two pixels out of VRAM and combine them. Zero fill odd pixel counts.
+  // Read two pixels out of VRAM and combine them.
   u32 value = 0;
   for (u32 i = 0; i < 2; i++)
   {
     // Read with correct wrap-around behavior.
     const u16 read_x = (s_locals.vram_transfer.x + s_locals.vram_transfer.col) % VRAM_WIDTH;
-    const u16 read_y = (s_locals.vram_transfer.y + s_locals.vram_transfer.row) % VRAM_HEIGHT;
+    const u16 read_y = (s_locals.vram_transfer.y + s_locals.vram_transfer.row) & GetAddressableVRAMHeightMask();
     value |= ZeroExtend32(g_vram[read_y * VRAM_WIDTH + read_x]) << (i * 16);
 
     if (++s_locals.vram_transfer.col == s_locals.vram_transfer.width)
@@ -2101,6 +2254,10 @@ u32 GPU::ReadGPUREAD()
 
       if (++s_locals.vram_transfer.row == s_locals.vram_transfer.height)
       {
+        // An odd pixel count pads the last word with the next pixel on the same VRAM row.
+        if (i == 0)
+          value |= ZeroExtend32(g_vram[read_y * VRAM_WIDTH + ((read_x + 1) % VRAM_WIDTH)]) << 16;
+
         DEBUG_LOG("End of VRAM->CPU transfer");
         s_locals.vram_transfer = {};
         s_locals.blitter_state = BlitterState::Idle;
@@ -2190,7 +2347,9 @@ void GPU::WriteGP1(u32 value)
 
     case static_cast<u8>(GP1Command::SetDisplayStartAddress):
     {
-      const u32 new_value = param & CRTCState::Regs::DISPLAY_ADDRESS_START_MASK;
+      // The upper Y bit is only latched with 2MB VRAM, and masked at use when the upper bank isn't enabled.
+      const u32 new_value = param & (s_locals.enable_2mb_vram ? CRTCState::Regs::DISPLAY_ADDRESS_START_MASK_2MB :
+                                                                CRTCState::Regs::DISPLAY_ADDRESS_START_MASK);
       DEBUG_LOG("Display address start <- 0x{:08X}", new_value);
 
       System::IncrementInternalFrameNumber();
@@ -2262,16 +2421,66 @@ void GPU::WriteGP1(u32 value)
         static constexpr u32 SET_MASK = UINT32_C(0b00000000011111110100000000000000);
         s_locals.command_tick_event.InvokeEarlyNoReschedule();
         SynchronizeCRTC();
+
+        // The next field is chosen in scanline 311 (261 in NTSC), the last line of a short field and the line before
+        // the last of a long one. Turning interlace off from there holds that field, before it the field in progress,
+        // even though bit 13 has already changed at the start of a short field's last line.
+        CRTCState& cs = s_locals.crtc_state;
+        if (s_locals.GPUSTAT.vertical_interlace && !dm.vertical_interlace && cs.current_scanline < cs.vertical_total &&
+            !cs.frame_end_missed && cs.current_scanline >= (cs.vertical_total + cs.interlaced_field - 2u))
+        {
+          // It was measured between the start of the line and 45% into it, so take a quarter.
+          const bool chosen = (cs.current_scanline > (cs.vertical_total + cs.interlaced_field - 2u) ||
+                               cs.current_tick_in_scanline >= static_cast<TickCount>(cs.horizontal_total / 4u));
+          s_locals.GPUSTAT.interlaced_field = ConvertToBoolUnchecked(cs.interlaced_field ^ BoolToUInt8(!chosen));
+        }
+
+        const bool interlace_on = !s_locals.GPUSTAT.vertical_interlace && dm.vertical_interlace;
+        const u16 old_vertical_total = cs.vertical_total;
         s_locals.GPUSTAT.bits = (s_locals.GPUSTAT.bits & ~SET_MASK) | (new_GPUSTAT.bits & SET_MASK);
         UpdateCRTCConfig();
+
+        // A short field's end is decided at the start of its last line, a long field's with the next field, a quarter
+        // into the line before. Turning interlace on from there misses it and the counter runs on, unless the 240p
+        // frame's end was already decided at the start of its own last line, then it finishes.
+        // TODO: A short field's window ends a quarter into the 240p frame's second last line, not at its last line.
+        if (interlace_on && !cs.frame_end_missed && cs.current_scanline < old_vertical_total &&
+            (old_vertical_total > NTSC_TOTAL_LINES) == (cs.vertical_total > NTSC_TOTAL_LINES))
+        {
+          const u32 position = cs.current_scanline * 4u + (cs.current_tick_in_scanline * 4u) / cs.horizontal_total;
+          const u32 missed_from = (cs.vertical_total + cs.interlaced_field - 2u) * 4u + (cs.interlaced_field ^ 1u);
+          if (cs.current_scanline == (old_vertical_total - 1u))
+            cs.current_scanline = cs.vertical_total - 1u;
+          else if (position >= missed_from)
+            cs.frame_end_missed = (cs.current_scanline < cs.vertical_total);
+          RescheduleCRTC();
+        }
       }
     }
     break;
 
     case static_cast<u8>(GP1Command::SetVRAMSize):
     {
-      s_locals.enable_upper_vram = ConvertToBoolUnchecked(param & 0x01);
-      DEBUG_LOG("Upper VRAM addressing <- {}", s_locals.enable_upper_vram ? "allowed" : "ignored");
+      // TODO: On 1MB consoles, enabling the upper bank should drop VRAM writes to Y>=512, read FFFFh from there, and
+      // make textures from E1h.11 pages disappear, since the second chip select is not connected. We alias instead.
+      // The forced 2MB mode keeps the upper bank addressable for software that never sets GP1(09h).0.
+      const bool upper_vram_active =
+        (ConvertToBoolUnchecked(param & 0x01) || g_settings.gpu_vram_size == GPUVRAMSize::Expanded2MBForced);
+      DEBUG_LOG("Upper VRAM addressing <- {}", upper_vram_active ? "allowed" : "ignored");
+      if (s_locals.upper_vram_active != upper_vram_active)
+      {
+        const bool was_addressable = IsUpperVRAMAddressable();
+        s_locals.upper_vram_active = upper_vram_active;
+        if (IsUpperVRAMAddressable() != was_addressable)
+        {
+          // Coordinates are masked differently now. VRAM transfers before the next draw need the new height.
+          s_locals.drawing_area_changed = true;
+          SetClampedDrawingArea();
+          PrepareForDraw();
+          InvalidateCLUT();
+          UpdateCRTCDisplayParameters();
+        }
+      }
     }
     break;
 
@@ -2379,18 +2588,18 @@ void GPU::InvalidateCLUT()
 
 void GPU::SetClampedDrawingArea()
 {
-  s_locals.clamped_drawing_area = GetClampedDrawingArea(s_locals.drawing_area);
+  s_locals.clamped_drawing_area = GetClampedDrawingArea(s_locals.drawing_area, GetAddressableVRAMHeight());
 }
 
-GSVector4i GPU::GetClampedDrawingArea(const GPUDrawingArea& drawing_area)
+GSVector4i GPU::GetClampedDrawingArea(const GPUDrawingArea& drawing_area, u32 vram_height)
 {
   if (drawing_area.left > drawing_area.right || drawing_area.top > drawing_area.bottom) [[unlikely]]
     return GSVector4i::zero();
 
   const u32 right = std::min(drawing_area.right + 1, static_cast<u32>(VRAM_WIDTH));
   const u32 left = std::min(drawing_area.left, std::min(drawing_area.right, VRAM_WIDTH - 1));
-  const u32 bottom = std::min(drawing_area.bottom + 1, static_cast<u32>(VRAM_HEIGHT));
-  const u32 top = std::min(drawing_area.top, std::min(drawing_area.bottom, VRAM_HEIGHT - 1));
+  const u32 bottom = std::min(drawing_area.bottom + 1, vram_height);
+  const u32 top = std::min(drawing_area.top, std::min(drawing_area.bottom, vram_height - 1));
   return GSVector4i(left, top, right, bottom);
 }
 
@@ -2405,9 +2614,10 @@ void GPU::SetDrawMode(u16 value)
   s_locals.GPUSTAT.texture_page_y_base_2 = s_locals.draw_mode_reg.texture_page_y_base_2;
 }
 
-void GPU::SetTexturePalette(u16 value)
+GPUTexturePaletteReg GPU::DecodeTexturePalette(u16 value)
 {
-  s_locals.texture_palette_reg.bits = value & GPUTexturePaletteReg::MASK;
+  return GPUTexturePaletteReg{
+    IsUpperVRAMAddressable() ? value : static_cast<u16>(value & ~GPUTexturePaletteReg::UPPER_VRAM_BIT)};
 }
 
 void GPU::SetTextureWindow(u32 value)
@@ -2606,6 +2816,29 @@ void GPU::CalculateDrawRect(const GSVector2i& window_size, const GSVector2i& vid
   *out_display_rect = GSVector4i(GSVector4::loadh(fvideo_size) + padding4);
 }
 
+u32 GPU::GetVRAMHeight()
+{
+  return s_locals.enable_2mb_vram ? VRAM_2MB_HEIGHT : VRAM_1MB_HEIGHT;
+}
+
+bool GPU::Is2MBVRAMEnabled()
+{
+  return s_locals.enable_2mb_vram;
+}
+
+void GPU::Set2MBVRAM(bool enabled)
+{
+  if (s_locals.enable_2mb_vram == enabled)
+    return;
+
+  INFO_LOG("Switching to {} MB VRAM.", enabled ? 2 : 1);
+  s_locals.enable_2mb_vram = enabled;
+
+  // The backend's VRAM size is fixed, so it has to be recreated. This also clears memory save states.
+  // Callers (reset/state load) are responsible for the registers, drawing area and CLUT.
+  System::RecreateGPU(VideoThread::GetRequestedRenderer().value_or(g_settings.gpu_renderer), enabled);
+}
+
 void GPU::ReadVRAM(u16 x, u16 y, u16 width, u16 height)
 {
   // If we're using the software renderer, we only need to sync the thread.
@@ -2678,24 +2911,28 @@ void GPU::UpdateDisplay(bool submit_frame)
   submit_frame = (submit_frame && System::GetFramePresentationParameters(&frame));
 
   GPUBackendUpdateDisplayCommand* cmd = GPUBackend::NewUpdateDisplayCommand();
-  cmd->gpu_busy_pct = g_settings.display_show_gpu_stats ? UpdateOrGetGPUBusyPct() : 0;
+  cmd->gpu_busy_pct =
+    (g_settings.display_show_gpu_stats || ImGuiManager::IsGPUDebugWindowVisible(g_settings.debug_window_visibility)) ?
+      UpdateOrGetGPUBusyPct() :
+      0;
   if (!g_settings.gpu_show_vram) [[likely]]
   {
     FillUpdateDisplayCommand(cmd);
   }
   else
   {
+    const u16 vram_height = Truncate16(GetVRAMHeight());
     cmd->display_width = VRAM_WIDTH;
-    cmd->display_height = VRAM_HEIGHT;
+    cmd->display_height = vram_height;
     cmd->display_origin_left = 0;
     cmd->display_origin_top = 0;
     cmd->display_vram_left = 0;
     cmd->display_vram_top = 0;
     cmd->display_vram_width = VRAM_WIDTH;
-    cmd->display_vram_height = VRAM_HEIGHT;
+    cmd->display_vram_height = vram_height;
     cmd->X = 0;
     cmd->scanout_start_row = 0;
-    cmd->scanout_end_row = VRAM_HEIGHT;
+    cmd->scanout_end_row = vram_height;
     cmd->interlaced_display_enabled = false;
     cmd->interlaced_display_field = false;
     cmd->interlaced_display_interleaved = false;
@@ -2818,16 +3055,17 @@ u8 GPU::CalculateAutomaticResolutionScale()
 
 bool GPU::DumpVRAMToFile(std::string path, Error* error)
 {
-  ReadVRAM(0, 0, VRAM_WIDTH, VRAM_HEIGHT);
+  const u32 vram_height = GetVRAMHeight();
+  ReadVRAM(0, 0, VRAM_WIDTH, Truncate16(vram_height));
 
   const std::string_view extension = Path::GetExtension(path);
   if (StringUtil::EqualNoCase(extension, "png"))
   {
-    return DumpVRAMToFile(std::move(path), VRAM_WIDTH, VRAM_HEIGHT, sizeof(u16) * VRAM_WIDTH, g_vram, true, error);
+    return DumpVRAMToFile(std::move(path), VRAM_WIDTH, vram_height, sizeof(u16) * VRAM_WIDTH, g_vram, true, error);
   }
   else if (StringUtil::EqualNoCase(extension, "bin"))
   {
-    return FileSystem::WriteAtomicRenamedFile(std::move(path), g_vram, VRAM_WIDTH * VRAM_HEIGHT * sizeof(u16), error);
+    return FileSystem::WriteAtomicRenamedFile(std::move(path), g_vram, VRAM_WIDTH * vram_height * sizeof(u16), error);
   }
   else
   {
@@ -2938,6 +3176,7 @@ void GPU::TryExecuteCommands()
 
       case BlitterState::WritingVRAM:
       {
+        // TODO: Write complete rows as they arrive, keeping only the unfinished row buffered on v2 GPUs.
         DebugAssert(s_locals.blit_remaining_words > 0);
         const u32 words_to_copy = std::min(s_locals.blit_remaining_words, s_locals.fifo.GetSize());
         s_locals.blit_buffer.reserve(s_locals.blit_buffer.size() + words_to_copy);
@@ -3146,6 +3385,7 @@ void GPU::PrepareForDraw()
     s_locals.drawing_area_changed = false;
     GPUBackendSetDrawingAreaCommand* cmd = GPUBackend::NewSetDrawingAreaCommand();
     cmd->new_area = s_locals.drawing_area;
+    cmd->vram_height = static_cast<u16>(GetAddressableVRAMHeight());
     GPUBackend::PushCommand(cmd);
   }
 }
@@ -3176,9 +3416,9 @@ ALWAYS_INLINE_RELEASE void GPU::FillDrawCommand(GPUBackendDrawCommand* RESTRICT 
   else
     cmd->dither_enable = (dither_enable && (shading_enable || (texture_enable && !raw_texture_enable)));
 
-  // Only the populated 1 MiB bank is passed to the renderer for now, until 2MB VRAM is supported.
-  cmd->draw_mode.bits = s_locals.draw_mode_reg.bits & ~(1u << 11);
-  cmd->palette.bits = s_locals.texture_palette_reg.bits;
+  // The upper bank bit of the texture page is ignored unless 2MB VRAM is present and enabled.
+  cmd->draw_mode.bits =
+    IsUpperVRAMAddressable() ? s_locals.draw_mode_reg.bits : (s_locals.draw_mode_reg.bits & ~(1u << 11));
   cmd->window = s_locals.texture_window;
 }
 
@@ -3331,14 +3571,14 @@ void GPU::HandleRenderPolygonCommand()
             rc.shading_enable ? "shaded" : "monochrome", num_vertices, setup_ticks);
 
   // set draw state up
-  // TODO: Get rid of SetTexturePalette() and just fill it as needed
+  GPUTexturePaletteReg palette = {};
   if (rc.texture_enable)
   {
     const u16 texpage_attribute = Truncate16((rc.shading_enable ? FifoPeek(5) : FifoPeek(4)) >> 16);
     SetDrawMode((texpage_attribute & GPUDrawModeReg::POLYGON_TEXPAGE_MASK) |
                 (s_locals.draw_mode_reg.bits & ~GPUDrawModeReg::POLYGON_TEXPAGE_MASK));
-    SetTexturePalette(Truncate16(FifoPeek(2) >> 16));
-    UpdateCLUTIfNeeded(s_locals.draw_mode_reg.texture_mode, s_locals.texture_palette_reg);
+    palette = DecodeTexturePalette(Truncate16(FifoPeek(2) >> 16));
+    UpdateCLUTIfNeeded(s_locals.draw_mode_reg.texture_mode, palette);
   }
 
   s_locals.render_command.bits = rc.bits;
@@ -3350,6 +3590,7 @@ void GPU::HandleRenderPolygonCommand()
   {
     GPUBackendDrawPrecisePolygonCommand* RESTRICT cmd = GPUBackend::NewDrawPrecisePolygonCommand(num_vertices);
     FillDrawCommand<GPUPrimitive::Polygon>(cmd, rc);
+    cmd->palette = palette;
     cmd->num_vertices = Truncate16(num_vertices);
 
     const u32 first_color = rc.color_for_first_vertex;
@@ -3478,6 +3719,7 @@ void GPU::HandleRenderPolygonCommand()
   {
     GPUBackendDrawPolygonCommand* RESTRICT cmd = GPUBackend::NewDrawPolygonCommand(num_vertices);
     FillDrawCommand<GPUPrimitive::Polygon>(cmd, rc);
+    cmd->palette = palette;
     cmd->num_vertices = Truncate16(num_vertices);
 
     const u32 first_color = rc.color_for_first_vertex;
@@ -3580,10 +3822,11 @@ void GPU::HandleRenderRectangleCommand()
   if (IsInterlacedRenderingEnabled() && IsCRTCScanlinePending())
     SynchronizeCRTC();
 
+  GPUTexturePaletteReg palette = {};
   if (rc.texture_enable)
   {
-    SetTexturePalette(Truncate16(FifoPeek(2) >> 16));
-    UpdateCLUTIfNeeded(s_locals.draw_mode_reg.texture_mode, s_locals.texture_palette_reg);
+    palette = DecodeTexturePalette(Truncate16(FifoPeek(2) >> 16));
+    UpdateCLUTIfNeeded(s_locals.draw_mode_reg.texture_mode, palette);
   }
 
   const TickCount setup_ticks = 50;
@@ -3598,23 +3841,14 @@ void GPU::HandleRenderRectangleCommand()
   PrepareForDraw();
   GPUBackendDrawRectangleCommand* cmd = GPUBackend::NewDrawRectangleCommand();
   FillDrawCommand<GPUPrimitive::Rectangle>(cmd, rc);
+  cmd->palette = palette;
   cmd->color = rc.color_for_first_vertex;
 
   const GPUVertexPosition vp{FifoPop()};
   cmd->x = TruncateGPUVertexPosition(s_locals.drawing_offset.x + vp.x);
   cmd->y = TruncateGPUVertexPosition(s_locals.drawing_offset.y + vp.y);
 
-  if (rc.texture_enable)
-  {
-    const u32 texcoord_and_palette = FifoPop();
-    cmd->palette.bits = Truncate16(texcoord_and_palette >> 16);
-    cmd->texcoord = Truncate16(texcoord_and_palette);
-  }
-  else
-  {
-    cmd->palette.bits = 0;
-    cmd->texcoord = 0;
-  }
+  cmd->texcoord = rc.texture_enable ? Truncate16(FifoPop()) : 0;
 
   switch (rc.rectangle_size)
   {
@@ -3634,7 +3868,7 @@ void GPU::HandleRenderRectangleCommand()
     {
       const u32 width_and_height = FifoPop();
       cmd->width = static_cast<u16>(width_and_height & VRAM_WIDTH_MASK);
-      cmd->height = static_cast<u16>((width_and_height >> 16) & VRAM_HEIGHT_MASK);
+      cmd->height = static_cast<u16>((width_and_height >> 16) & VRAM_1MB_HEIGHT_MASK);
     }
     break;
   }
@@ -3929,9 +4163,9 @@ void GPU::HandleFillRectangleCommand()
 
   const u32 color = FifoPop() & 0x00FFFFFF;
   const u32 dst_x = FifoPeek() & 0x3F0;
-  const u32 dst_y = (FifoPop() >> 16) & VRAM_HEIGHT_MASK;
+  const u32 dst_y = (FifoPop() >> 16) & GetAddressableVRAMHeightMask();
   const u32 width = ((FifoPeek() & VRAM_WIDTH_MASK) + 0xF) & ~0xF;
-  const u32 height = (FifoPop() >> 16) & VRAM_HEIGHT_MASK;
+  const u32 height = (FifoPop() >> 16) & VRAM_TRANSFER_HEIGHT_MASK;
 
   DEBUG_LOG("Fill VRAM rectangle offset=({},{}), size=({},{})", dst_x, dst_y, width, height);
 
@@ -3960,20 +4194,10 @@ void GPU::HandleCopyRectangleCPUToVRAMCommand()
   const u32 coords = FifoPop();
   const u32 size = FifoPop();
 
-  // Tenga Seiha does a bunch of completely-invalid VRAM writes on boot, then expects GPU idle to be set.
-  // It's unclear what actually happens, I need to write another test, but for now, just skip these uploads.
-  // Not setting GPU idle during the write command breaks Doom, so that's not an option.
-  if (size == 0xFFFFFFFFu) [[unlikely]]
-  {
-    ERROR_LOG("Ignoring likely-invalid VRAM write to ({},{})", (coords & VRAM_WIDTH_MASK),
-              ((coords >> 16) & VRAM_HEIGHT_MASK));
-    return;
-  }
-
   const u32 dst_x = coords & VRAM_WIDTH_MASK;
-  const u32 dst_y = (coords >> 16) & VRAM_HEIGHT_MASK;
+  const u32 dst_y = (coords >> 16) & GetAddressableVRAMHeightMask();
   const u32 copy_width = ReplaceZero(size & VRAM_WIDTH_MASK, 0x400);
-  const u32 copy_height = ReplaceZero((size >> 16) & VRAM_HEIGHT_MASK, 0x200);
+  const u32 copy_height = ReplaceZero((size >> 16) & VRAM_TRANSFER_HEIGHT_MASK, 0x200);
   const u32 num_pixels = copy_width * copy_height;
   const u32 num_words = ((num_pixels + 1) / 2);
 
@@ -3990,7 +4214,7 @@ void GPU::HandleCopyRectangleCPUToVRAMCommand()
   s_locals.vram_transfer.height = Truncate16(copy_height);
 }
 
-void GPU::FinishVRAMWrite()
+void GPU::FinishVRAMWrite(bool write_partial_row)
 {
   if (IsInterlacedRenderingEnabled() && IsCRTCScanlinePending())
     SynchronizeCRTC();
@@ -4014,7 +4238,10 @@ void GPU::FinishVRAMWrite()
     const u32 num_pixels = ZeroExtend32(s_locals.vram_transfer.width) * ZeroExtend32(s_locals.vram_transfer.height);
     const u32 num_words = (num_pixels + 1) / 2;
     const u32 transferred_words = num_words - s_locals.blit_remaining_words;
-    const u32 transferred_pixels = transferred_words * 2;
+    u32 transferred_pixels = transferred_words * 2;
+    // The upper halfword starting a new row is held until another word arrives, even across GP1 resets.
+    if (transferred_pixels > 0 && ((transferred_pixels - 1) % s_locals.vram_transfer.width) == 0)
+      transferred_pixels--;
     const u32 transferred_full_rows = transferred_pixels / s_locals.vram_transfer.width;
     const u32 transferred_width_last_row = transferred_pixels % s_locals.vram_transfer.width;
 
@@ -4029,7 +4256,8 @@ void GPU::FinishVRAMWrite()
                  s_locals.GPUSTAT.check_mask_before_draw);
       blit_ptr += (ZeroExtend32(s_locals.vram_transfer.width) * transferred_full_rows) * sizeof(u16);
     }
-    if (transferred_width_last_row > 0)
+    // GP1(00h) discards the unfinished row on v2 GPUs; GP1(01h) writes its held words.
+    if (write_partial_row && transferred_width_last_row > 0)
     {
       UpdateVRAM(s_locals.vram_transfer.x, static_cast<u16>(s_locals.vram_transfer.y + transferred_full_rows),
                  static_cast<u16>(transferred_width_last_row), 1, blit_ptr, s_locals.GPUSTAT.set_mask_while_drawing,
@@ -4046,18 +4274,23 @@ void GPU::HandleCopyRectangleVRAMToCPUCommand()
 {
   s_locals.fifo.RemoveOne();
 
+  const u32 vram_height = GetAddressableVRAMHeight();
+  const u32 vram_height_mask = GetAddressableVRAMHeightMask();
   s_locals.vram_transfer.x = Truncate16(FifoPeek() & VRAM_WIDTH_MASK);
-  s_locals.vram_transfer.y = Truncate16((FifoPop() >> 16) & VRAM_HEIGHT_MASK);
+  s_locals.vram_transfer.y = Truncate16((FifoPop() >> 16) & vram_height_mask);
   s_locals.vram_transfer.width = ((Truncate16(FifoPeek()) - 1) & VRAM_WIDTH_MASK) + 1;
-  s_locals.vram_transfer.height = ((Truncate16(FifoPop() >> 16) - 1) & VRAM_HEIGHT_MASK) + 1;
+  s_locals.vram_transfer.height = ((Truncate16(FifoPop() >> 16) - 1) & VRAM_TRANSFER_HEIGHT_MASK) + 1;
 
   DEBUG_LOG("Copy rectangle from VRAM to CPU offset=({},{}), size=({},{})", s_locals.vram_transfer.x,
             s_locals.vram_transfer.y, s_locals.vram_transfer.width, s_locals.vram_transfer.height);
   DebugAssert(s_locals.vram_transfer.col == 0 && s_locals.vram_transfer.row == 0);
 
-  // ensure VRAM shadow is up to date
-  ReadVRAM(s_locals.vram_transfer.x, s_locals.vram_transfer.y, s_locals.vram_transfer.width,
-           s_locals.vram_transfer.height);
+  // Include the padding pixel for odd pixel counts, and sync the whole addressable height on Y wrap-around.
+  const u16 read_width =
+    s_locals.vram_transfer.width + (s_locals.vram_transfer.width & s_locals.vram_transfer.height & 1u);
+  const bool wraps_y = (static_cast<u32>(s_locals.vram_transfer.y) + s_locals.vram_transfer.height) > vram_height;
+  ReadVRAM(s_locals.vram_transfer.x, wraps_y ? 0 : s_locals.vram_transfer.y, read_width,
+           wraps_y ? Truncate16(vram_height) : s_locals.vram_transfer.height);
 
   if (g_settings.gpu_dump_vram_to_cpu_copies) [[unlikely]]
   {
@@ -4069,7 +4302,7 @@ void GPU::HandleCopyRectangleVRAMToCPUCommand()
     std::vector<u16> pixels(width * height);
     for (u32 row = 0; row < height; row++)
     {
-      const u16* src = &g_vram[((s_locals.vram_transfer.y + row) & VRAM_HEIGHT_MASK) * VRAM_WIDTH];
+      const u16* src = &g_vram[((s_locals.vram_transfer.y + row) & vram_height_mask) * VRAM_WIDTH];
       u16* dst = &pixels[row * width];
       std::memcpy(dst, src + x, first_width * sizeof(u16));
       std::memcpy(dst + first_width, src, (width - first_width) * sizeof(u16));
@@ -4093,12 +4326,13 @@ void GPU::HandleCopyRectangleVRAMToVRAMCommand()
 {
   s_locals.fifo.RemoveOne();
 
+  const u32 vram_height_mask = GetAddressableVRAMHeightMask();
   const u32 src_x = FifoPeek() & VRAM_WIDTH_MASK;
-  const u32 src_y = (FifoPop() >> 16) & VRAM_HEIGHT_MASK;
+  const u32 src_y = (FifoPop() >> 16) & vram_height_mask;
   const u32 dst_x = FifoPeek() & VRAM_WIDTH_MASK;
-  const u32 dst_y = (FifoPop() >> 16) & VRAM_HEIGHT_MASK;
+  const u32 dst_y = (FifoPop() >> 16) & vram_height_mask;
   const u32 width = ReplaceZero(FifoPeek() & VRAM_WIDTH_MASK, 0x400);
-  const u32 height = ReplaceZero((FifoPop() >> 16) & VRAM_HEIGHT_MASK, 0x200);
+  const u32 height = ReplaceZero((FifoPop() >> 16) & VRAM_TRANSFER_HEIGHT_MASK, 0x200);
 
   DEBUG_LOG("Copy rectangle from VRAM to VRAM src=({},{}), dst=({},{}), size=({},{})", src_x, src_y, dst_x, dst_y,
             width, height);
@@ -4127,58 +4361,244 @@ void GPU::HandleCopyRectangleVRAMToVRAMCommand()
 
 void GPU::DrawDebugStateWindow(float scale)
 {
-  if (ImGui::CollapsingHeader("GPU", ImGuiTreeNodeFlags_DefaultOpen))
-  {
-    static constexpr std::array<const char*, 5> state_strings = {
-      {"Idle", "Reading VRAM", "Writing VRAM", "Drawing Polyline"}};
+  static constexpr const CRTCState& cs = s_locals.crtc_state;
+  static constexpr std::array<const char*, 4> state_strings = {
+    {"Idle", "Reading VRAM", "Writing VRAM", "Drawing Polyline"}};
+  const char* clock = s_locals.console_is_pal ? (s_locals.GPUSTAT.pal_mode ? "PAL-on-PAL" : "NTSC-on-PAL") :
+                                                (s_locals.GPUSTAT.pal_mode ? "PAL-on-NTSC" : "NTSC-on-NTSC");
 
-    ImGui::Text("State: %s", state_strings[static_cast<u8>(s_locals.blitter_state)]);
-    ImGui::Text("Dither: %s", s_locals.GPUSTAT.dither_enable ? "Enabled" : "Disabled");
-    ImGui::Text("Draw To Displayed Field: %s", s_locals.GPUSTAT.draw_to_displayed_field ? "Enabled" : "Disabled");
-    ImGui::Text("Draw Set Mask Bit: %s", s_locals.GPUSTAT.set_mask_while_drawing ? "Yes" : "No");
-    ImGui::Text("Draw To Masked Pixels: %s", s_locals.GPUSTAT.check_mask_before_draw ? "Yes" : "No");
-    ImGui::Text("Reverse Flag: %s", s_locals.GPUSTAT.reverse_flag ? "Yes" : "No");
-    ImGui::Text("Texture Page Upper Bank: %s", s_locals.GPUSTAT.texture_page_y_base_2 ? "Yes" : "No");
-    ImGui::Text("PAL Mode: %s", s_locals.GPUSTAT.pal_mode ? "Yes" : "No");
-    ImGui::Text("Interrupt Request: %s", s_locals.GPUSTAT.interrupt_request ? "Yes" : "No");
-    ImGui::Text("DMA Request: %s", s_locals.GPUSTAT.dma_data_request ? "Yes" : "No");
+  const char* standard = s_locals.GPUSTAT.pal_mode ? "PAL" : "NTSC";
+  const char* scan_mode = s_locals.GPUSTAT.vertical_interlace ? (s_locals.GPUSTAT.pal_mode ? "576i" : "480i") :
+                                                                (s_locals.GPUSTAT.pal_mode ? "288p" : "240p");
+
+  const float left = ImGui::GetCursorPosX();
+  const float button_width =
+    ImGui::CalcTextSize(ICON_FA_COPY " Copy State").x + ImGui::GetStyle().FramePadding.x * 2.0f;
+  ImGui::SetCursorPosX(left + ImGui::GetContentRegionAvail().x - button_width);
+  const bool copy_state = ImGui::Button(ICON_FA_COPY " Copy State");
+  if (copy_state)
+    ImGui::LogToClipboard();
+
+  ImGui::SameLine(left);
+  ImGui::PushFont(nullptr, std::ceil(18.0f * scale), 0.0f);
+  ImGui::AlignTextToFramePadding();
+  ImGui::TextWrapped("%s %s " ICON_EMOJI_MIDDLE_DOT " %u x %u " ICON_EMOJI_MIDDLE_DOT " %u-bit " ICON_EMOJI_MIDDLE_DOT
+                     " %.3f Hz " ICON_EMOJI_MIDDLE_DOT " %u%% Usage",
+                     standard, scan_mode, cs.display_width, cs.display_height,
+                     s_locals.GPUSTAT.display_area_color_depth_24 ? 24 : 15, ComputeVerticalFrequency(),
+                     s_locals.last_gpu_busy_pct);
+  ImGui::PopFont();
+  ImGui::Spacing();
+
+  constexpr ImGuiTableFlags table_flags =
+    ImGuiTableFlags_SizingStretchSame | ImGuiTableFlags_PadOuterX | ImGuiTableFlags_RowBg;
+  static constexpr auto label = [](const char* text) {
+    ImGui::TableNextRow();
+    ImGui::TableNextColumn();
+    ImVec4 color = ImGui::GetStyleColorVec4(ImGuiCol_Text);
+    color.w *= 0.7f;
+    ImGui::TextColored(color, "%s", text);
+    ImGui::TableNextColumn();
+  };
+
+  static constexpr auto flag = [](const char* text, bool value) {
+    label(text);
+    ImGui::TextUnformatted(value ? "Enabled" : "Disabled");
+  };
+
+  ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(10.0f * scale, ImGui::GetStyle().CellPadding.y));
+  ImGui::PushStyleColor(ImGuiCol_TableRowBgAlt, ImVec4(1.0f, 1.0f, 1.0f, 0.035f));
+  if (!ImGui::BeginTable("layout", 2, ImGuiTableFlags_SizingStretchSame | ImGuiTableFlags_BordersInnerV))
+  {
+    ImGui::PopStyleColor();
+    ImGui::PopStyleVar();
+    if (copy_state)
+      ImGui::LogFinish();
+
+    return;
   }
 
-  if (ImGui::CollapsingHeader("CRTC", ImGuiTreeNodeFlags_DefaultOpen))
+  ImGui::TableNextRow();
+  ImGui::TableSetColumnIndex(0);
+  ImGui::SeparatorText("Drawing");
+  if (ImGui::BeginTable("drawing", 2, table_flags))
   {
-    const auto& cs = s_locals.crtc_state;
-    ImGui::Text("Clock: %s", (s_locals.console_is_pal ? (s_locals.GPUSTAT.pal_mode ? "PAL-on-PAL" : "NTSC-on-PAL") :
-                                                        (s_locals.GPUSTAT.pal_mode ? "PAL-on-NTSC" : "NTSC-on-NTSC")));
-    ImGui::Text("Horizontal Frequency: %.3f KHz", ComputeHorizontalFrequency() / 1000.0f);
-    ImGui::Text("Vertical Frequency: %.3f Hz", ComputeVerticalFrequency());
-    ImGui::Text("Dot Clock Divider: %u", cs.dot_clock_divider);
-    ImGui::Text("Vertical Interlace: %s (%s field)", s_locals.GPUSTAT.vertical_interlace ? "Yes" : "No",
-                cs.interlaced_field ? "odd" : "even");
-    ImGui::Text("Current Scanline: %u (tick %u)", cs.current_scanline, cs.current_tick_in_scanline);
-    ImGui::Text("Display Disable: %s", s_locals.GPUSTAT.display_disable ? "Yes" : "No");
-    ImGui::Text("Displaying Odd Lines: %s", cs.active_line_lsb ? "Yes" : "No");
-    ImGui::Text("Color Depth: %u-bit", s_locals.GPUSTAT.display_area_color_depth_24 ? 24 : 15);
-    ImGui::Text("Start Offset in VRAM: (%u, %u)", cs.regs.X.GetValue(), cs.regs.Y.GetValue());
-    ImGui::Text("Display Total: %u (%u) horizontal, %u vertical", cs.horizontal_total,
-                cs.horizontal_total / cs.dot_clock_divider, cs.vertical_total);
-    ImGui::Text("Configured Display Range: %u-%u (%u-%u), %u-%u", cs.regs.X1.GetValue(), cs.regs.X2.GetValue(),
-                cs.regs.X1.GetValue() / cs.dot_clock_divider, cs.regs.X2.GetValue() / cs.dot_clock_divider,
-                cs.regs.Y1.GetValue(), cs.regs.Y2.GetValue());
-    ImGui::Text("Output Display Range: %u-%u (%u-%u), %u-%u", cs.horizontal_display_start, cs.horizontal_display_end,
-                cs.horizontal_display_start / cs.dot_clock_divider, cs.horizontal_display_end / cs.dot_clock_divider,
-                cs.vertical_display_start, cs.vertical_display_end);
-    ImGui::Text("Cropping: %s", Settings::GetDisplayCropModeName(g_settings.display_crop_mode));
-    ImGui::Text("Visible Display Range: %u-%u (%u-%u), %u-%u", cs.horizontal_visible_start, cs.horizontal_visible_end,
-                cs.horizontal_visible_start / cs.dot_clock_divider, cs.horizontal_visible_end / cs.dot_clock_divider,
-                cs.vertical_visible_start, cs.vertical_visible_end);
-    ImGui::Text("Display Resolution: %ux%u", cs.display_width, cs.display_height);
-    ImGui::Text("Display Origin: %u, %u", cs.display_origin_left, cs.display_origin_top);
-    ImGui::Text("Displayed/Visible VRAM Portion: %ux%u @ (%u, %u)", cs.display_vram_width, cs.display_vram_height,
-                cs.display_vram_left, cs.display_vram_top);
-    ImGui::Text("Padding: Left=%d, Top=%d, Right=%d, Bottom=%d", cs.display_origin_left, cs.display_origin_top,
+    label("Blitter state");
+    ImGui::TextUnformatted(state_strings[static_cast<u8>(s_locals.blitter_state)]);
+    label("Drawing area (inclusive)");
+    ImGui::Text("(%u, %u) - (%u, %u)", s_locals.drawing_area.left, s_locals.drawing_area.top,
+                s_locals.drawing_area.right, s_locals.drawing_area.bottom);
+    label("Drawing offset");
+    ImGui::Text("(%d, %d)", s_locals.drawing_offset.x, s_locals.drawing_offset.y);
+    label("Semi-transparency");
+    static constexpr std::array<const char*, 4> transparency_modes = {{"B/2 + F/2", "B + F", "B - F", "B + F/4"}};
+    ImGui::TextUnformatted(transparency_modes[static_cast<u8>(s_locals.draw_mode_reg.transparency_mode.GetValue())]);
+    flag("Dithering", s_locals.GPUSTAT.dither_enable);
+    flag("Draw to displayed field", s_locals.GPUSTAT.draw_to_displayed_field);
+    flag("Set mask bit", s_locals.GPUSTAT.set_mask_while_drawing);
+    flag("Check mask bit", s_locals.GPUSTAT.check_mask_before_draw);
+    flag("Reverse flag", s_locals.GPUSTAT.reverse_flag);
+    ImGui::Text("VRAM Size: %u MB, Upper Bank %s", s_locals.enable_2mb_vram ? 2u : 1u,
+                s_locals.upper_vram_active ? "Enabled" : "Disabled");
+    ImGui::EndTable();
+  }
+
+  ImGui::SeparatorText("Texture");
+  if (ImGui::BeginTable("texture", 2, table_flags))
+  {
+    label("Texture page");
+    ImGui::Text("(%u, %u)", s_locals.draw_mode_reg.GetTexturePageBaseX(), s_locals.draw_mode_reg.GetTexturePageBaseY());
+    flag("Texture page upper bank", s_locals.GPUSTAT.texture_page_y_base_2);
+    label("Texture format");
+    static constexpr std::array<const char*, 4> texture_modes = {
+      {"4-bit indexed", "8-bit indexed", "16-bit direct", "Reserved (16-bit)"}};
+    ImGui::TextUnformatted(texture_modes[static_cast<u8>(s_locals.draw_mode_reg.texture_mode.GetValue())]);
+    label("CLUT");
+    if (s_locals.current_clut_reg_bits != std::numeric_limits<u32>::max())
+    {
+      const GPUTexturePaletteReg palette = DecodeTexturePalette(Truncate16(s_locals.current_clut_reg_bits));
+      ImGui::Text("(%u, %u) %u-bit", palette.GetXBase(), palette.GetYBase(), s_locals.current_clut_is_8bit ? 8 : 4);
+    }
+    else
+    {
+      ImGui::TextColored(ImVec4(1.0f, 0.3f, 0.3f, 1.0f), "Invalid");
+    }
+    label("Window AND (X / Y)");
+    ImGui::Text("0x%02X / 0x%02X", s_locals.texture_window.and_x, s_locals.texture_window.and_y);
+    label("Window OR (X / Y)");
+    ImGui::Text("0x%02X / 0x%02X", s_locals.texture_window.or_x, s_locals.texture_window.or_y);
+    ImGui::EndTable();
+  }
+
+  ImGui::SeparatorText("Timing");
+  if (ImGui::BeginTable("timing", 2, table_flags))
+  {
+    label("Clock");
+    ImGui::TextUnformatted(clock);
+    flag("PAL mode", s_locals.GPUSTAT.pal_mode);
+    label("Horizontal frequency");
+    ImGui::Text("%.3f kHz", ComputeHorizontalFrequency() / 1000.0f);
+    label("Vertical frequency");
+    ImGui::Text("%.3f Hz", ComputeVerticalFrequency());
+    label("Dot clock divider");
+    ImGui::Text("%u", cs.dot_clock_divider);
+    label("Horizontal total");
+    ImGui::Text("%u ticks (%u dots)", cs.horizontal_total, cs.horizontal_total / cs.dot_clock_divider);
+    label("Vertical total");
+    ImGui::Text("%u lines", cs.vertical_total);
+    flag("Interlace", s_locals.GPUSTAT.vertical_interlace);
+    label("Current field");
+    ImGui::TextUnformatted(cs.interlaced_field ? "Odd" : "Even");
+    label("Current scanline");
+    ImGui::Text("%u (tick %u)", cs.current_scanline, cs.current_tick_in_scanline);
+    label("Displaying odd lines");
+    ImGui::TextUnformatted(cs.active_line_lsb ? "Yes" : "No");
+    ImGui::EndTable();
+  }
+
+  ImGui::TableSetColumnIndex(1);
+  ImGui::SeparatorText("Signals");
+  if (ImGui::BeginTable("signals", 2, table_flags))
+  {
+    label("Interrupt request");
+    ImGui::TextUnformatted(s_locals.GPUSTAT.interrupt_request ? "Asserted" : "Clear");
+    label("DMA request");
+    ImGui::TextUnformatted(s_locals.GPUSTAT.dma_data_request ? "Asserted" : "Clear");
+    ImGui::EndTable();
+  }
+
+  ImGui::SeparatorText("Display");
+  if (ImGui::BeginTable("display", 2, table_flags))
+  {
+    flag("Display output", !s_locals.GPUSTAT.display_disable);
+    label("Color depth");
+    ImGui::Text("%u-bit", s_locals.GPUSTAT.display_area_color_depth_24 ? 24 : 15);
+    label("VRAM start");
+    ImGui::Text("(%u, %u)", cs.regs.X.GetValue(), cs.regs.Y.GetValue());
+    label("Resolution");
+    ImGui::Text("%u x %u", cs.display_width, cs.display_height);
+    label("Cropping");
+    ImGui::TextUnformatted(Settings::GetDisplayCropModeName(g_settings.display_crop_mode));
+    label("Display origin");
+    ImGui::Text("(%u, %u)", cs.display_origin_left, cs.display_origin_top);
+    label("Visible VRAM portion");
+    ImGui::Text("%u x %u at (%u, %u)", cs.display_vram_width, cs.display_vram_height, cs.display_vram_left,
+                cs.display_vram_top);
+    label("Padding (L / T / R / B)");
+    ImGui::Text("%u / %u / %d / %d", cs.display_origin_left, cs.display_origin_top,
                 cs.display_width - cs.display_vram_width - cs.display_origin_left,
                 cs.display_height - cs.display_vram_height - cs.display_origin_top);
+    ImGui::EndTable();
   }
+
+  const GSVector4i configured(cs.regs.X1.GetValue(), cs.regs.Y1.GetValue(), cs.regs.X2.GetValue(),
+                              cs.regs.Y2.GetValue());
+  const GSVector4i output(cs.horizontal_display_start, cs.vertical_display_start, cs.horizontal_display_end,
+                          cs.vertical_display_end);
+  const GSVector4i visible(cs.horizontal_visible_start, cs.vertical_visible_start, cs.horizontal_visible_end,
+                           cs.vertical_visible_end);
+  ImGui::SeparatorText("Display ranges");
+  if (ImGui::BeginTable("ranges", 4, table_flags))
+  {
+    ImGui::TableSetupColumn("Range");
+    ImGui::TableSetupColumn("H ticks");
+    ImGui::TableSetupColumn("H dots");
+    ImGui::TableSetupColumn("V lines");
+    ImGui::TableHeadersRow();
+    static constexpr auto range_row = [](const char* text, const GSVector4i& rect) {
+      ImGui::TableNextRow();
+      ImGui::TableNextColumn();
+      ImGui::TextUnformatted(text);
+      ImGui::TableNextColumn();
+      ImGui::Text("%d-%d", rect.x, rect.z);
+      ImGui::TableNextColumn();
+      ImGui::Text("%u-%u", rect.x / cs.dot_clock_divider, rect.z / cs.dot_clock_divider);
+      ImGui::TableNextColumn();
+      ImGui::Text("%d-%d", rect.y, rect.w);
+    };
+    range_row("Configured", configured);
+    range_row("Output", output);
+    range_row("Visible", visible);
+    ImGui::EndTable();
+  }
+  if (copy_state)
+    ImGui::LogFinish();
+
+  {
+    ImGui::Spacing();
+
+    ImDrawList* const dl = ImGui::GetWindowDrawList();
+    const ImVec2 origin = ImGui::GetCursorScreenPos();
+    const ImVec2 size(ImGui::GetContentRegionAvail().x, 140.0f * scale);
+    dl->AddRectFilled(origin, origin + size, ImGui::GetColorU32(ImGuiCol_FrameBg));
+    static constexpr auto draw_range = [](ImDrawList* const dl, float scale, const ImVec2& origin, const ImVec2& size,
+                                          const GSVector4i& rect, ImU32 color, float thickness) {
+      const ImVec2 start(origin.x + size.x * std::clamp(static_cast<float>(rect.x) / cs.horizontal_total, 0.0f, 1.0f),
+                         origin.y + size.y * std::clamp(static_cast<float>(rect.y) / cs.vertical_total, 0.0f, 1.0f));
+      const ImVec2 end(origin.x + size.x * std::clamp(static_cast<float>(rect.z) / cs.horizontal_total, 0.0f, 1.0f),
+                       origin.y + size.y * std::clamp(static_cast<float>(rect.w) / cs.vertical_total, 0.0f, 1.0f));
+      dl->AddRect(start, end, color, 0.0f, thickness * scale);
+    };
+
+    static constexpr ImU32 configured_color = IM_COL32(234, 190, 100, 255);
+    static constexpr ImU32 output_color = IM_COL32(110, 175, 235, 255);
+    static constexpr ImU32 visible_color = IM_COL32(120, 215, 165, 255);
+
+    // Different outline widths keep coincident ranges visible.
+    draw_range(dl, scale, origin, size, output, output_color, 5.0f);
+    draw_range(dl, scale, origin, size, configured, configured_color, 3.0f);
+    draw_range(dl, scale, origin, size, visible, visible_color, 1.0f);
+
+    ImGui::Dummy(size);
+    ImGui::TextColored(ImGui::ColorConvertU32ToFloat4(configured_color), "Configured");
+    ImGui::SameLine();
+    ImGui::TextColored(ImGui::ColorConvertU32ToFloat4(output_color), "Output");
+    ImGui::SameLine();
+    ImGui::TextColored(ImGui::ColorConvertU32ToFloat4(visible_color), "Visible");
+  }
+  ImGui::EndTable();
+  ImGui::PopStyleColor();
+  ImGui::PopStyleVar();
 }
 
 GPUDump::Recorder* GPU::GetGPUDump()
@@ -4201,7 +4621,7 @@ bool GPU::StartRecordingGPUDump(const char* path, u32 num_frames /* = 1 */)
   }
 
   // ensure vram is up to date
-  ReadVRAM(0, 0, VRAM_WIDTH, VRAM_HEIGHT);
+  ReadVRAM(0, 0, VRAM_WIDTH, Truncate16(GetVRAMHeight()));
 
   std::string osd_key = fmt::format("GPUDump_{}", Path::GetFileName(path));
   Error error;
@@ -4289,7 +4709,7 @@ void GPU::WriteCurrentVideoModeToDump(GPUDump::Recorder* dump)
   dump->WriteGP1Command(GP1Command::SetDisplayStartAddress, s_locals.crtc_state.regs.display_address_start);
   dump->WriteGP1Command(GP1Command::SetHorizontalDisplayRange, s_locals.crtc_state.regs.horizontal_display_range);
   dump->WriteGP1Command(GP1Command::SetVerticalDisplayRange, s_locals.crtc_state.regs.vertical_display_range);
-  dump->WriteGP1Command(GP1Command::SetVRAMSize, BoolToUInt32(s_locals.enable_upper_vram));
+  dump->WriteGP1Command(GP1Command::SetVRAMSize, BoolToUInt32(s_locals.upper_vram_active));
 
   // display mode
   GP1SetDisplayMode dispmode = {};
@@ -4392,12 +4812,11 @@ void GPU::ProcessGPUDumpPacket(GPUDump::PacketType type, const std::span<const u
       execute_all_commands();
 
       // we _should_ be using the tick count for the event, but it breaks with looping.
-      // instead, just add a fixed amount
-      const TickCount crtc_ticks_per_frame = static_cast<TickCount>(s_locals.crtc_state.horizontal_total) *
-                                             static_cast<TickCount>(s_locals.crtc_state.vertical_total);
-      const TickCount system_ticks_per_frame =
-        CRTCTicksToSystemTicks(crtc_ticks_per_frame, s_locals.crtc_state.fractional_ticks);
-      SystemTicksToCRTCTicks(system_ticks_per_frame, &s_locals.crtc_state.fractional_ticks);
+      // instead, just add a fixed amount. The line counter doesn't move, so it can't run on past the field.
+      const TickCount system_ticks_per_frame = CRTCSubTicksToSystemTicks(
+        GetCRTCLineSubTicks() * s_locals.crtc_state.vertical_total - u64(s_locals.crtc_state.fractional_ticks));
+      s_locals.crtc_state.fractional_ticks =
+        SystemTicksToCRTCTicks(system_ticks_per_frame, s_locals.crtc_state.fractional_ticks).second;
       TimingEvents::SetGlobalTickCounter(TimingEvents::GetGlobalTickCounter() +
                                          static_cast<GlobalTicks>(system_ticks_per_frame));
 

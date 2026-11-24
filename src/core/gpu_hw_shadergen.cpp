@@ -133,6 +133,7 @@ std::string GPU_HW_ShaderGen::GenerateBatchVertexShader(const BatchVertexShaderS
   DefineMacro(ss, "DISABLE_UPSCALED_DIRECT_TEXTURES", sel.disable_upscaled_direct_textures);
   DefineMacro(ss, "PGXP_DEPTH", sel.pgxp_depth);
   DefineMacro(ss, "UPSCALED", sel.upscaled);
+  DefineMacro(ss, "VRAM_HEIGHT", static_cast<s32>(sel.vram_2mb ? VRAM_2MB_HEIGHT : VRAM_1MB_HEIGHT));
 
   WriteBatchUniformBuffer(ss);
 
@@ -183,7 +184,7 @@ std::string GPU_HW_ShaderGen::GenerateBatchVertexShader(const BatchVertexShaderS
 
   // 0..+1023 -> -1..1
   float pos_x = ((a_pos.x + vertex_offset) / 512.0) - 1.0;
-  float pos_y = ((a_pos.y + vertex_offset) / -256.0) + 1.0;
+  float pos_y = ((a_pos.y + vertex_offset) / -float(VRAM_HEIGHT / 2)) + 1.0;
 
 #if PGXP_DEPTH
   // Interpolate reciprocal camera Z in screen space, preserving W for perspective correction.
@@ -218,10 +219,10 @@ std::string GPU_HW_ShaderGen::GenerateBatchVertexShader(const BatchVertexShaderS
     #if !PAGE_TEXTURE
       // base_x,base_y,palette_x,palette_y
       v_texpage.x = (a_texpage & 15u) * 64u;
-      v_texpage.y = ((a_texpage >> 4) & 1u) * 256u;
+      v_texpage.y = (((a_texpage >> 4) & 1u) * 256u) + (((a_texpage >> 11) & 1u) * 512u);
       #if PALETTE
         v_texpage.z = ((a_texpage >> 16) & 63u) * 16u;
-        v_texpage.w = ((a_texpage >> 22) & 511u);
+        v_texpage.w = ((a_texpage >> 22) & 1023u);
       #endif
     #endif
 
@@ -1415,7 +1416,6 @@ void FilteredSampleFromVRAM(TEXPAGE_VALUE texpage, float2 coords, float4 uv_limi
 
 	#define src(xoffs,yoffs) packUnorm4x8(srcf(xoffs,yoffs))
 	)";
-
     /* MMPX Enhanced
      * An optimized refinement of the original MMPX shader that addresses key
      * visual artifacts while fully preserving the baseline's signature performance and efficiency.
@@ -1429,7 +1429,9 @@ void FilteredSampleFromVRAM(TEXPAGE_VALUE texpage, float2 coords, float4 uv_limi
 float luma(float4 col) {
 
 	//Use CRT-era BT.601 standard.
-    return dot(col.rgb, float3(0.299, 0.587, 0.114));
+    float colBT601 = dot(col.rgb, float3(0.299, 0.587, 0.114));
+	//*	x2 value for pure blue
+	return colBT601 * (1.0 + step(col.r+col.g, 0.01));
 }
 
 float mixGate(float4 col1, float4 col2) {
@@ -1444,12 +1446,35 @@ float mixGate(float4 col1, float4 col2) {
 
 	return step(dot_diff, mix(0.75, 0.0, factor));
 }
+#if GLSL
 
-#define all_eq2(a, b1, b2) (a == b1 && a == b2)
-#define all_eq4(a, b1, b2, b3, b4) (a == b1 && a == b2 && a == b3 && a == b4)
+	#define all_eq2(a, b1, b2) (a == b1 && a == b2)
+	#define all_eq4(a, b1, b2, b3, b4) (a == b1 && a == b2 && a == b3 && a == b4)
+
+	float checknonzero(float4 res) {
+		uvec4 uBits = floatBitsToUint(res);
+		return float((uBits.r | uBits.g | uBits.b | uBits.a) != 0u);
+	}
+
+#else
+	//* faster on dx12
+	#define all_eq2(a, b1, b2) \
+		( ((a ^ b1) | (a ^ b2)) == 0u )
+
+	#define all_eq4(a, b1, b2, b3, b4) \
+		( ((a ^ b1) | (a ^ b2) | (a ^ b3) | (a ^ b4)) == 0u )
+
+	float checknonzero(float4 res) {
+		uint4 uBits = asuint(res);
+		return float((uBits.r | uBits.g | uBits.b | uBits.a) != 0u);
+	}
+
+#endif
+
 #define any_eq2(a, b1, b2) (a == b1 || a == b2)
-#define none_eq2(a, b1, b2) !any_eq2(a, b1, b2)
+#define none_eq2(a, b1, b2) (a!=b1 && a!=b2)
 #define none_eq4(a, b1, b2, b3, b4) (a!=b1 && a!=b2 && a!=b3 && a!=b4)
+
 
 float4 admixC(float4 vX, float4 vE) {
 
@@ -1462,7 +1487,7 @@ float4 admixK(float4 vX, float4 vE) {
 
     float4 diff = vX - vE;
 
-	float mixFactor = dot(diff.rgb, diff.rgb) * 0.16666 + 0.5;
+	float mixFactor = clamp(dot(diff.rgb, diff.rgb), 0.0, 1.0) * 0.5 + 0.5; // xxx.alpha
 
 	return mix(vX,vE,mixFactor);
 }
@@ -1505,6 +1530,16 @@ if (!skiprest) {
 	uint R  = src(+2.0,  0.0);
 	uint S  = src( 0.0, +2.0);
 
+    float Bl = luma(vB) + float(B==0u) *2.0;
+    float Dl = luma(vD) + float(D==0u) *2.0;
+    float El = luma(vE) + float(E==0u) *2.0;
+    float Fl = luma(vF) + float(F==0u) *2.0;
+    float Hl = luma(vH) + float(H==0u) *2.0;
+
+    float4 J = vE;    float4 K = vE;    float4 L = vE;    float4 M = vE;
+
+if (B != H && D != F) {
+
 	uint PA = src(-1.0, -2.0);
 	uint PC = src(+1.0, -2.0);
 	uint QA = src(-2.0, -1.0);
@@ -1514,99 +1549,70 @@ if (!skiprest) {
 	uint SG = src(-1.0, +2.0);
 	uint SI = src(+1.0, +2.0);
 
-
-    float4 J = vE;    float4 K = vE;    float4 L = vE;    float4 M = vE;
-
-
-    float Bl = luma(vB) + float(B==0u) *2.0;
-    float Dl = luma(vD) + float(D==0u) *2.0;
-    float El = luma(vE) + float(E==0u) *2.0;
-    float Fl = luma(vF) + float(F==0u) *2.0;
-    float Hl = luma(vH) + float(H==0u) *2.0;
-
-    bool slope1 = false;    bool slope2 = false;    bool slope3 = false;    bool slope4 = false;
-
 // B - D
-    if ( E!=B && (D == B && D != H && D != F) && (El >= Dl || E == A && B !=PA && D !=QA) && any_eq2(E, C, G) && ((El < Dl) || A != D || E != P || E != Q)
+	if ( D == B && (El > Dl || El < Dl && E == A && B !=PA && D !=QA) && any_eq2(E, C, G) && (A != D || E != P || E != Q)
 		) {
 		J=vB;
-		slope1 = true;
+		if (all_eq2(Q,D,C) && Q != QG && C != R) K=J;
+		if (all_eq2(P,B,G) && P != PC && G != S) L=J;
+		skiprest = true;
 	}
 
 // B - F
-    if ( E!=B && (B == F && B != D && B != H) && (El >= Bl || E == C && B !=PC && F !=RC) && any_eq2(E, A, I) && ((El < Bl) || C != B || E != P || E != R)
+	if ( B == F && (El > Bl || El < Bl && E == C && B !=PC && F !=RC) && any_eq2(E, A, I) && (C != B || E != P || E != R)
 	 ) {
 		K=vB;
-		slope2 = true;
+		if (all_eq2(R,F,A) && R != RI && A != Q) J=K;
+		if (all_eq2(P,B,I) && P != PA && I != S) M=K;
+		skiprest = true;
 	}
 
 // D - H
-    if ( E!=H && (H == D && H != F && H != B) && (El >= Hl || E == G && D !=QG && H !=SG) && any_eq2(E, A, I) && ((El < Hl) || G != H || E != S || E != Q)
+    if ( H == D && (El > Hl || El < Hl && E == G && D !=QG && H !=SG) && any_eq2(E, A, I) && (G != H || E != S || E != Q)
 	 ) {
 		L=vH;
-		slope3 = true;
+		if (all_eq2(Q,D,I) && Q != QA && R != I) M=L;
+		if (all_eq2(S,H,A) && S != SI && A != P) J=L;
+		skiprest = true;
 	}
 // F - H
-    if ( E!=H && (F == H && F != B && F != D) && (El >= Fl || E == I && F !=RI && H !=SI) && any_eq2(E, C, G) && ((El < Fl) || I != H || E != R || E != S)
+    if ( F == H && (El > Fl || El < Fl && E == I && F !=RI && H !=SI) && any_eq2(E, C, G) && (I != H || E != R || E != S)
 	  ) {
 		M=vH;
-		slope4 = true;
+		if (all_eq2(R,F,G) && R != RC && Q != G) L=M;
+		if (all_eq2(S,H,C) && S != SG && P != C) K=M;
+		skiprest = true;
 	}
 
-//  long gentle 2:1 slope
-
-if (slope4) { //zone4 long slope
-	if (all_eq2(R,F,G) && R != RC && Q != G) L=M;
-	// vertical
-	if (all_eq2(S,H,C) && S != SG && P != C) K=M;
 }
 
-if (slope3) { //zone3 long slope
-	// horizontal
-	if (all_eq2(Q,D,I) && Q != QA && R != I) M=L;
-	// vertical
-	if (all_eq2(S,H,A) && S != SI && A != P) J=L;
-}
+skiprest = skiprest||E==0u||B==0u||D==0u||F==0u||H==0u;
 
-if (slope2) { //zone2 long slope
-	// horizontal
-	if (all_eq2(R,F,A) && R != RI && A != Q) J=K;
-	// vertical
-	if (all_eq2(P,B,I) && P != PA && I != S) M=K;
-}
-
-if (slope1) { //zone1 long slope
-	// horizontal
-	if (all_eq2(Q,D,C) && Q != QG && C != R) K=J;
-	// vertical
-	if (all_eq2(P,B,G) && P != PC && G != S) L=J;
-}
-
-skiprest = skiprest||slope1||slope2||slope3||slope4||E==0u||B==0u||D==0u||F==0u||H==0u;
+if (!skiprest) {
 
 /* Concave + Cross type */
 
-    if (!skiprest && Bl < El && all_eq4(E, G, H, I, S) && none_eq4(E, A, D, C, F)) { J=admixC(vB,J);	K=J;    skiprest = true;}
-    if (!skiprest && Hl < El && all_eq4(E, A, B, C, P) && none_eq4(E, D, G, I, F)) { L=admixC(vH,L);	M=L;    skiprest = true;}
-    if (!skiprest && Fl < El && all_eq4(E, A, D, G, Q) && none_eq4(E, B, C, I, H)) { K=admixC(vF,K);	M=K;    skiprest = true;}
-    if (!skiprest && Dl < El && all_eq4(E, C, F, I, R) && none_eq4(E, B, A, G, H)) { J=admixC(vD,J);	L=J;    skiprest = true;}
+    if (Bl < El && all_eq4(E, G, H, I, S) && none_eq4(E, A, D, C, F)) { J=admixC(vB,vE);	K=J;}
+    if (Hl < El && all_eq4(E, A, B, C, P) && none_eq4(E, D, G, I, F)) { L=admixC(vH,vE);	M=L;}
+    if (Fl < El && all_eq4(E, A, D, G, Q) && none_eq4(E, B, C, I, H)) { K=admixC(vF,vE);	M=K;}
+    if (Dl < El && all_eq4(E, C, F, I, R) && none_eq4(E, B, A, G, H)) { J=admixC(vD,vE);	L=J;}
 
 /* K type */
 
-    if (!skiprest && (E != F && all_eq4(E, C, I, D, Q) && all_eq2(F, B, H)) && (F != src(+3.0, +0.0))) {K=admixK(vF,K); M=K;skiprest=true;}	// RIGHT
-    if (!skiprest && (E != D && all_eq4(E, A, G, F, R) && all_eq2(D, B, H)) && (D != src(-3.0, +0.0))) {J=admixK(vD,J); L=J;skiprest=true;}	// LEFT
-    if (!skiprest && (E != H && all_eq4(E, G, I, B, P) && all_eq2(H, D, F)) && (H != src(+0.0, +3.0))) {L=admixK(vH,L); M=L;skiprest=true;}	// BOTTOM
-    if (!skiprest && (E != B && all_eq4(E, A, C, H, S) && all_eq2(B, D, F)) && (B != src(+0.0, -3.0))) {J=admixK(vB,J); K=J;}				// TOP
-
+    if ( (E != F && all_eq4(E, C, I, D, Q) && all_eq2(F, B, H)) && (F != src(+3.0, +0.0))) {K=admixK(vF,vE);	M=K;}
+    if ( (E != D && all_eq4(E, A, G, F, R) && all_eq2(D, B, H)) && (D != src(-3.0, +0.0))) {J=admixK(vD,vE);	L=J;}
+    if ( (E != H && all_eq4(E, G, I, B, P) && all_eq2(H, D, F)) && (H != src(+0.0, +3.0))) {L=admixK(vH,vE);	M=L;}
+    if ( (E != B && all_eq4(E, A, C, H, S) && all_eq2(B, D, F)) && (B != src(+0.0, -3.0))) {J=admixK(vB,vE);	K=J;}
+}
 	//final write
 	float2 fpart = frac(coords);
 
 	float4 res = (fpart.x < 0.5) ? ((fpart.y < 0.5) ? J : L) : ((fpart.y < 0.5) ? K : M);
 
-	ialpha = step(0.002, res.r+res.g+res.b+res.a);
+	ialpha = checknonzero(res);
 	texcol = res;
 }
-	
+
 }
 
 #undef src
@@ -1630,8 +1636,7 @@ skiprest = skiprest||slope1||slope2||slope3||slope4||E==0u||B==0u||D==0u||F==0u|
 
 	#define src(xoffs,yoffs) packUnorm4x8(srcf(xoffs,yoffs))
 	)";
-
-    /* =========================================================================
+/* =========================================================================
  * MMPX Advanced v3.5
  * =========================================================================
  * An optimized and heavily expanded derivative of the MMPX algorithm.
@@ -1728,6 +1733,7 @@ float mixGate(float4 col1, float4 col2) {
 #define not_eq2(a, b1, b2)  (ne(a,b1) && ne(a,b2))
 #define not_eq3(a, b1, b2, b3)  (ne(a,b1) && ne(a,b2) && ne(a,b3))
 #define not_eq4(a, b1, b2, b3, b4) (ne(a,b1) && ne(a,b2) && ne(a,b3) && ne(a,b4))
+#define not_eq5(a, b1, b2, b3, b4, b5) (ne(a,b1) && ne(a,b2) && ne(a,b3) && ne(a,b4) && ne(a,b5))
 
 
 #if GLSL
@@ -1824,10 +1830,12 @@ float4 admixX( uint A, uint B, uint C, uint D, uint E, uint F, uint G, uint H, u
 
 	bool doubleWall = eq(B,C) && eq(D,G);
 
-	bool Xisblack = checkblack(vB);
-	bool triBlack = Xisblack && El >0.5 && (Fl<0.078 || Hl<0.078);
+	bool Bisblack = checkblack(vB);
+	bool Disblack = checkblack(vD);	//xxx.alpha.duck
+	bool triBlack = Bisblack && El >0.5 && (Fl<0.078 || Hl<0.078);
 	bool transBD = B==0u||D==0u;	//xxx.alpha.duck
-	if (doubleWall||triBlack||transBD) return slopeBAD;
+	bool border1dark = ne(B,D) && (Bisblack||Disblack) && E==0u;	//xxx.alpha.duck
+	if (doubleWall||triBlack||transBD||border1dark) return slopeBAD;	//xxx.alpha.duck
 
 
 //* =========================================
@@ -1835,7 +1843,10 @@ float4 admixX( uint A, uint B, uint C, uint D, uint E, uint F, uint G, uint H, u
 //* ==================================== zz =
 if (ne(B,D)){
 
-	float4 vX = Bl>Dl ? vB : vD;
+	float4 midBD = mix(vB,vD,0.5);		// xxx.alpha
+
+	float4 vX = E==0u ? midBD :		// xxx.alpha.duck
+				Bl>Dl ? vB : vD;
 
 	float mixFactor = 0.145898 * mixGate(vX,vE) * float(E!=0u);	//xxx.alpha.duck
 
@@ -1846,7 +1857,6 @@ if (ne(B,D)){
 
 		return mixXEoff +float(!okB&&!okD)*2.0;
 	}
-
 
 
     if (not_eq2(A,B,D)){
@@ -1867,12 +1877,15 @@ if (ne(B,D)){
 		float4 vA = unpackUnorm4x8(A);
 		float Al = luma(vA);
 
-		bool Disbetter = all_eq2(E,G,QG) && Al>Bl;
-		bool Bisbetter = all_eq2(E,C,PC) && Al>Dl;
+		int BDscore = int(eq(D,Q)&&ne(B,PC)) +int(eq(E,G)) +int(eq(B,C)) -int(eq(B,P)&&ne(D,QG)) -int(eq(D,G)) -int(eq(E,C));
+
+		bool Disbetter = BDscore>0 && (Al>Bl||E==0u);	// xxx.alpha.duck
+		bool Bisbetter = BDscore<0 && (Al>Dl||E==0u);	// xxx.alpha.duck
+
 		vX = Disbetter ? vD :
 			 Bisbetter ? vB :
 						vX ;
-		
+
 		if (na1||na2||na3||na4||na5||na6||na7||na8||na9) return mixXEoff;
 	}
 
@@ -1965,9 +1978,8 @@ if (eq(E,A)) {
 	bool ECG4 = D_slope && eq(E,C);
 	if (ECG1||ECG2||ECG3||ECG4) return mixXEoff;
 
-//* E B D Region Checkerboard Scoring Rule
 
-    float scoreE = 0.0; float scoreB = 0.0; float scoreD = 0.0; float scoreZ = 0.0;
+//* E B D Zone Checkerboard Scoring Rule
 
 
 	B_wall = eq(B,C) && not_eq3(B,PC,P,PA);
@@ -1978,17 +1990,18 @@ if (eq(E,A)) {
 
 
 //*	E Zone
+int scoreE = 0;
 
-	scoreE += float(eq(E,C)) * (
-				1.0 + float(eq(F,H)) + float(eq(B,PC)&&ne(B,PA)) + float(eq(A,Q))
+	scoreE += int(eq(E,C)) * (
+				1 + int(eq(F,H)) + int(eq(B,PC)&&ne(B,PA)) + int(eq(A,Q))
 				);
 
-	scoreE += float(eq(E,G)) * (
-				1.0 + float(eq(F,H)) + float(eq(D,QG)&&ne(D,QA)) + float(eq(A,P))
+	scoreE += int(eq(E,G)) * (
+				1 + int(eq(F,H)) + int(eq(D,QG)&&ne(D,QA)) + int(eq(A,P))
 				);
 
 
-	scoreE += float( (B_slope||B_wall) && eq(A,Q) || (D_slope||D_wall) && eq(A,P) );
+	scoreE += int( (B_slope||B_wall) && eq(A,Q) || (D_slope||D_wall) && eq(A,P) );
 
 
 
@@ -1996,7 +2009,7 @@ if (eq(E,A)) {
 
 	bool EisWhite = checkwhite(vE);
 
-	if ( scoreE<0.01 && !En3 ) {
+	if ( scoreE==0 && !En3 ) {
 
 		bool leftA= eq(A,QA) && not_eq4(A,PA,AA,P,Q);
 		bool upA  = eq(A,PA) && not_eq4(A,QA,AA,P,Q);
@@ -2021,7 +2034,10 @@ if (eq(E,A)) {
 		if (bad1a||bad1b||bad2a||bad2b||bad3||bad4) return theEXIT;
     }
 
-	scoreE += float(B_slope && eq(A,P) || D_slope && eq(A,Q));
+	scoreE += int(B_slope && eq(A,P) || D_slope && eq(A,Q));
+
+
+int scoreZ = 0;
 
 	bool ext_FH = any_eq2(F,RC,SG);
 
@@ -2031,7 +2047,7 @@ if (eq(E,A)) {
 
 		bool AEIstrong= EisWhite || Bl<0.92 && Fl<0.92 && min(Bl,Fl)-El>0.145898;
 		
-		bool badcond0 = scoreE<0.01 && (Eisblack && ne(E,F) || eq(E,I) && AEIstrong && !simEC && !simEG);
+		bool badcond0 = scoreE==0 && (Eisblack && ne(E,F) || eq(E,I) && AEIstrong && !simEC && !simEG);
 
 		bool badcond1 = En3 && !ext_FH;
 		bool badcond2 = eq(F,I) && (Eisblack || EisWhite || !(ext_FH || any_eq2(F,C,R) || any_eq2(H,G,S)));
@@ -2039,7 +2055,7 @@ if (eq(E,A)) {
 		bool condZ1 = eq(B,C) && ne(B,P);
 		bool condZ2 = eq(D,G) && ne(D,Q);
 
-		scoreZ = float((condZ1 || condZ2) && !badcond0 && !badcond1 && !badcond2);
+		scoreZ = int((condZ1 || condZ2) && !badcond0 && !badcond1 && !badcond2);
     }
 
 
@@ -2047,44 +2063,48 @@ if (eq(E,A)) {
 
 	bool An4 = all_eq3(A,AA,PA,QA);
 
-	scoreZ += float(eq(PA,QA) && !An4 && scoreZ>0.99);
+	scoreZ += int(eq(PA,QA) && !An4 && scoreZ==1);
 
 
 	bool Bn4 = all_eq3(B,P,PC,C);
 	bool Dn4 = all_eq3(D,Q,QG,G);
 
-	float in_B = float(eq(C,P) && !Bn4);
-	float in_D = float(eq(G,Q) && !Dn4);
+	int in_B = int(eq(C,P) && !Bn4);
+	int in_D = int(eq(G,Q) && !Dn4);
 	
 //*	B Zone
+ int scoreB = 0;
 
-	scoreB -= float(eq(B,PA)) * (
-		1.0 + float(eq(C,P)) + float(eq(A,AA))
+	scoreB -= int(eq(B,PA)) * (
+		1 + int(eq(C,P)) + int(eq(A,AA))
 		);
 
-	scoreB -= in_B * float(eq(A,AA));
+	scoreB -= in_B * int(eq(A,AA));
 
 
 //*  D Zone
-
-	scoreD -= float(eq(D,QA)) * (
-		1.0 + float(eq(G,Q)) + float(eq(A,AA))
+ int scoreD = 0; 
+ 
+	scoreD -= int(eq(D,QA)) * (
+		1 + int(eq(G,Q)) + int(eq(A,AA))
 		);
 
-	scoreD -= in_D * float(eq(A,AA));
+	scoreD -= in_D * int(eq(A,AA));
 
-	scoreZ = clamp(scoreZ -in_B -in_D, 0.0, 1.0);
+	scoreZ = clamp(scoreZ -in_B -in_D, 0, 1);
 
-	float scoreBD = scoreB + scoreD;
-    float scoreFinal = scoreE + scoreBD + scoreZ ;
+	int scoreFinal = scoreE + scoreB + scoreD + scoreZ ;
+	scoreFinal += int(
+				((scoreFinal | scoreB | scoreD) == 0) && 
+				!Eisblack && !EisWhite && 
+				(B_wall && D_tower || B_tower && D_wall) 
+				);
 
-	scoreFinal += float( scoreFinal<0.01&&scoreBD>-0.01 && !Eisblack && !EisWhite && (B_wall && D_tower || B_tower && D_wall) );
-
-	mixFactor *= scoreFinal>1.99 ? 0.145898 : 1.0;
+	mixFactor *= scoreFinal>=2 ? 0.145898 : 1.0;
 	bool closeB = all_eq4(E,C,F,P,PC) && eq(A,PA) && (ne(D,G) || eq(D,Q));
 	bool closeD = all_eq4(E,H,G,Q,QG) && eq(A,QA) && (ne(B,C) || eq(B,P));
 
-	return mixXE +step(scoreFinal, 0.01)*4.0 +float(closeB||closeD)*8.0;
+	return mixXE +float(scoreFinal<=0)*4.0 +float(closeB||closeD)*8.0;
 
 }	//* E == A
 
@@ -2108,7 +2128,7 @@ if (eq(E,A)) {
 		return mixXE +float(badC)*8.0;
 	}
 
-	if (E==0u) return theEXIT;		// xxx.alpha
+	mixFactor = E==0u ? 1.0 : mixFactor;		// xxx.alpha // better than Exit
 
 //* =======================================================
 //*                  F - H / B+ D+ Extended Rules
@@ -2409,16 +2429,31 @@ if (ne(B,H) && ne(D,F)) {
 	uint II = src(+2.0, +2.0); //*             GG   SG   [S]  SI   II
 
 
-    bool slope1 = false;    bool slope2 = false;    bool slope3 = false;    bool slope4 = false;
-    bool slope1end = false;  bool slope2end = false;  bool slope3end = false;  bool slope4end = false;
-
 
 //*	B - D
+	bool slope1 = ( ne(D,H) && ne(B,F) &&
+					(eq(E,A)&&El<min(Bl,Dl)||El>max(Bl,Dl)) && (not_eq2(A,B,D) || ne(E,P) || ne(E,Q)) &&
+					( eq(B,D) &&(eq(E,A)||any_eq3(B,P,C,PC)||any_eq3(D,Q,G,QG)||simEC||simEG) || simb(vB,vD)&&(eq(F,H)||any_eq2(E,C,G)) )
+				);
+//*	B - F
+	bool slope2 = ( ne(B,D) && ne(F,H) &&
+					(eq(E,C)&&El<min(Bl,Fl)||El>max(Bl,Fl)) && (not_eq2(C,B,F) || ne(E,P) || ne(E,R)) &&
+					( eq(B,F)&&(eq(E,C)||any_eq3(B,P,A,PA)||any_eq3(F,R,I,RI)||simEI||simEA) || simb(vB,vF)&&(eq(D,H)||any_eq2(E,A,I)) )
+				);
+//*	D - H
+	bool slope3 = ( ne(F,H) && ne(B,D) &&
+					(eq(E,G)&&El<min(Dl,Hl)||El>max(Dl,Hl))  &&  (not_eq2(G,D,H) || ne(E,S) || ne(E,Q)) &&
+					( eq(D,H) &&(eq(E,G)||any_eq3(D,A,Q,QA)||any_eq3(H,S,I,SI)||simEA||simEI) || simb(vD,vH)&&(eq(B,F)||any_eq2(E,A,I)) )
+				);
+//*	F - H
+	bool slope4 = ( ne(B,F) && ne(D,H) &&
+					(eq(E,I)&&El<min(Fl,Hl)||El>max(Fl,Hl))  &&  (not_eq2(I,F,H) || ne(E,R) || ne(E,S)) &&
+					( eq(F,H) &&(eq(E,I)||any_eq3(F,R,C,RC)||any_eq3(H,S,G,SG)||simEG||simEC) || simb(vF,vH)&&(eq(B,D)||any_eq2(E,C,G)) )
+				);
 
-	if ((ne(D,H) && ne(B,F))
-	 && (eq(E,A)&&El<min(Bl,Dl)||El>max(Bl,Dl)) && ( not_eq2(A,B,D) || ne(E,P) || ne(E,Q) )
-	 && ( eq(B,D) &&(eq(E,A)||any_eq3(B,P,C,PC)||any_eq3(D,Q,G,QG)||simEC||simEG) || simb(vB,vD)&&(eq(F,H)||any_eq2(E,C,G)) )
-		) {
+    bool slope1end = false;  bool slope2end = false;  bool slope3end = false;  bool slope4end = false;
+
+	if (slope1) {
 		J=admixX(A,B,C,D,E,F,G,H,I
 				,P,PA,PC,Q,QA,QG,R,RC,RI,S,SG,SI,AA,CC,GG
 				,El,Bl,Dl,Fl,Hl, simEC,simEG,simEI
@@ -2427,24 +2462,18 @@ if (ne(B,H) && ne(D,F)) {
 		bool slope1ok = (J.b < 1.01) && max(sign(El-Dl)*(Fl-El),sign(El-Dl)*(Hl-El))>-0.1;
 		bool isCopy=checkeq(J,vD);
 		float4 mixL2 = mix(J,vE,0.145898);
-		if (slope1ok && all_eq2(D,C,Q) && ne(D,QG) && (ne(C,R)||eq(R, RI)) && (ne(D,QA)||eq(D,A)) ) {K=isCopy ? J : mixL2;}
-		if (slope1ok && all_eq2(D,G,P) && ne(D,PC) && (ne(G,S)||eq(S, SI)) && (ne(D,PA)||eq(D,A)) ) {L=isCopy ? J : mixL2;}
-
+		bool longH = slope1ok && all_eq2(D,C,Q) && ne(D,QG) && (ne(D,R)||eq(D,RI)) && (ne(D,QA)||eq(D,A));
+		bool longV = slope1ok && all_eq2(D,G,P) && ne(D,PC) && (ne(D,S)||eq(D,SI)) && (ne(D,PA)||eq(D,A));
+		K= longH ? isCopy ? J : mixL2 : K;
+		L= longV ? isCopy ? J : mixL2 : L;
 		slope1end = (J.b < 3.99);
 
 		J = (J.b > 3.99) ? vE :
 			(J.b > 1.01) ? (J - 2.0) :
 			J;
-
-		slope1 = true;
 	}
 
-//*	B - F
-
-	if ( (ne(B,D) && ne(F,H))
-	 && (eq(E,C)&&El<min(Bl,Fl)||El>max(Bl,Fl)) && ( not_eq2(C,B,F) || ne(E,P) || ne(E,R) )
-	 && ( eq(B,F) &&(eq(E,C)||any_eq3(B,P,A,PA)||any_eq3(F,R,I,RI)||simEI||simEA) || simb(vB,vF)&&(eq(D,H)||any_eq2(E,A,I)) )
-	 ) {
+	if (slope2) {
 		K=admixX(C,F,I,B,E,H,A,D,G
 				,R,RC,RI,P,PC,PA,S,SI,SG,Q,QA,QG,CC,II,AA
 				,El,Fl,Bl,Hl,Dl, simEI,simEA,simEG
@@ -2454,24 +2483,18 @@ if (ne(B,H) && ne(D,F)) {
 		bool slope2ok = K.b<1.01 && max(sign(El-Fl)*(Dl-El),sign(El-Fl)*(Hl-El))>-0.1;
 		bool isCopy=checkeq(K,vF);
 		float4 mixL2 = mix(K,vE,0.145898);
-		if ( slope2ok && all_eq2(F,A,R) && ne(F,RI) && (ne(F,RC)||eq(F,C)) && (ne(A,Q)||eq(Q, QG)) ) {J=isCopy ? K : mixL2;}
-		if ( slope2ok && all_eq2(F,I,P) && ne(F,PA) && (ne(F,PC)||eq(F,C)) && (ne(I,S)||eq(S, SG)) ) {M=isCopy ? K : mixL2;}
-
+		bool longH = slope2ok && all_eq2(F,A,R) && ne(F,RI) && (ne(F,RC)||eq(F,C)) && (ne(F,Q)||eq(F,QG));
+		bool longV = slope2ok && all_eq2(F,I,P) && ne(F,PA) && (ne(F,PC)||eq(F,C)) && (ne(F,S)||eq(F,SG));
+		J= longH ? isCopy ? K : mixL2 : J;
+		M= longV ? isCopy ? K : mixL2 : M;
 		slope2end = (K.b < 3.99);
 
 		K = (K.b > 3.99) ? vE :
 			(K.b > 1.01) ? (K - 2.0) :
 			K;
-
-		slope2 = true;
 	}
 
-//*	D - H
-
-	if ( (ne(F,H) && ne(B,D))
-	 && (eq(E,G)&&El<min(Dl,Hl)||El>max(Dl,Hl))  &&  (not_eq2(G,D,H) || ne(E,S) || ne(E,Q))
-	 &&	( eq(D,H) &&(eq(E,G)||any_eq3(D,A,Q,QA)||any_eq3(H,S,I,SI)||simEA||simEI) || simb(vD,vH)&&(eq(B,F)||any_eq2(E,A,I)) )
-	 ) {
+	if (slope3) {
 		L=admixX(G,D,A,H,E,B,I,F,C
 				,Q,QG,QA,S,SG,SI,P,PA,PC,R,RI,RC,GG,AA,II
 				,El,Dl,Hl,Bl,Fl, simEA,simEI,simEC
@@ -2481,23 +2504,18 @@ if (ne(B,H) && ne(D,F)) {
 		bool slope3ok = (L.b < 1.01) && max(sign(El-Dl)*(Bl-El),sign(El-Dl)*(Fl-El))>-0.1;
 		bool isCopy=checkeq(L,vD);
 		float4 mixL2 = mix(L,vE,0.145898);
-		if (slope3ok && all_eq2(D,I,Q) && ne(D,QA) && (ne(D,QG)||eq(D,G)) && (ne(R,I)||eq(R, RC)) ) {M=isCopy ? L : mixL2;}
-		if (slope3ok && all_eq2(D,A,S) && ne(D,SI) && (ne(D,SG)||eq(D,G)) && (ne(A,P)||eq(P, PC)) ) {J=isCopy ? L : mixL2;}
+		bool longH = slope3ok && all_eq2(D,I,Q) && ne(D,QA) && (ne(D,QG)||eq(D,G)) && (ne(D,R)||eq(D,RC));
+		bool longV = slope3ok && all_eq2(D,A,S) && ne(D,SI) && (ne(D,SG)||eq(D,G)) && (ne(D,P)||eq(D,PC));
+		M= longH ? isCopy ? L : mixL2 : M;
+		J= longV ? isCopy ? L : mixL2 : J;
 
 		slope3end = (L.b < 3.99);
 		L = (L.b > 3.99) ? vE :
 			(L.b > 1.01) ? (L - 2.0) :
 			L;
-
-		slope3 = true;
 	}
 
-//*	F - H
-
-	if ( (ne(B,F) && ne(D,H))
-	 && (eq(E,I)&&El<min(Fl,Hl)||El>max(Fl,Hl))  &&  (not_eq2(I,F,H) || ne(E,R) || ne(E,S))
-	 && ( eq(F,H) &&(eq(E,I)||any_eq3(F,R,C,RC)||any_eq3(H,S,G,SG)||simEG||simEC) || simb(vF,vH)&&(eq(B,D)||any_eq2(E,C,G)) )
-	  ) {
+	if (slope4) {
 		M=admixX(I,H,G,F,E,D,C,B,A
 				,S,SI,SG,R,RI,RC,Q,QG,QA,P,PC,PA,II,GG,CC
 				,El,Hl,Fl,Dl,Bl, simEG,simEC,simEA
@@ -2507,34 +2525,35 @@ if (ne(B,H) && ne(D,F)) {
 		bool slope4ok = (M.b < 1.01) && max(sign(El-Fl)*(Bl-El), sign(El-Fl)*(Dl-El))>-0.1;
 		bool isCopy=checkeq(M,vF);
 		float4 mixL2 = mix(M,vE,0.145898);
-		if ( slope4ok && all_eq2(F,G,R) && ne(F,RC) && (ne(F,RI)||eq(F,I)) && (ne(Q,G)||eq(Q, QA)) ) {L=isCopy ? M : mixL2;}
-		if ( slope4ok && all_eq2(F,C,S) && ne(F,SG) && (ne(F,SI)||eq(F,I)) && (ne(P,C)||eq(P, PA)) ) {K=isCopy ? M : mixL2;}
+		bool longH = slope4ok && all_eq2(F,G,R) && ne(F,RC) && (ne(F,RI)||eq(F,I)) && (ne(F,Q)||eq(F,QA));
+		bool longV = slope4ok && all_eq2(F,C,S) && ne(F,SG) && (ne(F,SI)||eq(F,I)) && (ne(F,P)||eq(F,PA));
+		L= longH ? isCopy ? M : mixL2 : L;
+		K= longV ? isCopy ? M : mixL2 : K;
 
 		slope4end = (M.b < 3.99);
 		M = (M.b > 3.99) ? vE :
 			(M.b > 1.01) ? (M - 2.0) :
 			M;
-
-		slope4 = true;
 	}
 
 skiprest = slope1||slope2||slope3||slope4;
 
 
+
 //* =========================  2:1 staggered slope  (new rule)  ===========================
 
-    bool bottonH = not_eq3(H,E,A,C);
+    bool bottonH = not_eq5(H,E,A,C,D,F);
 
-        if ( bottonH &&(!slope2 && ne(B,F)) && (!slope3 && ne(D,H)) && (!slope4end && ne(F,H)) &&
-            ne(E,F) && eq(R,H) && eq(F,G) ) {
+		if (bottonH && !slope4end && !slope2 && !slope3 && ne(B,F) &&
+            ne(E,F) && eq(H,R) && eq(F,G) ) {
             M = admixS( A, B, C, D, E, F, G, H, I
                       , Q, R, RC, RI, S, SG, SI, CC, simEC
                       , vE, vF
                       );
             skiprest = true;}
 
-        if ( bottonH && (!slope1 && ne(B,D)) && (!slope4 && ne(F,H)) && (!slope3end && ne(D,H)) &&
-             ne(E,D) && eq(Q,H) && eq(D,I) ) {
+        if (bottonH && !slope3end && !slope1 && !slope4 && ne(B,D) &&
+             ne(E,D) && eq(H,Q) && eq(D,I) ) {
             L = admixS( C, B, A, F, E, D, I, H, G
                       , R, Q, QA, QG, S, SI, SG, AA, simEA
                       , vE, vD
@@ -2542,9 +2561,9 @@ skiprest = slope1||slope2||slope3||slope4;
             skiprest = true;}
 
 
-    bool topH = not_eq3(B,E,G,I);
+    bool topH = not_eq5(B,E,G,I,D,F);
 
-        if ( topH &&(!slope1 && ne(B,D))  && (!slope4 && ne(F,H)) && (!slope2end && ne(B,F)) &&
+        if (topH && !slope2end && !slope1 && !slope4 && ne(F,H) &&
               ne(E,F) && eq(B,R) && eq(A,F) ) {
             K = admixS( G, H, I, D, E, F, A, B, C
                       , Q, R, RI, RC, P, PA, PC, II, simEI
@@ -2552,7 +2571,7 @@ skiprest = slope1||slope2||slope3||slope4;
                       );
             skiprest = true;}
 
-        if ( topH && (!slope2 && ne(B,F)) && (!slope3 && ne(D,H)) && (!slope1end && ne(B,D)) &&
+        if (topH && !slope1end && !slope2 && !slope3 && ne(D,H) &&
              ne(E,D) && eq(B,Q) && eq(C,D) ) {
             J = admixS( I, H, G, F, E, D, C, B, A
                       , R, Q, QG, QA, P, PC, PA, GG, simEG
@@ -2561,10 +2580,9 @@ skiprest = slope1||slope2||slope3||slope4;
             skiprest = true;}
 
 
+    bool leftV = not_eq5(D,E,C,I,B,H);
 
-    bool leftV = not_eq3(D,E,C,I);
-
-        if ( leftV && (!slope1 && ne(B,D)) && (!slope4 && ne(F,H)) && (!slope3end && ne(D,H)) &&
+        if (leftV && !slope3end && !slope1 && !slope4 && ne(F,H) &&
               ne(E,H) && eq(D,S) && eq(A,H) ) {
             L = admixS( C, F, I, B, E, H, A, D, G
                       , P, S, SI, SG, Q, QA, QG, II, simEI
@@ -2572,8 +2590,8 @@ skiprest = slope1||slope2||slope3||slope4;
                       );
             skiprest = true;}
 
-        if ( leftV && (!slope3 && ne(D,H)) && (!slope2 && ne(B,F)) && (!slope1end && ne(B,D)) &&
-              ne(E,B) && eq(P,D) && eq(B,G) ) {
+        if (leftV && !slope1end && !slope2 && !slope3 && ne(B,F) &&
+              ne(E,B) && eq(D,P) && eq(B,G) ) {
             J = admixS( I, F, C, H, E, B, G, D, A
                       , S, P, PC, PA, Q, QG, QA, CC, simEC
                       , vE, vB
@@ -2582,18 +2600,18 @@ skiprest = slope1||slope2||slope3||slope4;
 
 
 
-    bool rightV = not_eq3(F,E,A,G);
+    bool rightV = not_eq5(F,E,A,G,B,H);
 
-        if ( rightV && (!slope2 && ne(B,F)) && (!slope3 && ne(D,H)) && (!slope4end && ne(F,H)) &&
-              ne(E,H) && eq(S,F) && eq(H,C) ) {
+        if (rightV && !slope4end && !slope2 && !slope3 && ne(D,H) &&
+              ne(E,H) && eq(F,S) && eq(H,C) ) {
             M = admixS( A, D, G, B, E, H, C, F, I
                       , P, S, SG, SI, R, RC, RI, GG, simEG
                       , vE, vH
                       );
             skiprest = true;}
 
-        if ( rightV && (!slope1 && ne(B,D)) && (!slope4 && ne(F,H)) && (!slope2end && ne(B,F)) &&
-             ne(E,B) && eq(P,F) && eq(B,I) ) {
+        if (rightV && !slope2end && !slope1 && !slope4 && ne(B,D) &&
+             ne(E,B) && eq(F,P) && eq(B,I) ) {
             K = admixS( G, D, A, H, E, B, I, F, C
                       , S, P, PA, PC, R, RI, RC, AA, simEA
                       , vE, vB
@@ -2897,8 +2915,10 @@ std::string GPU_HW_ShaderGen::GenerateBatchFragmentShader(const BatchFragmentSha
   DefineMacro(ss, "UPSCALED", sel.upscaled);
 
   // Used for converting to normalized coordinates for sampling.
-  ss << "CONSTANT float2 RCP_VRAM_SIZE = float2(1.0 / float(" << VRAM_WIDTH << "), 1.0 / float(" << VRAM_HEIGHT
+  const u32 vram_height = sel.vram_2mb ? VRAM_2MB_HEIGHT : VRAM_1MB_HEIGHT;
+  ss << "CONSTANT float2 RCP_VRAM_SIZE = float2(1.0 / float(" << VRAM_WIDTH << "), 1.0 / float(" << vram_height
      << "));\n";
+  ss << "CONSTANT uint2 VRAM_COORD_MASK = uint2(" << (VRAM_WIDTH - 1) << "u, " << (vram_height - 1) << "u);\n";
 
   WriteColorConversionFunctions(ss);
   WriteBatchUniformBuffer(ss);
@@ -3048,13 +3068,13 @@ float4 SampleFromVRAM(TEXPAGE_VALUE texpage, DECLARE_UV_LIMITS(float2 coords, fl
     // Direct texturing - usually render-to-texture effects.
     #if !UPSCALED
       uint2 icoord = ApplyTextureWindow(FloatToIntegerCoords(DECLARE_UV_LIMITS(coords, uv_limits)));
-      uint2 vicoord = (texpage.xy + icoord) & uint2(1023, 511);
+      uint2 vicoord = (texpage.xy + icoord) & VRAM_COORD_MASK;
       return LOAD_TEXTURE(samp0, int2(vicoord), 0);
     #elif DISABLE_UPSCALED_DIRECT_TEXTURES
       // Treat direct textures as native resolution, so filtering offsets move to adjacent native texels instead of
       // duplicated upscaled texels.
       uint2 icoord = ApplyTextureWindow(FloatToIntegerCoords(DECLARE_UV_LIMITS(coords, uv_limits)));
-      uint2 vicoord = (texpage.xy + icoord) & uint2(1023, 511);
+      uint2 vicoord = (texpage.xy + icoord) & VRAM_COORD_MASK;
       return SAMPLE_TEXTURE_LEVEL(samp0, float2(vicoord) * RCP_VRAM_SIZE, 0.0);
     #else
       // Coordinates are already upscaled, we need to downscale them to apply the texture
@@ -3063,7 +3083,7 @@ float4 SampleFromVRAM(TEXPAGE_VALUE texpage, DECLARE_UV_LIMITS(float2 coords, fl
       float2 ncoords = APPLY_UV_LIMITS(coords, uv_limits) * u_rcp_resolution_scale;
       float2 nfpart = frac(ncoords);
       uint2 nicoord = ApplyTextureWindow(uint2(floor(ncoords)));
-      uint2 nvicoord = (texpage.xy + nicoord) & uint2(1023, 511);
+      uint2 nvicoord = (texpage.xy + nicoord) & VRAM_COORD_MASK;
       ncoords = (float2(nvicoord) + nfpart);
       return SAMPLE_TEXTURE_LEVEL(samp0, ncoords * RCP_VRAM_SIZE, 0.0);
     #endif
@@ -3392,10 +3412,10 @@ std::string GPU_HW_ShaderGen::GenerateVRAMExtractFragmentShader(u32 resolution_s
   DefineMacro(ss, "DEPTH_BUFFER", depth_buffer);
   DefineMacro(ss, "MULTISAMPLING", msaa);
   ss << "CONSTANT uint RESOLUTION_SCALE = " << resolution_scale << "u;\n";
-  ss << "CONSTANT uint2 VRAM_SIZE = uint2(" << VRAM_WIDTH << ", " << VRAM_HEIGHT << ") * RESOLUTION_SCALE;\n";
   ss << "CONSTANT uint MULTISAMPLES = " << multisamples << "u;\n";
 
-  DeclareUniformBuffer(ss, {"uint2 u_vram_offset", "float u_skip_x", "float u_line_skip"}, true);
+  // Scanout wraps at the addressable VRAM height, which depends on GP1(09h).
+  DeclareUniformBuffer(ss, {"uint2 u_vram_offset", "float u_skip_x", "float u_line_skip", "uint u_vram_height"}, true);
   DeclareTexture(ss, "samp0", 0, msaa);
   if (depth_buffer)
     DeclareTexture(ss, "samp1", 1, msaa);
@@ -3433,7 +3453,7 @@ float LoadDepth(int2 coords)
 float3 SampleVRAM24(uint2 icoords)
 {
   // load adjacent 16-bit texels
-  uint2 clamp_size = uint2(1024, 512);
+  uint2 clamp_size = uint2(1024u, u_vram_height);
 
   // relative to start of scanout
   uint2 vram_coords = u_vram_offset + uint2((icoords.x * 3u) / 2u, icoords.y);
@@ -3455,7 +3475,7 @@ float3 SampleVRAM24(uint2 icoords)
   // Have to floor because SV_Position is at the pixel center.
   float2 v_pos_floored = floor(v_pos.xy);
   uint2 icoords = uint2(v_pos_floored.x + u_skip_x, v_pos_floored.y * u_line_skip);
-  int2 wrapped_coords = int2((icoords + u_vram_offset) % VRAM_SIZE);
+  int2 wrapped_coords = int2((icoords + u_vram_offset) % (uint2(1024u, u_vram_height) * RESOLUTION_SCALE));
 
   #if COLOR_24BIT
     o_col0 = float4(SampleVRAM24(icoords), 1.0);
@@ -3579,20 +3599,12 @@ std::string GPU_HW_ShaderGen::GenerateWireframeFragmentShader() const
   return std::move(ss).str();
 }
 
-std::string GPU_HW_ShaderGen::GenerateVRAMReadFragmentShader(u32 resolution_scale, u32 multisamples) const
+void GPU_HW_ShaderGen::WriteVRAMReadFunctions(std::stringstream& ss, u32 resolution_scale, u32 multisamples) const
 {
   const bool msaa = (multisamples > 1);
-
-  std::stringstream ss;
-  WriteHeader(ss);
-  WriteColorConversionFunctions(ss);
-
   DefineMacro(ss, "MULTISAMPLING", msaa);
   ss << "CONSTANT uint RESOLUTION_SCALE = " << resolution_scale << "u;\n";
   ss << "CONSTANT uint MULTISAMPLES = " << multisamples << "u;\n";
-
-  DeclareUniformBuffer(ss, {"uint2 u_base_coords", "uint2 u_size"}, true);
-  DeclareTexture(ss, "samp0", 0, msaa);
 
   ss << R"(
 float4 LoadVRAM(int2 coords)
@@ -3616,15 +3628,62 @@ uint SampleVRAM(uint2 coords)
   // Box filter for downsampling.
   float4 value = float4(0.0, 0.0, 0.0, 0.0);
   uint2 base_coords = coords * uint2(RESOLUTION_SCALE, RESOLUTION_SCALE);
-  for (uint offset_x = 0u; offset_x < RESOLUTION_SCALE; offset_x++)
+  FOR_LOOP (uint offset_x = 0u; offset_x < RESOLUTION_SCALE; offset_x++)
   {
-    for (uint offset_y = 0u; offset_y < RESOLUTION_SCALE; offset_y++)
+    FOR_LOOP (uint offset_y = 0u; offset_y < RESOLUTION_SCALE; offset_y++)
       value += LoadVRAM(int2(base_coords + uint2(offset_x, offset_y)));
   }
   value /= float(RESOLUTION_SCALE * RESOLUTION_SCALE);
   return RGBA8ToRGBA5551(value);
 }
 )";
+}
+
+std::string GPU_HW_ShaderGen::GenerateVRAMReadComputeShader(u32 resolution_scale, u32 multisamples) const
+{
+  std::stringstream ss;
+  WriteHeader(ss);
+  WriteColorConversionFunctions(ss);
+  DeclareUniformBuffer(ss, {"uint2 u_base_coords", "uint2 u_size", "uint u_output_offset", "uint u_output_stride"},
+                       false);
+  DeclareTexture(ss, "samp0", 0, multisamples > 1);
+  WriteVRAMReadFunctions(ss, resolution_scale, multisamples);
+  DeclareComputeOutputBuffer(ss, "output_buffer");
+  if (m_glsl)
+    ss << "shared uint s_right[32];\n#define GROUP_BARRIER barrier()\n";
+  else
+    ss << "groupshared uint s_right[32];\n#define GROUP_BARRIER GroupMemoryBarrierWithGroupSync()\n";
+  DeclareComputeEntryPoint(ss, 8, 8, 1);
+  ss << R"(
+{
+  // One pixel per thread, odd lanes hand their pixel to the even lane to pack. Sampling two pixels per thread
+  // doubles the stride between lanes' fetches, which is much slower on some GPUs (35x on NVIDIA at 12x/8xMSAA).
+  uint2 pos = GLOBAL_ID.xy;
+  bool in_bounds = (pos.x < u_size.x && pos.y < u_size.y);
+  uint pair_index = ((pos.y & 7u) * 8u + (pos.x & 7u)) >> 1;
+  uint value = 0u;
+  if (in_bounds)
+    value = SampleVRAM(u_base_coords + pos);
+  if ((pos.x & 1u) != 0u)
+    s_right[pair_index] = value;
+  GROUP_BARRIER;
+  if (in_bounds && (pos.x & 1u) == 0u)
+    output_buffer[u_output_offset + pos.y * u_output_stride + (pos.x >> 1)] = value | (s_right[pair_index] << 16u);
+})";
+  return std::move(ss).str();
+}
+
+std::string GPU_HW_ShaderGen::GenerateVRAMReadFragmentShader(u32 resolution_scale, u32 multisamples) const
+{
+  const bool msaa = (multisamples > 1);
+
+  std::stringstream ss;
+  WriteHeader(ss);
+  WriteColorConversionFunctions(ss);
+
+  DeclareUniformBuffer(ss, {"uint2 u_base_coords", "uint2 u_size"}, true);
+  DeclareTexture(ss, "samp0", 0, msaa);
+  WriteVRAMReadFunctions(ss, resolution_scale, multisamples);
 
   DeclareFragmentEntryPoint(ss, 0, 1, {}, true, 1);
   ss << R"(
@@ -3666,11 +3725,11 @@ std::string GPU_HW_ShaderGen::GenerateVRAMWriteFragmentShader(bool use_buffer, b
   if (filtering)
     DefineMacro(ss, "TEXTURE_ALPHA_BLENDING", false);
 
-  ss << "CONSTANT float2 VRAM_SIZE = float2(" << VRAM_WIDTH << ".0, " << VRAM_HEIGHT << ".0);\n";
-
+  // Writes wrap at the addressable VRAM height, which depends on GP1(09h).
   DeclareUniformBuffer(ss,
                        {"float2 u_base_coords", "float2 u_end_coords", "float2 u_size", "float u_resolution_scale",
-                        "uint u_buffer_base_offset", "uint u_mask_or_bits", "float u_depth_value"},
+                        "uint u_buffer_base_offset", "uint u_mask_or_bits", "float u_depth_value",
+                        "float u_vram_height"},
                        false);
 
   if (!use_buffer)
@@ -3756,8 +3815,8 @@ float4 SampleFromVRAM(TEXPAGE_VALUE texpage, float2 coords, float4 uv_limits)
 
   // find offset from the start of the row/column
   float2 offset;
-  offset.x = (coords.x < u_base_coords.x) ? (VRAM_SIZE.x - u_base_coords.x + coords.x) : (coords.x - u_base_coords.x);
-  offset.y = (coords.y < u_base_coords.y) ? (VRAM_SIZE.y - u_base_coords.y + coords.y) : (coords.y - u_base_coords.y);
+  offset.x = (coords.x < u_base_coords.x) ? (1024.0 - u_base_coords.x + coords.x) : (coords.x - u_base_coords.x);
+  offset.y = (coords.y < u_base_coords.y) ? (u_vram_height - u_base_coords.y + coords.y) : (coords.y - u_base_coords.y);
 
   #if !USE_BUFFER
     uint value = LOAD_TEXTURE(samp0, int2(offset), 0).x;

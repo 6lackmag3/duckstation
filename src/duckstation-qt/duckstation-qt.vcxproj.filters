@@ -28,6 +28,7 @@
     <ClCompile Include="debuggermodels.cpp" />
     <ClCompile Include="memoryviewwidget.cpp" />
     <ClCompile Include="emulationsettingswidget.cpp" />
+    <ClCompile Include="folderssettingswidget.cpp" />
     <ClCompile Include="achievementsettingswidget.cpp" />
     <ClCompile Include="achievementlogindialog.cpp" />
     <ClCompile Include="controllerglobalsettingswidget.cpp" />
@@ -100,6 +101,7 @@
     <QtMoc Include="debuggermodels.h" />
     <QtMoc Include="debuggerwindow.h" />
     <QtMoc Include="emulationsettingswidget.h" />
+    <QtMoc Include="folderssettingswidget.h" />
     <QtMoc Include="achievementsettingswidget.h" />
     <QtMoc Include="achievementlogindialog.h" />
     <QtMoc Include="controllerbindingwidgets.h" />
@@ -171,6 +173,9 @@
     <QtUi Include="memoryscannerwindow.ui" />
     <QtUi Include="controllerbindingwidget_negconrumble.ui" />
     <QtUi Include="controllerbindingwidget_justifier.ui" />
+    <QtUi Include="controllerbindingwidget_jogcon.ui" />
+    <QtUi Include="controllerbindingwidget_ddgo.ui" />
+    <QtUi Include="controllerbindingwidget_popn.ui" />
     <QtUi Include="selectdiscdialog.ui" />
     <QtUi Include="texturereplacementsettingsdialog.ui" />
     <QtUi Include="gamepatchsettingswidget.ui" />

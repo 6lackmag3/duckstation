@@ -56,6 +56,10 @@
 #include "util/postprocessing.h"
 #include "util/translation.h"
 
+#ifdef __linux__
+#include "util/x11_tools.h"
+#endif
+
 #include "scmversion/scmversion.h"
 
 #include "fmt/format.h"
@@ -119,7 +123,6 @@ static constexpr int IDLE_UPDATE_INTERVAL_WITH_FULLSCREEN_UI = 8;
 static constexpr int IDLE_UPDATE_INTERVAL_WHILE_DOWNLOADING = 10;
 
 /// Poll at 1ms when running GDB server. We can get rid of this once we move networking to its own thread.
-static constexpr int IDLE_UPDATE_INTERVAL_WITH_GDB_CLIENTS = 10;
 
 //////////////////////////////////////////////////////////////////////////
 // Local function declarations
@@ -283,6 +286,17 @@ bool QtHost::VeryEarlyProcessStartup()
 #endif
 
   QGuiApplication::setHighDpiScaleFactorRoundingPolicy(Qt::HighDpiScaleFactorRoundingPolicy::PassThrough);
+
+  // Set application details.
+  // This is critical for Linux to show the correct application name in the task switcher, since it appears
+  // to use the application name to search for desktop files with the corresponding StartupWMClass.
+  // These must be set before QApplication is constructed, so that the desktop file name can be registered
+  // with the xdg-desktop-portal before the platform theme makes any portal calls.
+  QApplication::setApplicationName(u"duckstation-qt"_s);
+  QApplication::setApplicationVersion(QString::fromUtf8(g_scm_version_str));
+  QApplication::setOrganizationName(u"Stenzek"_s);
+  QApplication::setOrganizationDomain(u"duckstation.org"_s);
+  QApplication::setDesktopFileName(u"org.duckstation.DuckStation"_s);
   return true;
 }
 
@@ -290,15 +304,6 @@ bool QtHost::EarlyProcessStartup()
 {
   // Redirect Qt errors.
   qInstallMessageHandler(MessageOutputHandler);
-
-  // Set application details.
-  // This is critical for Linux to show the correct application name in the task switcher, since it appears
-  // to uses the application name to search for desktop files with the corresponding StartupWMClass.
-  QApplication::setApplicationName(u"duckstation-qt"_s);
-  QApplication::setApplicationVersion(QString::fromUtf8(g_scm_version_str));
-  QApplication::setOrganizationName(u"Stenzek"_s);
-  QApplication::setOrganizationDomain(u"duckstation.org"_s);
-  QApplication::setDesktopFileName(u"org.duckstation.DuckStation"_s);
 
   Error error;
   if (!Core::ProcessStartup(&error)) [[unlikely]]
@@ -2031,7 +2036,7 @@ void Host::DestroyAuxiliaryRenderWindow(AuxiliaryRenderWindowHandle handle, s32*
 
   // eat all pending events, to make sure we're not going to write input events back to a dead pointer
   if (g_core_thread->isCurrentThread())
-    g_core_thread->getEventLoop()->processEvents(QEventLoop::AllEvents);
+    g_core_thread->pumpMessages();
 }
 
 void CoreThread::queueAuxiliaryRenderWindowInputEvent(Host::AuxiliaryRenderWindowUserData userdata,
@@ -2097,21 +2102,7 @@ void CoreThread::stopIdleUpdateTimer()
 
 void CoreThread::onIdleUpdateTimer()
 {
-  if (!m_has_gdb_clients)
-  {
-    Core::IdleUpdate(0);
-    return;
-  }
-
-  // When we have gdb clients, use the multiplexer to sleep instead. that way round-trips can
-  // be responded to as quickly as possible.
-  //
-  // NOTE: This is kinda screwy, because it'll block RunOnCoreThread() callbacks from running
-  // while we're polling. Hence why it's still capped at 10ms.
-
-  const int timeout = m_idle_update_timer->interval();
-  const u64 poll_until = Timer::GetCurrentValue() + Timer::ConvertMillisecondsToValue(static_cast<u32>(timeout));
-  Core::IdleUpdate(poll_until);
+  Core::IdleUpdate();
 }
 
 void CoreThread::updateIdleTimerInterval()
@@ -2138,8 +2129,6 @@ int CoreThread::getBackgroundControllerPollInterval() const
 {
   if (m_video_thread_run_idle)
     return IDLE_UPDATE_INTERVAL_WITH_FULLSCREEN_UI;
-  else if (m_has_gdb_clients)
-    return IDLE_UPDATE_INTERVAL_WITH_GDB_CLIENTS;
   else if (m_http_downloader_active)
     return IDLE_UPDATE_INTERVAL_WHILE_DOWNLOADING;
   else if (InputManager::GetPollableDeviceCount() > 0)
@@ -2158,18 +2147,6 @@ void CoreThread::setHTTPDownloaderActive(bool active)
 
   DEV_LOG("HTTP Downloader now {}", active ? "active" : "inactive");
   m_http_downloader_active = active;
-  updateIdleTimerInterval();
-}
-
-void CoreThread::setGDBActiveClients(bool active)
-{
-  if (!isCurrentThread())
-  {
-    QMetaObject::invokeMethod(this, &CoreThread::setGDBActiveClients, Qt::QueuedConnection, active);
-    return;
-  }
-
-  m_has_gdb_clients = active;
   updateIdleTimerInterval();
 }
 
@@ -2212,11 +2189,6 @@ void Host::OnHTTPDownloaderActiveChanged(bool active)
   g_core_thread->setHTTPDownloaderActive(active);
 }
 
-void Host::OnGDBServerActiveClientsChanged(bool has_clients)
-{
-  g_core_thread->setGDBActiveClients(has_clients);
-}
-
 void CoreThread::stop()
 {
   Assert(isRunning() && !isCurrentThread() && g_core_thread == this);
@@ -2243,6 +2215,9 @@ void CoreThread::stopInThread()
 void CoreThread::run()
 {
   m_event_loop = new QEventLoop();
+  m_event_wait_timer = new QTimer(m_event_loop);
+  m_event_wait_timer->setSingleShot(true);
+  m_event_wait_timer->setTimerType(Qt::PreciseTimer);
   QtHost::s_state.core_thread_handle = Threading::ThreadHandle::GetForCallingThread();
 
   // input source setup must happen on emu thread
@@ -2302,6 +2277,25 @@ void CoreThread::run()
   moveToThread(m_ui_thread);
   delete m_event_loop;
   m_event_loop = nullptr;
+  m_event_wait_timer = nullptr;
+}
+
+void CoreThread::pumpMessages(u64 wait_until)
+{
+  DebugAssert(isCurrentThread());
+
+  const Timer::Value current_time = Timer::GetCurrentValue();
+  if (wait_until <= current_time)
+  {
+    m_event_loop->processEvents(QEventLoop::AllEvents);
+    return;
+  }
+
+  // The deadline overload doesn't wait for new events and ignores WaitForMoreEvents.
+  // Round up to avoid spinning when under 1ms.
+  m_event_wait_timer->start(static_cast<int>(std::ceil(Timer::ConvertValueToMilliseconds(wait_until - current_time))));
+  m_event_loop->processEvents(QEventLoop::AllEvents | QEventLoop::WaitForMoreEvents);
+  m_event_wait_timer->stop();
 }
 
 void Host::FrameDoneOnVideoThread(GPUBackend* gpu_backend, u32 frame_number)
@@ -3203,9 +3197,9 @@ void Host::SetMouseMode(bool relative, bool hide_cursor)
   emit g_core_thread->mouseModeRequested(relative, hide_cursor, ignore_double_click);
 }
 
-void Host::PumpMessagesOnCoreThread()
+void Host::PumpMessagesOnCoreThread(u64 wait_until)
 {
-  g_core_thread->getEventLoop()->processEvents(QEventLoop::AllEvents);
+  g_core_thread->pumpMessages(wait_until);
 }
 
 void QtHost::SaveSettings()
@@ -3622,6 +3616,16 @@ int main(int argc, char* argv[])
   // created before the platform plugin is loaded. This is only here because GNOME plus Wankland
   // and their implementation of it is fucking terrible.
   ApplyWaylandWorkarounds();
+#endif
+
+#ifdef __linux__
+  // Qt detects auto-repeat by looking for the press after a release in its event queue, which isn't reliable, as the
+  // press may not have been read yet. Missed detections send spurious release/press pairs while a key is held.
+  if (const auto* x11_app = qGuiApp->nativeInterface<QNativeInterface::QX11Application>())
+  {
+    if (Error error; !X11Tools::EnableDetectableAutoRepeat(x11_app->connection(), &error))
+      std::fprintf(stderr, "Failed to enable detectable auto repeat: %s\n", error.GetDescription().c_str());
+  }
 #endif
 
   // Type registration has to happen after hardware checks, clang emits ptest instructions otherwise.

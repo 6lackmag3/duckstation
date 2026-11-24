@@ -6895,7 +6895,7 @@ Would you like to import one now?</source>
     <message>
         <source>Start Big Picture Mode</source>
         <comment>game_list_start_fullscreen_ui</comment>
-        <translation></translation>
+        <translation>Режим Big Picture</translation>
     </message>
     <message>
         <source>Confirm Close Game</source>

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>600</width>
-    <height>520</height>
+    <height>552</height>
    </rect>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
@@ -28,7 +28,7 @@
      <property name="title">
       <string>Console</string>
      </property>
-     <layout class="QGridLayout" name="gridLayout_3" columnstretch="0,1">
+     <layout class="QGridLayout" name="gridLayout_3" columnstretch="0,1,1" columnminimumwidth="120,0,0">
       <item row="0" column="0">
        <widget class="QLabel" name="label">
         <property name="text">
@@ -36,7 +36,7 @@
         </property>
        </widget>
       </item>
-      <item row="0" column="1">
+      <item row="0" column="1" colspan="2">
        <widget class="QComboBox" name="region"/>
       </item>
       <item row="1" column="0">
@@ -46,7 +46,7 @@
         </property>
        </widget>
       </item>
-      <item row="1" column="1">
+      <item row="1" column="1" colspan="2">
        <widget class="QComboBox" name="forceVideoTiming"/>
       </item>
       <item row="2" column="0">
@@ -56,11 +56,28 @@
         </property>
        </widget>
       </item>
-      <item row="2" column="1">
+      <item row="2" column="1" colspan="2">
        <widget class="QComboBox" name="ramSize"/>
       </item>
-      <item row="3" column="0" colspan="2">
+      <item row="3" column="0">
+       <widget class="QLabel" name="vramSizeLabel">
+        <property name="text">
+         <string>Installed VRAM:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="1" colspan="2">
+       <widget class="QComboBox" name="vramSize"/>
+      </item>
+      <item row="4" column="0" colspan="3">
        <layout class="QGridLayout" name="gridLayout_2">
+        <item row="1" column="0">
+         <widget class="QCheckBox" name="fastForwardBoot">
+          <property name="text">
+           <string>Fast Forward Boot</string>
+          </property>
+         </widget>
+        </item>
         <item row="0" column="0">
          <widget class="QCheckBox" name="fastBoot">
           <property name="text">
@@ -75,17 +92,10 @@
           </property>
          </widget>
         </item>
-        <item row="1" column="0">
-         <widget class="QCheckBox" name="fastForwardBoot">
-          <property name="text">
-           <string>Fast Forward Boot</string>
-          </property>
-         </widget>
-        </item>
         <item row="1" column="1">
-         <widget class="QCheckBox" name="forceFullRAMMapping">
+         <widget class="QCheckBox" name="fastForwardLoading">
           <property name="text">
-           <string>Force Full RAM Mapping</string>
+           <string>Fast Forward While Loading</string>
           </property>
          </widget>
         </item>
@@ -95,11 +105,11 @@
     </widget>
    </item>
    <item>
-    <widget class="QGroupBox" name="groupBox_2">
+    <widget class="QGroupBox" name="cpuGroup">
      <property name="title">
       <string>CPU Emulation</string>
      </property>
-     <layout class="QGridLayout" name="gridLayout_4" columnstretch="0,1">
+     <layout class="QGridLayout" name="cpuGroupLayout" columnstretch="0,1" columnminimumwidth="120,0">
       <item row="0" column="0">
        <widget class="QLabel" name="cpuExecutionModeLabel">
         <property name="text">
@@ -111,7 +121,7 @@
        <widget class="QComboBox" name="cpuExecutionMode"/>
       </item>
       <item row="1" column="0" colspan="2">
-       <layout class="QHBoxLayout" name="horizontalLayout">
+       <layout class="QHBoxLayout" name="overclockLayout">
         <item>
          <widget class="QCheckBox" name="enableCPUClockSpeedControl">
           <property name="text">
@@ -126,8 +136,8 @@
           </property>
           <property name="sizeHint" stdset="0">
            <size>
-            <width>40</width>
-            <height>20</height>
+            <width>0</width>
+            <height>0</height>
            </size>
           </property>
          </spacer>
@@ -153,10 +163,10 @@
          <number>1000</number>
         </property>
         <property name="singleStep">
-         <number>5</number>
+         <number>1</number>
         </property>
         <property name="pageStep">
-         <number>50</number>
+         <number>5</number>
         </property>
         <property name="value">
          <number>100</number>
@@ -173,11 +183,22 @@
        </widget>
       </item>
       <item row="3" column="0" colspan="2">
-       <widget class="QCheckBox" name="recompilerICache">
-        <property name="text">
-         <string>Enable Recompiler ICache</string>
-        </property>
-       </widget>
+       <layout class="QGridLayout" name="cpuAdvancedLayout">
+        <item row="0" column="0">
+         <widget class="QCheckBox" name="recompilerICache">
+          <property name="text">
+           <string>Enable Recompiler ICache</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="1">
+         <widget class="QCheckBox" name="idleTimeoutScale">
+          <property name="text">
+           <string>Scale Idle Timeout</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </item>
      </layout>
     </widget>
@@ -187,7 +208,7 @@
      <property name="title">
       <string>CD-ROM Emulation</string>
      </property>
-     <layout class="QGridLayout" name="cdromLayout" columnstretch="0,1">
+     <layout class="QGridLayout" name="cdromLayout" columnstretch="0,1" columnminimumwidth="120,0">
       <item row="0" column="0">
        <widget class="QLabel" name="cdromReadSpeedupLabel">
         <property name="text">
@@ -283,39 +304,12 @@
         </item>
        </widget>
       </item>
-      <item row="2" column="0">
-       <widget class="QLabel" name="cdromHostReadSpeedLabel">
-        <property name="text">
-         <string>Physical Drive Speed:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="1">
-       <widget class="QSpinBox" name="cdromHostReadSpeed">
-        <property name="specialValueText">
-         <string>Don't Change</string>
-        </property>
-        <property name="suffix">
-         <string>x</string>
-        </property>
-        <property name="maximum">
-         <number>72</number>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="0" colspan="2">
+      <item row="2" column="0" colspan="2">
        <layout class="QGridLayout" name="cdromGridLayout">
         <item row="0" column="0">
          <widget class="QCheckBox" name="cdromLoadImageToRAM">
           <property name="text">
            <string>Preload Image to RAM</string>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="1">
-         <widget class="QCheckBox" name="cdromIgnoreHostSubcode">
-          <property name="text">
-           <string>Ignore Physical Drive Subcode</string>
           </property>
          </widget>
         </item>

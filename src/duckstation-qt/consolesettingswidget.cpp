@@ -45,32 +45,47 @@ ConsoleSettingsWidget::ConsoleSettingsWidget(SettingsWindow* dialog, QWidget* pa
   SettingWidgetBinder::BindWidgetToEnumSetting(
     sif, m_ui.ramSize, Settings::CPU_SECTION_NAME, "RAMSize", &Settings::ParseCPURAMSize, &Settings::GetCPURAMSizeName,
     &Settings::GetCPURAMSizeDisplayName, Settings::DEFAULT_CPU_RAM_SIZE, CPURAMSize::Count, +[](CPURAMSize size) {
-      static constexpr const char* icons[] = {
-        ":/icons/monochrome/svg/emulation-line.svg", // 2MB - Retail
-        ":/icons/monochrome/svg/arcade-line.svg",    // 4MB - Arcade
-        ":/icons/monochrome/svg/code-box-line.svg",  // 8MB - Dev Console
-        ":/icons/monochrome/svg/tools-line.svg",     // 16MB - Mods
-      };
-      static_assert(std::size(icons) == static_cast<size_t>(CPURAMSize::Count));
-      return QIcon(QString::fromLatin1(icons[static_cast<size_t>(size)]));
+      switch (size)
+      {
+        case CPURAMSize::Default:
+          return QIcon(QStringLiteral(":/icons/monochrome/svg/emulation-line.svg"));
+        case CPURAMSize::Expanded4MB:
+        case CPURAMSize::Expanded4MBForced:
+          return QIcon(QStringLiteral(":/icons/monochrome/svg/arcade-line.svg"));
+        case CPURAMSize::Expanded8MB:
+        case CPURAMSize::Expanded8MBForced:
+          return QIcon(QStringLiteral(":/icons/monochrome/svg/code-box-line.svg"));
+        default:
+          return QIcon(QStringLiteral(":/icons/monochrome/svg/tools-line.svg"));
+      }
     });
-  SettingWidgetBinder::BindWidgetToBoolSetting(sif, m_ui.forceFullRAMMapping, Settings::CPU_SECTION_NAME,
-                                               "ForceFullRAMMapping", false);
+  SettingWidgetBinder::BindWidgetToEnumSetting(
+    sif, m_ui.vramSize, Settings::CONSOLE_SECTION_NAME, "VRAMSize", &Settings::ParseGPUVRAMSize,
+    &Settings::GetGPUVRAMSizeName, &Settings::GetGPUVRAMSizeDisplayName, Settings::DEFAULT_GPU_VRAM_SIZE,
+    GPUVRAMSize::Count, +[](GPUVRAMSize size) {
+      return QIcon((size == GPUVRAMSize::Default) ? QStringLiteral(":/icons/monochrome/svg/emulation-line.svg") :
+                                                    QStringLiteral(":/icons/monochrome/svg/arcade-line.svg"));
+    });
   SettingWidgetBinder::BindWidgetToBoolSetting(sif, m_ui.fastForwardMemoryCardAccess,
                                                Settings::MEMORY_CARDS_SECTION_NAME, "FastForwardAccess", false);
+  SettingWidgetBinder::BindWidgetToBoolSetting(sif, m_ui.fastForwardLoading, Settings::INTERFACE_SECTION_NAME,
+                                               "FastForwardLoading", false);
   connect(m_ui.fastBoot, &QCheckBox::checkStateChanged, this, &ConsoleSettingsWidget::onFastBootChanged);
   onFastBootChanged();
-  connect(m_ui.ramSize, &QComboBox::currentIndexChanged, this, &ConsoleSettingsWidget::onRAMSizeChanged);
-  onRAMSizeChanged();
 
   SettingWidgetBinder::BindWidgetToEnumSetting(sif, m_ui.cpuExecutionMode, Settings::CPU_SECTION_NAME, "ExecutionMode",
                                                &Settings::ParseCPUExecutionMode, &Settings::GetCPUExecutionModeName,
                                                &Settings::GetCPUExecutionModeDisplayName,
                                                Settings::DEFAULT_CPU_EXECUTION_MODE, CPUExecutionMode::Count);
+  connect(m_ui.cpuExecutionMode, &QComboBox::currentIndexChanged, this, &ConsoleSettingsWidget::onExecutionModeChanged);
+  onExecutionModeChanged();
+
   SettingWidgetBinder::BindWidgetToBoolSetting(sif, m_ui.enableCPUClockSpeedControl, Settings::CPU_SECTION_NAME,
                                                "OverclockEnable", false);
   SettingWidgetBinder::BindWidgetToBoolSetting(sif, m_ui.recompilerICache, Settings::CPU_SECTION_NAME,
                                                "RecompilerICache", false);
+  SettingWidgetBinder::BindWidgetToBoolSetting(sif, m_ui.idleTimeoutScale, Settings::CPU_SECTION_NAME,
+                                               "IdleTimeoutScale", true);
   SettingWidgetBinder::BindWidgetToBoolSetting(sif, m_ui.cdromLoadImageToRAM, Settings::CDROM_SECTION_NAME,
                                                "LoadImageToRAM", false);
   SettingWidgetBinder::BindWidgetToBoolSetting(sif, m_ui.cdromAutoDiscChange, Settings::CDROM_SECTION_NAME,
@@ -80,23 +95,9 @@ ConsoleSettingsWidget::ConsoleSettingsWidget(SettingsWindow* dialog, QWidget* pa
   {
     SettingWidgetBinder::BindWidgetToBoolSetting(sif, m_ui.cdromLoadImagePatches, Settings::CDROM_SECTION_NAME,
                                                  "LoadImagePatches", false);
-    SettingWidgetBinder::BindWidgetToBoolSetting(sif, m_ui.cdromIgnoreHostSubcode, Settings::CDROM_SECTION_NAME,
-                                                 "IgnoreHostSubcode", false);
-    SettingWidgetBinder::BindWidgetToIntSetting(sif, m_ui.cdromHostReadSpeed, Settings::CDROM_SECTION_NAME,
-                                                "HostReadSpeed", 8);
-    QtUtils::FixSpinBoxTextMargins(m_ui.cdromHostReadSpeed);
   }
   else
   {
-    m_ui.cdromLayout->removeWidget(m_ui.cdromHostReadSpeedLabel);
-    delete m_ui.cdromHostReadSpeedLabel;
-    m_ui.cdromHostReadSpeedLabel = nullptr;
-    m_ui.cdromLayout->removeWidget(m_ui.cdromHostReadSpeed);
-    delete m_ui.cdromHostReadSpeed;
-    m_ui.cdromHostReadSpeed = nullptr;
-    m_ui.cdromGridLayout->removeWidget(m_ui.cdromIgnoreHostSubcode);
-    delete m_ui.cdromIgnoreHostSubcode;
-    m_ui.cdromIgnoreHostSubcode = nullptr;
     m_ui.cdromGridLayout->removeWidget(m_ui.cdromLoadImagePatches);
     delete m_ui.cdromLoadImagePatches;
     m_ui.cdromLoadImagePatches = nullptr;
@@ -125,15 +126,19 @@ ConsoleSettingsWidget::ConsoleSettingsWidget(SettingsWindow* dialog, QWidget* pa
   m_dialog->registerWidgetHelp(m_ui.fastForwardMemoryCardAccess, tr("Fast Forward Memory Card Access"), tr("Unchecked"),
                                tr("Fast forwards through memory card access, both loading and saving. Can reduce "
                                   "waiting times in games that frequently access memory cards."));
-  dialog->registerWidgetHelp(m_ui.ramSize, tr("Installed RAM"),
-                             QString::fromUtf8(Settings::GetCPURAMSizeDisplayName(Settings::DEFAULT_CPU_RAM_SIZE)),
-                             tr("Changes the amount of RAM installed in the emulated console. Games have to use a "
-                                "larger heap size for expanded RAM to be usable. Titles which rely on memory mirrors "
-                                "may break, so it should only be used with compatible mods."));
-  dialog->registerWidgetHelp(m_ui.forceFullRAMMapping, tr("Force Full RAM Mapping"), tr("Unchecked"),
-                             tr("Maps all installed RAM, regardless of the size configured by the BIOS or game. Retail "
-                                "BIOSes only map 8MB, so this is needed for 16MB to be usable without a patched BIOS. "
-                                "Only has an effect when expanded RAM is installed."));
+  m_dialog->registerWidgetHelp(m_ui.fastForwardLoading, tr("Fast Forward While Loading"), tr("Unchecked"),
+                               tr("Fast forwards when the game stops updating the screen while reading from the disc. "
+                                  "Does not apply to animated loading screens."));
+  dialog->registerWidgetHelp(
+    m_ui.ramSize, tr("Installed RAM"),
+    QString::fromUtf8(Settings::GetCPURAMSizeDisplayName(Settings::DEFAULT_CPU_RAM_SIZE)),
+    tr("Changes the amount of RAM installed in the emulated console. Retail games do not use extra RAM. Forced maps "
+       "all installed RAM regardless of game configuration, needed for 16MB with retail BIOSes."));
+  dialog->registerWidgetHelp(
+    m_ui.vramSize, tr("Installed VRAM"),
+    QString::fromUtf8(Settings::GetGPUVRAMSizeDisplayName(Settings::DEFAULT_GPU_VRAM_SIZE)),
+    tr("Changes the amount of VRAM installed in the emulated console. Retail games do not use extra VRAM. Forced makes "
+       "the second VRAM bank accessible regardless of the game enabling it or not."));
 
   dialog->registerWidgetHelp(
     m_ui.cpuExecutionMode, tr("Execution Mode"),
@@ -148,6 +153,10 @@ ConsoleSettingsWidget::ConsoleSettingsWidget(SettingsWindow* dialog, QWidget* pa
                              tr("Simulates stalls in the recompilers when the emulated CPU would have to fetch "
                                 "instructions into its cache. Makes games run closer to their console framerate, at a "
                                 "small cost to performance. Interpreter mode always simulates the instruction cache."));
+  dialog->registerWidgetHelp(
+    m_ui.idleTimeoutScale, tr("Scale Idle Timeout"), tr("Checked"),
+    tr("Games give up waiting for vertical blank after a fixed number of loop iterations, which pass faster when "
+       "overclocking. Scales this timeout to keep games synchronized to vertical blank."));
 
   dialog->registerWidgetHelp(
     m_ui.cdromReadSpeedup, tr("CD-ROM Read Speedup"), tr("None (Double Speed)"),
@@ -168,14 +177,6 @@ ConsoleSettingsWidget::ConsoleSettingsWidget(SettingsWindow* dialog, QWidget* pa
     m_ui.cdromAutoDiscChange, tr("Switch to Next Disc on Stop"), tr("Unchecked"),
     tr("Automatically switches to the next disc in the game when the game stops the CD-ROM motor. No switch will occur "
        "if the last disc in the game is already selected. <strong>Does not work for all games.</strong>"));
-  dialog->registerWidgetHelp(
-    m_ui.cdromHostReadSpeed, tr("Physical Drive Speed"), tr("8x"),
-    tr("Sets the speed of the host drive when using physical discs. Higher speeds can reduce stutter, but make the "
-       "drive louder. Set to \"Don't Change\" to leave the drive at its own speed. Not all drives support this."));
-  dialog->registerWidgetHelp(
-    m_ui.cdromIgnoreHostSubcode, tr("Ignore Physical Drive Subcode"), tr("Unchecked"),
-    tr("Ignores the subchannel provided by the drive when using physical discs, instead always generating subchannel "
-       "data. Won't work with libcrypt games, but can improve read reliability on some drives."));
 
   m_ui.cpuClockSpeed->setEnabled(m_dialog->getEffectiveBoolValue(Settings::CPU_SECTION_NAME, "OverclockEnable", false));
 
@@ -188,6 +189,8 @@ ConsoleSettingsWidget::ConsoleSettingsWidget(SettingsWindow* dialog, QWidget* pa
                                        !m_dialog->hasGameTrait(GameDatabase::Trait::ForceFullBoot));
   SettingWidgetBinder::SetAvailability(
     m_ui.fastForwardMemoryCardAccess, !m_dialog->hasGameTrait(GameDatabase::Trait::DisableFastForwardMemoryCardAccess));
+  SettingWidgetBinder::SetAvailability(m_ui.fastForwardLoading,
+                                       !m_dialog->hasGameTrait(GameDatabase::Trait::DisableFastForwardLoading));
   SettingWidgetBinder::SetAvailability(
     m_ui.cpuExecutionMode, !m_dialog->hasGameTrait(GameDatabase::Trait::ForceInterpreter), m_ui.cpuExecutionModeLabel);
   SettingWidgetBinder::SetAvailability(m_ui.cdromReadSpeedup,
@@ -211,26 +214,14 @@ void ConsoleSettingsWidget::onFastBootChanged()
   m_ui.fastForwardBoot->setEnabled(fast_boot_enabled);
 }
 
-void ConsoleSettingsWidget::onRAMSizeChanged()
-{
-  const CPURAMSize ram_size = Settings::ParseCPURAMSize(m_dialog->getEffectiveStringValue(
-                                                          Settings::CPU_SECTION_NAME, "RAMSize",
-                                                          Settings::GetCPURAMSizeName(Settings::DEFAULT_CPU_RAM_SIZE)))
-                                .value_or(Settings::DEFAULT_CPU_RAM_SIZE);
-  m_ui.forceFullRAMMapping->setEnabled(ram_size != Settings::DEFAULT_CPU_RAM_SIZE);
-}
-
-void ConsoleSettingsWidget::updateRecompilerICacheEnabled()
+void ConsoleSettingsWidget::onExecutionModeChanged()
 {
   const CPUExecutionMode mode =
-    Settings::ParseCPUExecutionMode(
-      m_dialog
-        ->getEffectiveStringValue(Settings::CPU_SECTION_NAME, "ExecutionMode",
-                                  Settings::GetCPUExecutionModeName(Settings::DEFAULT_CPU_EXECUTION_MODE))
-        .c_str())
+    Settings::ParseCPUExecutionMode(m_dialog->getEffectiveStringValue(Settings::CPU_SECTION_NAME, "ExecutionMode"))
       .value_or(Settings::DEFAULT_CPU_EXECUTION_MODE);
   m_ui.recompilerICache->setEnabled(mode != CPUExecutionMode::Interpreter &&
                                     !m_dialog->hasGameTrait(GameDatabase::Trait::ForceRecompilerICache));
+  m_ui.idleTimeoutScale->setEnabled(mode != CPUExecutionMode::Interpreter);
 }
 
 void ConsoleSettingsWidget::onEnableCPUClockSpeedControlChecked(int state)

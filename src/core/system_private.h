@@ -53,8 +53,14 @@ void UpdateGTEAspectRatio();
 /// Updates the resolution scale when it is set to automatic.
 void UpdateAutomaticResolutionScale();
 
+/// Recreates the GPU backend, preserving VRAM. enable_2mb_vram keeps the current VRAM size if not set.
+void RecreateGPU(GPURenderer renderer, std::optional<bool> enable_2mb_vram = std::nullopt);
+
 /// Called on card read/write, handles fast forwarding.
 void OnMemoryCardAccessed();
+
+/// Called when a data sector is delivered to the CPU, used for fast forward while loading.
+void OnCDROMDataSectorRead();
 
 /// Immediately terminates the virtual machine, no state is saved.
 void AbnormalShutdown(const std::string_view reason);
@@ -108,8 +114,10 @@ void OnSystemUndoStateAvailabilityChanged(bool available, u64 timestamp);
 void OnMediaCaptureStarted(MediaCaptureMode mode);
 void OnMediaCaptureStopped();
 
-/// Provided by the host; called once per frame at guest vsync.
-void PumpMessagesOnCoreThread();
+/// Provided by the host, called once per frame at guest vsync with wait_until = 0.
+/// If wait_until is non-zero, blocks until at least one event is processed or wait_until (in Timer ticks) is reached.
+/// Wakeup precision is that of the host event loop, so the caller should do a final precise sleep if needed.
+void PumpMessagesOnCoreThread(u64 wait_until = 0);
 
 /// Requests a specific display window size.
 void RequestResizeHostDisplay(s32 width, s32 height);

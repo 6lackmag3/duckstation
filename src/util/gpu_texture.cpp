@@ -39,7 +39,7 @@ const char* GPUTexture::GetFormatName(GPUTextureFormat format)
     "D16",     // D16
     "D24S8",   // D24S8
     "D32F",    // D32F
-    "D32FS8S", // D32FS8
+    "D32FS8",  // D32FS8
     "R16",     // R16
     "R16I",    // R16I
     "R16U",    // R16U
@@ -386,8 +386,9 @@ void GPUTexture::MakeReadyForSampling()
 {
 }
 
-GPUDownloadTexture::GPUDownloadTexture(u32 width, u32 height, GPUTextureFormat format, bool is_imported)
-  : m_width(width), m_height(height), m_format(format), m_is_imported(is_imported)
+GPUDownloadTexture::GPUDownloadTexture(u32 width, u32 height, GPUTextureFormat format, bool is_imported,
+                                       bool shader_write)
+  : m_width(width), m_height(height), m_format(format), m_is_imported(is_imported), m_shader_write(shader_write)
 {
 }
 

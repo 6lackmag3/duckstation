@@ -219,7 +219,12 @@ TinyString Host::FormatRelativeDateTime(std::time_t timestamp, bool long_format 
     return TranslatePluralToTinyString("Host", TRANSLATE_PLURAL_NOOP("Host", "%n hours ago", "Time difference"),
                                        "Time difference", static_cast<int>(delta) / (60 * 60));
   }
-  else if (use_extended_relative_time && delta >= WEEK)
+  else if (use_extended_relative_time && delta < WEEK)
+  {
+    // Today, yesterday or N days ago.
+    return FormatRelativeDate(timestamp, long_format, for_title);
+  }
+  else if (use_extended_relative_time)
   {
     const std::tm current_tm = Common::LocalTime(static_cast<std::time_t>(current_time)).value_or(std::tm{});
     const std::optional<std::tm> timestamp_tm = Common::LocalTime(timestamp);
@@ -304,4 +309,24 @@ TinyString Host::FormatTimespan(std::time_t timespan, bool long_format /*= false
     else
       return TinyString(TRANSLATE_SV("Host", "None"));
   }
+}
+
+TinyString Host::FormatByteSize(u64 size, bool exact /* = false */)
+{
+  static constexpr u64 KB = 1024;
+  static constexpr u64 MB = KB * 1024;
+  static constexpr u64 GB = MB * 1024;
+
+  if (size >= GB)
+    return TinyString::from_format(TRANSLATE_FS("Host", "{:.1f} GB"), static_cast<double>(size) / GB);
+  else if (size >= MB && exact)
+    return TinyString::from_format(TRANSLATE_FS("Host", "{:.1f} MB"), static_cast<double>(size) / MB);
+  else if (size >= MB)
+    return TinyString::from_format(TRANSLATE_FS("Host", "{} MB"), (size + (MB - 1)) / MB);
+  else if (size >= KB && exact)
+    return TinyString::from_format(TRANSLATE_FS("Host", "{:.1f} KB"), static_cast<double>(size) / KB);
+  else if (size >= KB)
+    return TinyString::from_format(TRANSLATE_FS("Host", "{} KB"), (size + (KB - 1)) / KB);
+  else
+    return TinyString::from_format(TRANSLATE_FS("Host", "{} B"), size);
 }

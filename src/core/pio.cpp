@@ -784,6 +784,7 @@ bool PIO::Initialize(Error* error)
     return false;
   }
 
+  g_pio_device->Reset();
   return true;
 }
 
@@ -829,6 +830,15 @@ std::unique_ptr<PIO::Device> PIO::CreateDevice(PIODeviceType type)
 void PIO::Reset()
 {
   g_pio_device->Reset();
+}
+
+size_t PIO::GetMaxStateSize()
+{
+  // Device type and size header, plus device registers.
+  static constexpr size_t HEADER_SIZE = 64;
+  return (g_settings.pio_device_type == PIODeviceType::XplorerCart) ?
+           (HEADER_SIZE + Flash::TOTAL_SIZE + XplorerCart::SRAM_SIZE) :
+           HEADER_SIZE;
 }
 
 bool PIO::DoState(StateWrapper& sw)

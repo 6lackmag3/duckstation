@@ -5,6 +5,7 @@
 #include "mainwindow.h"
 #include "qthost.h"
 #include "qtutils.h"
+#include "settingswindow.h"
 
 #include "core/core.h"
 #include "core/game_list.h"
@@ -16,7 +17,9 @@
 #include <QtCore/QAbstractTableModel>
 #include <QtCore/QDebug>
 #include <QtCore/QDir>
+#include <QtCore/QFileInfo>
 #include <QtCore/QItemSelectionModel>
+#include <QtCore/QMimeData>
 #include <QtCore/QSettings>
 #include <QtCore/QUrl>
 #include <QtWidgets/QCheckBox>
@@ -28,6 +31,22 @@
 #include "moc_gamelistsettingswidget.cpp"
 
 using namespace Qt::StringLiterals;
+
+static QStringList GetDroppedPaths(const QMimeData* data, bool include_files)
+{
+  QStringList paths;
+  for (const QUrl& url : data->urls())
+  {
+    if (!url.isLocalFile())
+      continue;
+
+    const QFileInfo fi(url.toLocalFile());
+    if (fi.isDir() || (include_files && fi.isFile()))
+      paths.push_back(QDir::toNativeSeparators(QDir::cleanPath(fi.absoluteFilePath())));
+  }
+
+  return paths;
+}
 
 GameListSearchDirectoriesModel::GameListSearchDirectoriesModel(QObject* parent) : QAbstractTableModel(parent)
 {
@@ -87,6 +106,10 @@ QVariant GameListSearchDirectoriesModel::headerData(int section, Qt::Orientation
 
 Qt::ItemFlags GameListSearchDirectoriesModel::flags(const QModelIndex& index) const
 {
+  // drops are only accepted on the root, i.e. anywhere in the view
+  if (!index.isValid())
+    return Qt::ItemIsDropEnabled;
+
   Qt::ItemFlags flags = QAbstractTableModel::flags(index);
   if (index.isValid() && index.column() == 1)
     flags |= Qt::ItemIsUserCheckable;
@@ -109,6 +132,33 @@ bool GameListSearchDirectoriesModel::setData(const QModelIndex& index, const QVa
   row.recursive = recursive;
   emit dataChanged(this->index(index.row(), 0), this->index(index.row(), 1), {Qt::DecorationRole, Qt::CheckStateRole});
   save();
+  return true;
+}
+
+Qt::DropActions GameListSearchDirectoriesModel::supportedDropActions() const
+{
+  return Qt::CopyAction | Qt::MoveAction | Qt::LinkAction;
+}
+
+QStringList GameListSearchDirectoriesModel::mimeTypes() const
+{
+  return {u"text/uri-list"_s};
+}
+
+bool GameListSearchDirectoriesModel::canDropMimeData(const QMimeData* data, Qt::DropAction action, int row, int column,
+                                                     const QModelIndex& parent) const
+{
+  return !GetDroppedPaths(data, false).isEmpty();
+}
+
+bool GameListSearchDirectoriesModel::dropMimeData(const QMimeData* data, Qt::DropAction action, int row, int column,
+                                                  const QModelIndex& parent)
+{
+  QStringList paths = GetDroppedPaths(data, false);
+  if (paths.isEmpty())
+    return false;
+
+  emit pathsDropped(paths);
   return true;
 }
 
@@ -204,6 +254,56 @@ void GameListSearchDirectoriesModel::save()
   emit settingsChanged();
 }
 
+GameListExcludedPathsModel::GameListExcludedPathsModel(QObject* parent) : QStringListModel(parent)
+{
+}
+
+GameListExcludedPathsModel::~GameListExcludedPathsModel() = default;
+
+QVariant GameListExcludedPathsModel::data(const QModelIndex& index, int role) const
+{
+  if (role == Qt::DecorationRole && index.isValid())
+    return QIcon(u":/icons/monochrome/svg/file-forbid-line.svg"_s);
+
+  return QStringListModel::data(index, role);
+}
+
+Qt::ItemFlags GameListExcludedPathsModel::flags(const QModelIndex& index) const
+{
+  // drops are only accepted on the root, i.e. anywhere in the view
+  if (!index.isValid())
+    return Qt::ItemIsDropEnabled;
+
+  return Qt::ItemIsSelectable | Qt::ItemIsEnabled | Qt::ItemNeverHasChildren;
+}
+
+Qt::DropActions GameListExcludedPathsModel::supportedDropActions() const
+{
+  return Qt::CopyAction | Qt::MoveAction | Qt::LinkAction;
+}
+
+QStringList GameListExcludedPathsModel::mimeTypes() const
+{
+  return {u"text/uri-list"_s};
+}
+
+bool GameListExcludedPathsModel::canDropMimeData(const QMimeData* data, Qt::DropAction action, int row, int column,
+                                                 const QModelIndex& parent) const
+{
+  return !GetDroppedPaths(data, true).isEmpty();
+}
+
+bool GameListExcludedPathsModel::dropMimeData(const QMimeData* data, Qt::DropAction action, int row, int column,
+                                              const QModelIndex& parent)
+{
+  QStringList paths = GetDroppedPaths(data, true);
+  if (paths.isEmpty())
+    return false;
+
+  emit pathsDropped(paths);
+  return true;
+}
+
 GameListSettingsWidget::GameListSettingsWidget(SettingsWindow* dialog, QWidget* parent) : QWidget(parent)
 {
   m_ui.setupUi(this);
@@ -211,6 +311,8 @@ GameListSettingsWidget::GameListSettingsWidget(SettingsWindow* dialog, QWidget* 
   m_directory_model = new GameListSearchDirectoriesModel(this);
   m_ui.searchDirectoryList->setModel(m_directory_model);
   QtUtils::SetColumnWidthsForTreeView(m_ui.searchDirectoryList, {-1, 120});
+  m_excluded_paths_model = new GameListExcludedPathsModel(this);
+  m_ui.excludedPaths->setModel(m_excluded_paths_model);
 
   connect(m_ui.searchDirectoryList->selectionModel(), &QItemSelectionModel::selectionChanged, this,
           &GameListSettingsWidget::onDirectoryListSelectionChanged);
@@ -227,12 +329,49 @@ GameListSettingsWidget::GameListSettingsWidget(SettingsWindow* dialog, QWidget* 
           &GameListSettingsWidget::onAddExcludedFolderButtonClicked);
   connect(m_ui.removeExcludedPath, &QPushButton::clicked, this,
           &GameListSettingsWidget::onRemoveExcludedPathButtonClicked);
-  connect(m_ui.excludedPaths, &QListWidget::itemSelectionChanged, this,
+  connect(m_ui.excludedPaths->selectionModel(), &QItemSelectionModel::selectionChanged, this,
           &GameListSettingsWidget::onExcludedPathsSelectionChanged);
-  connect(m_ui.excludedPaths, &QListWidget::customContextMenuRequested, this,
+  connect(m_ui.excludedPaths, &QListView::customContextMenuRequested, this,
           &GameListSettingsWidget::onExcludedPathsContextMenuRequested);
   connect(m_ui.rescanAllGames, &QPushButton::clicked, this, &GameListSettingsWidget::onRescanAllGamesClicked);
   connect(m_ui.scanForNewGames, &QPushButton::clicked, this, &GameListSettingsWidget::onScanForNewGamesClicked);
+
+  // queued, so we're not showing message boxes from inside the drop handler
+  connect(
+    m_directory_model, &GameListSearchDirectoriesModel::pathsDropped, this,
+    [this](const QStringList& paths) {
+      for (const QString& path : paths)
+        promptAndAddSearchDirectory(path);
+    },
+    Qt::QueuedConnection);
+  connect(
+    m_excluded_paths_model, &GameListExcludedPathsModel::pathsDropped, this,
+    [this](const QStringList& paths) {
+      for (const QString& path : paths)
+        addExcludedPath(path);
+    },
+    Qt::QueuedConnection);
+
+  // used to draw placeholder text when the lists are empty
+  m_ui.searchDirectoryList->viewport()->installEventFilter(this);
+  m_ui.excludedPaths->viewport()->installEventFilter(this);
+
+  dialog->registerWidgetHelp(
+    m_ui.searchDirectoryList, tr("Search Directories"), QString(),
+    tr("Directories which will be scanned for games. Enable Scan Recursively to also search subdirectories, which "
+       "takes longer but finds games stored in nested folders. Folders can also be dragged here from your file "
+       "manager."));
+  dialog->registerWidgetHelp(
+    m_ui.excludedPaths, tr("Excluded Paths"), QString(),
+    tr("Files and directories which will be skipped when scanning for games, for example images you do not want to "
+       "appear in the game list. Files and folders can also be dragged here from your file manager."));
+  dialog->registerWidgetHelp(m_ui.scanForNewGames, tr("Scan For New Games"), QString(),
+                             tr("Scans the search directories for files which are not already in the game list. "
+                                "Previously-scanned games are loaded from the cache, so this is usually quick."));
+  dialog->registerWidgetHelp(
+    m_ui.rescanAllGames, tr("Rescan All Games"), QString(),
+    tr("Discards the game list cache and scans every file in the search directories again. Use this if game details "
+       "such as titles or serials are incorrect. May take a while for large collections."));
 
   refreshDirectoryList();
   refreshExclusionList();
@@ -248,9 +387,9 @@ bool GameListSettingsWidget::addExcludedPath(const QString& path)
 
   Host::CommitBaseSettingChanges();
 
-  QListWidgetItem* const it = new QListWidgetItem(path);
-  it->setIcon(QIcon(u":/icons/monochrome/svg/file-forbid-line.svg"_s));
-  m_ui.excludedPaths->addItem(it);
+  const int row = m_excluded_paths_model->rowCount();
+  m_excluded_paths_model->insertRow(row);
+  m_excluded_paths_model->setData(m_excluded_paths_model->index(row), path);
 
   g_main_window->refreshGameList(false);
   return true;
@@ -258,15 +397,10 @@ bool GameListSettingsWidget::addExcludedPath(const QString& path)
 
 void GameListSettingsWidget::refreshExclusionList()
 {
-  m_ui.excludedPaths->clear();
-
-  const std::vector<std::string> paths(Core::GetBaseStringListSetting(GameList::CONFIG_SECTION_NAME, "ExcludedPaths"));
-  for (const std::string& path : paths)
-  {
-    QListWidgetItem* const it = new QListWidgetItem(QString::fromStdString(path));
-    it->setIcon(QIcon(u":/icons/monochrome/svg/file-forbid-line.svg"_s));
-    m_ui.excludedPaths->addItem(it);
-  }
+  QStringList paths;
+  for (const std::string& path : Core::GetBaseStringListSetting(GameList::CONFIG_SECTION_NAME, "ExcludedPaths"))
+    paths.push_back(QString::fromStdString(path));
+  m_excluded_paths_model->setStringList(paths);
 
   m_ui.removeExcludedPath->setEnabled(false);
 }
@@ -304,6 +438,32 @@ void GameListSettingsWidget::onDirectoryListContextMenuRequested(const QPoint& p
   menu->popup(m_ui.searchDirectoryList->mapToGlobal(point));
 }
 
+bool GameListSettingsWidget::eventFilter(QObject* object, QEvent* event)
+{
+  if (event->type() == QEvent::Paint)
+  {
+    if (object == m_ui.searchDirectoryList->viewport())
+    {
+      if (QtUtils::DrawItemViewPlaceholderText(
+            m_ui.searchDirectoryList,
+            tr("No search directories. Add a folder, or drag one here, to choose where your games are stored.")))
+      {
+        return true;
+      }
+    }
+    else if (object == m_ui.excludedPaths->viewport())
+    {
+      if (QtUtils::DrawItemViewPlaceholderText(
+            m_ui.excludedPaths, tr("No excluded paths. Files or folders added here will be skipped when scanning.")))
+      {
+        return true;
+      }
+    }
+  }
+
+  return QWidget::eventFilter(object, event);
+}
+
 void GameListSettingsWidget::addSearchDirectory(QWidget* parent_widget)
 {
   const QString dir = QDir::toNativeSeparators(QDir::cleanPath(
@@ -312,6 +472,11 @@ void GameListSettingsWidget::addSearchDirectory(QWidget* parent_widget)
   if (dir.isEmpty())
     return;
 
+  promptAndAddSearchDirectory(dir);
+}
+
+void GameListSettingsWidget::promptAndAddSearchDirectory(const QString& dir)
+{
   QMessageBox::StandardButton selection = QtUtils::MessageBoxQuestion(
     this, tr("Scan Recursively?"),
     tr("Would you like to scan the directory \"%1\" recursively?\n\nScanning recursively takes "
@@ -360,16 +525,19 @@ void GameListSettingsWidget::onAddExcludedFolderButtonClicked()
 
 void GameListSettingsWidget::onRemoveExcludedPathButtonClicked()
 {
-  const QList<QListWidgetItem*> items = m_ui.excludedPaths->selectedItems();
-  if (items.isEmpty())
+  QModelIndexList indices = m_ui.excludedPaths->selectionModel()->selectedRows();
+  if (indices.isEmpty())
     return;
 
+  // remove from the bottom up, so the row numbers stay valid
+  std::ranges::sort(indices, [](const QModelIndex& lhs, const QModelIndex& rhs) { return lhs.row() > rhs.row(); });
+
   bool changed = false;
-  for (QListWidgetItem* const item : items)
+  for (const QModelIndex& index : indices)
   {
     changed |= Core::RemoveValueFromBaseStringListSetting(GameList::CONFIG_SECTION_NAME, "ExcludedPaths",
-                                                          item->text().toUtf8().constData());
-    delete item;
+                                                          index.data().toString().toUtf8().constData());
+    m_excluded_paths_model->removeRow(index.row());
   }
 
   if (changed)
@@ -380,13 +548,13 @@ void GameListSettingsWidget::onRemoveExcludedPathButtonClicked()
 
 void GameListSettingsWidget::onExcludedPathsSelectionChanged()
 {
-  m_ui.removeExcludedPath->setEnabled(!m_ui.excludedPaths->selectedItems().isEmpty());
+  m_ui.removeExcludedPath->setEnabled(m_ui.excludedPaths->selectionModel()->hasSelection());
 }
 
 void GameListSettingsWidget::onExcludedPathsContextMenuRequested(const QPoint& point)
 {
   QMenu* const menu = QtUtils::NewPopupMenu(this);
-  if (!m_ui.excludedPaths->selectedItems().isEmpty())
+  if (m_ui.excludedPaths->selectionModel()->hasSelection())
   {
     menu->addAction(QIcon(u":/icons/monochrome/svg/folder-reduce-line.svg"_s), tr("Remove"), this,
                     &GameListSettingsWidget::onRemoveExcludedPathButtonClicked);

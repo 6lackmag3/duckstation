@@ -287,12 +287,14 @@ struct Settings : public GPUSettings
   CPUExecutionMode cpu_execution_mode = DEFAULT_CPU_EXECUTION_MODE;
   CPUFastmemMode cpu_fastmem_mode = DEFAULT_CPU_FASTMEM_MODE;
   CPURAMSize cpu_ram_size = DEFAULT_CPU_RAM_SIZE;
+  GPUVRAMSize gpu_vram_size = DEFAULT_GPU_VRAM_SIZE;
   bool cpu_overclock_enable : 1 = false;
   bool cpu_overclock_active : 1 = false;
   bool cpu_recompiler_memory_exceptions : 1 = false;
   bool cpu_recompiler_block_linking : 1 = true;
   bool cpu_recompiler_icache : 1 = false;
-  bool cpu_force_full_ram_mapping : 1 = false;
+  bool cpu_idle_fast_forward : 1 = true;
+  bool cpu_idle_timeout_scale : 1 = true;
 
   bool gpu_dump_cpu_to_vram_copies : 1 = false;
   bool gpu_dump_vram_to_cpu_copies : 1 = false;
@@ -312,6 +314,7 @@ struct Settings : public GPUSettings
 
   bool memory_card_use_playlist_title : 1 = true;
   bool memory_card_fast_forward_access : 1 = false;
+  bool fast_forward_loading : 1 = false;
 
   bool cdrom_region_check : 1 = false;
   bool cdrom_subq_skew : 1 = false;
@@ -354,7 +357,7 @@ struct Settings : public GPUSettings
   bool achievements_hardcore_mode : 1 = false;
   bool achievements_encore_mode : 1 = false;
   bool achievements_spectator_mode : 1 = false;
-  bool achievements_track_unofficial : 1 = false;
+  bool achievements_track_unpromoted : 1 = false;
   bool achievements_use_raintegration : 1 = false;
   bool achievements_notifications : 1 = true;
   bool achievements_leaderboard_notifications : 1 = true;
@@ -495,6 +498,12 @@ struct Settings : public GPUSettings
   static const char* GetCPURAMSizeDisplayName(CPURAMSize size);
   static u32 GetCPURAMSizeBytes(CPURAMSize size);
   static std::optional<CPURAMSize> GetCPURAMSizeForBytes(u32 bytes);
+  static bool IsCPURAMSizeForced(CPURAMSize size);
+  static CPURAMSize GetForcedCPURAMSize(CPURAMSize size);
+
+  static std::optional<GPUVRAMSize> ParseGPUVRAMSize(std::string_view str);
+  static const char* GetGPUVRAMSizeName(GPUVRAMSize size);
+  static const char* GetGPUVRAMSizeDisplayName(GPUVRAMSize size);
 
   static std::optional<GPURenderer> ParseRendererName(std::string_view str);
   static const char* GetRendererName(GPURenderer renderer);
@@ -638,6 +647,7 @@ struct Settings : public GPUSettings
   static constexpr CPUFastmemMode DEFAULT_CPU_FASTMEM_MODE = CPUFastmemMode::LUT;
 #endif
   static constexpr CPURAMSize DEFAULT_CPU_RAM_SIZE = CPURAMSize::Default;
+  static constexpr GPUVRAMSize DEFAULT_GPU_VRAM_SIZE = GPUVRAMSize::Default;
 
   static constexpr u8 DEFAULT_CDROM_READAHEAD_SECTORS = 8;
   static constexpr u32 DEFAULT_CDROM_MAX_SEEK_SPEEDUP_CYCLES = 30000;

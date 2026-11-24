@@ -52,7 +52,7 @@ GPUBackend::Stats GPUBackend::s_stats = {};
 
 ALIGN_TO_CACHE_LINE static CoreThreadState s_core_thread_state = {};
 
-GPUBackend::GPUBackend()
+GPUBackend::GPUBackend(bool enable_2mb_vram) : m_vram_height(enable_2mb_vram ? VRAM_2MB_HEIGHT : VRAM_1MB_HEIGHT)
 {
   GPU_SW_Rasterizer::SelectImplementation();
   ResetStatistics();
@@ -133,7 +133,8 @@ void GPUBackend::DrawScreenQuadWithBarrier(const GSVector4i bounds, const GSVect
 
 bool GPUBackend::Initialize(bool clear_vram, Error* error)
 {
-  m_clamped_drawing_area = GPU::GetClampedDrawingArea(GPU_SW_Rasterizer::g_drawing_area);
+  m_clamped_drawing_area =
+    GPU::GetClampedDrawingArea(GPU_SW_Rasterizer::g_drawing_area, GPU_SW_Rasterizer::g_addressable_vram_height);
   return true;
 }
 
@@ -504,7 +505,9 @@ void GPUBackend::HandleCommand(const VideoThreadCommand* cmd)
     {
       const GPUBackendSetDrawingAreaCommand* ccmd = static_cast<const GPUBackendSetDrawingAreaCommand*>(cmd);
       GPU_SW_Rasterizer::g_drawing_area = ccmd->new_area;
-      m_clamped_drawing_area = GPU::GetClampedDrawingArea(ccmd->new_area);
+      GPU_SW_Rasterizer::g_addressable_vram_height = ccmd->vram_height;
+      GPU_SW_Rasterizer::g_addressable_vram_height_mask = ccmd->vram_height - 1u;
+      m_clamped_drawing_area = GPU::GetClampedDrawingArea(ccmd->new_area, ccmd->vram_height);
       DrawingAreaChanged();
     }
     break;
@@ -688,13 +691,11 @@ void GPUBackend::GetStatsString(SmallStringBase& str) const
 
 void GPUBackend::GetMemoryStatsString(SmallStringBase& str) const
 {
-  const u32 vram_usage_mb = static_cast<u32>((g_gpu_device->GetVRAMUsage() + (1048576 - 1)) / 1048576);
-  const u32 stream_kb = static_cast<u32>((s_stats.host_buffer_streamed + (1024 - 1)) / 1024);
-
-  str.format("{}MB " BOLD("VRAM") DOT_SEP "{}KB " BOLD("STR") DOT_SEP "{} " BOLD("B") DOT_SEP "{} " BOLD("RP") DOT_SEP
+  str.format("{} " BOLD("VRAM") DOT_SEP "{} " BOLD("STR") DOT_SEP "{} " BOLD("B") DOT_SEP "{} " BOLD("RP") DOT_SEP
              "{} " BOLD("TC") DOT_SEP "{} " BOLD("TU"),
-             vram_usage_mb, stream_kb, s_stats.host_num_barriers, s_stats.host_num_render_passes,
-             s_stats.host_num_copies, s_stats.host_num_uploads);
+             Host::FormatByteSize(g_gpu_device->GetVRAMUsage()), Host::FormatByteSize(s_stats.host_buffer_streamed),
+             s_stats.host_num_barriers, s_stats.host_num_render_passes, s_stats.host_num_copies,
+             s_stats.host_num_uploads);
 }
 
 void GPUBackend::GetFrameNumberString(SmallStringBase& str) const
@@ -903,7 +904,7 @@ namespace {
 class GPUNullBackend final : public GPUBackend
 {
 public:
-  GPUNullBackend();
+  explicit GPUNullBackend(bool enable_2mb_vram);
   ~GPUNullBackend() override;
 
   bool Initialize(bool upload_vram, Error* error) override;
@@ -942,7 +943,9 @@ public:
 
 } // namespace
 
-GPUNullBackend::GPUNullBackend() = default;
+GPUNullBackend::GPUNullBackend(bool enable_2mb_vram) : GPUBackend(enable_2mb_vram)
+{
+}
 
 GPUNullBackend::~GPUNullBackend() = default;
 
@@ -1040,7 +1043,7 @@ void GPUNullBackend::DoMemoryState(StateWrapper& sw, System::MemorySaveState& ms
 {
 }
 
-Common::unique_aligned_ptr<GPUBackend> GPUBackend::CreateNullBackend()
+Common::unique_aligned_ptr<GPUBackend> GPUBackend::CreateNullBackend(bool enable_2mb_vram)
 {
-  return Common::make_unique_aligned<GPUNullBackend>(HOST_CACHE_LINE_SIZE);
+  return Common::make_unique_aligned<GPUNullBackend>(HOST_CACHE_LINE_SIZE, enable_2mb_vram);
 }

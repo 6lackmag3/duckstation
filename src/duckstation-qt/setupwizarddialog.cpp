@@ -224,9 +224,9 @@ void SetupWizardDialog::languageChanged()
 void SetupWizardDialog::setupBIOSPage()
 {
   SettingWidgetBinder::BindWidgetToFolderSetting(nullptr, m_ui.biosSearchDirectory, m_ui.browseBiosSearchDirectory,
-                                                 tr("Select BIOS Directory"), m_ui.openBiosSearchDirectory,
-                                                 m_ui.resetBiosSearchDirectory, Settings::BIOS_SECTION_NAME,
-                                                 "SearchDirectory", Path::Combine(EmuFolders::DataRoot, "bios"));
+                                                 tr("Select BIOS Directory"), m_ui.biosSearchDirectoryMore,
+                                                 Settings::BIOS_SECTION_NAME, "SearchDirectory",
+                                                 Path::Combine(EmuFolders::DataRoot, "bios"));
 
   refreshBIOSList();
 
@@ -298,7 +298,32 @@ void SetupWizardDialog::setupGameListPage(bool initial)
   connect(m_ui.searchDirectoryList->selectionModel(), &QItemSelectionModel::selectionChanged, this,
           &SetupWizardDialog::onSearchDirectoryListSelectionChanged);
 
+  // used to draw placeholder text when the list is empty
+  m_ui.searchDirectoryList->viewport()->installEventFilter(this);
+
+  // queued, so we're not showing message boxes from inside the drop handler
+  connect(
+    m_directory_model, &GameListSearchDirectoriesModel::pathsDropped, this,
+    [this](const QStringList& paths) {
+      for (const QString& path : paths)
+        promptAndAddSearchDirectory(path);
+    },
+    Qt::QueuedConnection);
+
   refreshDirectoryList();
+}
+
+bool SetupWizardDialog::eventFilter(QObject* object, QEvent* event)
+{
+  if (event->type() == QEvent::Paint && object == m_ui.searchDirectoryList->viewport() &&
+      QtUtils::DrawItemViewPlaceholderText(
+        m_ui.searchDirectoryList,
+        tr("No search directories. Add a folder, or drag one here, to choose where your games are stored.")))
+  {
+    return true;
+  }
+
+  return QDialog::eventFilter(object, event);
 }
 
 void SetupWizardDialog::onDirectoryListContextMenuRequested(const QPoint& point)
@@ -326,6 +351,11 @@ void SetupWizardDialog::onAddSearchDirectoryButtonClicked()
   if (dir.isEmpty())
     return;
 
+  promptAndAddSearchDirectory(dir);
+}
+
+void SetupWizardDialog::promptAndAddSearchDirectory(const QString& dir)
+{
   QMessageBox::StandardButton selection = QtUtils::MessageBoxQuestion(
     this, tr("Scan Recursively?"),
     tr("Would you like to scan the directory \"%1\" recursively?\n\nScanning recursively takes "
@@ -723,7 +753,8 @@ void SetupWizardDialog::onGridViewChanged(bool checked)
 
   // NOTE: No settings apply here, we explicitly change the layout.
   Core::SetBaseBoolSettingValue(GameList::UI_SECTION_NAME, GameList::SETTING_KEY_GRID_VIEW, setting_value);
-  Core::SetBaseBoolSettingValue(GameList::UI_SECTION_NAME, GameList::SETTING_KEY_FULLSCREENUI_GRID_VIEW, setting_value);
+  Core::SetBaseStringSettingValue(GameList::UI_SECTION_NAME, GameList::SETTING_KEY_FULLSCREENUI_VIEW,
+                                  setting_value ? "Grid" : "List");
   Host::CommitBaseSettingChanges();
   g_main_window->getGameListWidget()->reloadViewModeFromSettings();
 }

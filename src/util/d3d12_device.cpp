@@ -1702,7 +1702,8 @@ void D3D12Device::PushUniformBuffer(ID3D12GraphicsCommandList4* const cmdlist, b
     0, // HWBatch
     0, // HWFeedbackLoopBatch
     0, // HWImageBatch
-    0, // ComputeMultiTextureAndUBO
+    0, // ComputeImageOutput
+    0, // ComputeBufferOutput
   };
 
   s_stats.buffer_streamed += data_size;
@@ -1776,16 +1777,17 @@ bool D3D12Device::CreateRootSignatures(Error* error)
     D3D12::SetObjectName(rs.Get(), "Multi Texture Pipeline Layout");
   }
 
+  for (const auto layout : {GPUPipeline::Layout::ComputeImageOutput, GPUPipeline::Layout::ComputeBufferOutput})
   {
-    auto& rs = m_root_signatures[static_cast<u8>(GPUPipeline::Layout::ComputeMultiTextureAndUBO)];
-
+    auto& rs = m_root_signatures[static_cast<u8>(layout)];
     rsb.AddCBVParameter(0, D3D12_SHADER_VISIBILITY_ALL);
     rsb.AddDescriptorTable(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 0, MAX_TEXTURE_SAMPLERS, D3D12_SHADER_VISIBILITY_ALL);
     rsb.AddDescriptorTable(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, 0, MAX_TEXTURE_SAMPLERS, D3D12_SHADER_VISIBILITY_ALL);
-    rsb.AddDescriptorTable(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 0, MAX_IMAGE_RENDER_TARGETS, D3D12_SHADER_VISIBILITY_ALL);
+    rsb.AddDescriptorTable(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 0,
+                           (layout == GPUPipeline::Layout::ComputeBufferOutput) ? 1 : MAX_IMAGE_RENDER_TARGETS,
+                           D3D12_SHADER_VISIBILITY_ALL);
     if (!(rs = rsb.Create(error, true)))
       return false;
-    D3D12::SetObjectName(rs.Get(), "Compute Multi Texture + UBO Pipeline Layout");
   }
 
   {
@@ -2024,10 +2026,6 @@ void D3D12Device::BeginRenderPass()
   // TODO: Stats
   m_in_render_pass = true;
   s_stats.num_render_passes++;
-
-  // If this is a new command buffer, bind the pipeline and such.
-  if ((m_dirty_flags & DIRTY_FLAG_INITIAL) && m_current_pipeline)
-    SetInitialPipelineState();
 }
 
 bool D3D12Device::InRenderPass()
@@ -2047,47 +2045,41 @@ void D3D12Device::EndRenderPass()
 
 void D3D12Device::SetPipeline(GPUPipeline* pipeline)
 {
-  // First draw? Bind everything.
-  if (m_dirty_flags & DIRTY_FLAG_INITIAL)
-  {
-    m_current_pipeline = static_cast<D3D12Pipeline*>(pipeline);
-    if (!m_current_pipeline)
-      return;
-
-    SetInitialPipelineState();
+  if (m_current_pipeline == pipeline)
     return;
-  }
-  else if (m_current_pipeline == pipeline)
-  {
-    return;
-  }
 
   m_current_pipeline = static_cast<D3D12Pipeline*>(pipeline);
+  if (!m_current_pipeline)
+    return;
 
-  ID3D12GraphicsCommandList4* cmdlist = GetCommandList();
-  cmdlist->SetPipelineState(m_current_pipeline->GetPipeline());
+  m_dirty_flags |= DIRTY_FLAG_PIPELINE;
 
-  if (D3D12_PRIMITIVE_TOPOLOGY topology = m_current_pipeline->GetTopology(); topology != m_current_topology)
+  const GPUPipeline::Layout layout = m_current_pipeline->GetLayout();
+  if (!IsComputeLayout(layout))
   {
-    m_current_topology = topology;
-    cmdlist->IASetPrimitiveTopology(topology);
+    if (const D3D12_PRIMITIVE_TOPOLOGY topology = m_current_pipeline->GetTopology(); topology != m_current_topology)
+    {
+      m_current_topology = topology;
+      m_dirty_flags |= DIRTY_FLAG_PRIMITIVE_TOPOLOGY;
+    }
+
+    if (const u32 vertex_stride = m_current_pipeline->GetVertexStride();
+        vertex_stride > 0 && m_current_vertex_stride != vertex_stride)
+    {
+      m_current_vertex_stride = vertex_stride;
+      m_dirty_flags |= DIRTY_FLAG_VERTEX_BUFFER;
+    }
+
+    // TODO: we don't need to change the blend constant if blending isn't on.
+    if (const u32 blend_constants = m_current_pipeline->GetBlendConstants();
+        m_current_blend_constant != blend_constants)
+    {
+      m_current_blend_constant = blend_constants;
+      m_dirty_flags |= DIRTY_FLAG_BLEND_CONSTANTS;
+    }
   }
 
-  if (u32 vertex_stride = m_current_pipeline->GetVertexStride();
-      vertex_stride > 0 && m_current_vertex_stride != vertex_stride)
-  {
-    m_current_vertex_stride = vertex_stride;
-    SetVertexBuffer(cmdlist);
-  }
-
-  // TODO: we don't need to change the blend constant if blending isn't on.
-  if (u32 blend_constants = m_current_pipeline->GetBlendConstants(); m_current_blend_constant != blend_constants)
-  {
-    m_current_blend_constant = blend_constants;
-    cmdlist->OMSetBlendFactor(m_current_pipeline->GetBlendConstantsF().data());
-  }
-
-  if (GPUPipeline::Layout layout = m_current_pipeline->GetLayout(); m_current_pipeline_layout != layout)
+  if (m_current_pipeline_layout != layout)
   {
     m_current_pipeline_layout = layout;
     m_dirty_flags |=
@@ -2122,56 +2114,6 @@ void D3D12Device::InvalidateCachedState()
                   ((m_current_render_pass_flags & GPUPipeline::BindRenderTargetsAsImages) ? ~0u : ~DIRTY_FLAG_RT_UAVS);
 }
 
-void D3D12Device::SetInitialPipelineState()
-{
-  DebugAssert(m_current_pipeline);
-  m_dirty_flags &= ~DIRTY_FLAG_INITIAL;
-
-  ID3D12GraphicsCommandList4* cmdlist = GetCommandList();
-
-  m_current_vertex_stride = m_current_pipeline->GetVertexStride();
-  SetVertexBuffer(cmdlist);
-  const D3D12_INDEX_BUFFER_VIEW ib_view = {m_index_buffer.GetGPUPointer(), m_index_buffer.GetSize(),
-                                           DXGI_FORMAT_R16_UINT};
-  cmdlist->IASetIndexBuffer(&ib_view);
-
-  cmdlist->SetPipelineState(m_current_pipeline->GetPipeline());
-  m_current_pipeline_layout = m_current_pipeline->GetLayout();
-
-  m_current_topology = m_current_pipeline->GetTopology();
-  cmdlist->IASetPrimitiveTopology(m_current_topology);
-
-  m_current_blend_constant = m_current_pipeline->GetBlendConstants();
-  cmdlist->OMSetBlendFactor(m_current_pipeline->GetBlendConstantsF().data());
-
-  SetViewport(cmdlist);
-  SetScissor(cmdlist);
-}
-
-void D3D12Device::SetVertexBuffer(ID3D12GraphicsCommandList4* cmdlist)
-{
-  const D3D12_VERTEX_BUFFER_VIEW vb_view = {m_vertex_buffer.GetGPUPointer(), m_vertex_buffer.GetSize(),
-                                            m_current_vertex_stride};
-  cmdlist->IASetVertexBuffers(0, 1, &vb_view);
-}
-
-void D3D12Device::SetViewport(ID3D12GraphicsCommandList4* cmdlist)
-{
-  const D3D12_VIEWPORT vp = {static_cast<float>(m_current_viewport.left),
-                             static_cast<float>(m_current_viewport.top),
-                             static_cast<float>(m_current_viewport.width()),
-                             static_cast<float>(m_current_viewport.height()),
-                             0.0f,
-                             1.0f};
-  cmdlist->RSSetViewports(1, &vp);
-}
-
-void D3D12Device::SetScissor(ID3D12GraphicsCommandList4* cmdlist)
-{
-  static_assert(sizeof(GSVector4i) == sizeof(D3D12_RECT));
-  cmdlist->RSSetScissorRects(1, reinterpret_cast<const D3D12_RECT*>(&m_current_scissor));
-}
-
 void D3D12Device::SetTextureSampler(u32 slot, GPUTexture* texture, GPUSampler* sampler)
 {
   D3D12Texture* T = static_cast<D3D12Texture*>(texture);
@@ -2199,6 +2141,15 @@ void D3D12Device::SetTextureSampler(u32 slot, GPUTexture* texture, GPUSampler* s
     m_current_samplers[slot] = sampler_to_bind;
     m_dirty_flags |= DIRTY_FLAG_SAMPLERS;
   }
+}
+
+void D3D12Device::SetComputeOutputBuffer(GPUDownloadTexture* buffer)
+{
+  DebugAssert(!buffer || buffer->IsShaderWritable());
+  if (m_compute_output_buffer == buffer)
+    return;
+  m_compute_output_buffer = static_cast<D3D12DownloadTexture*>(buffer);
+  m_dirty_flags |= DIRTY_FLAG_COMPUTE_OUTPUT_BUFFER;
 }
 
 void D3D12Device::SetTextureBuffer(GPUTextureBuffer* buffer)
@@ -2428,20 +2379,8 @@ void D3D12Device::RenderTextureMipmap(D3D12Texture* texture, u32 layer, u32 dst_
   }
 
   // Restore for next normal draw.
-  SetViewport(cmdlist);
-  SetScissor(cmdlist);
-  if (m_current_pipeline)
-  {
-    cmdlist->SetPipelineState(m_current_pipeline->GetPipeline());
-    if (m_current_pipeline->GetTopology() != D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST)
-      cmdlist->IASetPrimitiveTopology(m_current_pipeline->GetTopology());
-  }
-  else
-  {
-    m_current_topology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-  }
-
-  m_dirty_flags |= ROOT_SIGNATURE_DEPENDENT_DIRTY_STATE;
+  m_dirty_flags |= DIRTY_FLAG_PIPELINE | DIRTY_FLAG_PRIMITIVE_TOPOLOGY | DIRTY_FLAG_VIEWPORT | DIRTY_FLAG_SCISSOR |
+                   ROOT_SIGNATURE_DEPENDENT_DIRTY_STATE;
 }
 
 void D3D12Device::SetViewport(const GSVector4i rc)
@@ -2450,11 +2389,7 @@ void D3D12Device::SetViewport(const GSVector4i rc)
     return;
 
   m_current_viewport = rc;
-
-  if (m_dirty_flags & DIRTY_FLAG_INITIAL)
-    return;
-
-  SetViewport(GetCommandList());
+  m_dirty_flags |= DIRTY_FLAG_VIEWPORT;
 }
 
 void D3D12Device::SetScissor(const GSVector4i rc)
@@ -2463,11 +2398,7 @@ void D3D12Device::SetScissor(const GSVector4i rc)
     return;
 
   m_current_scissor = rc;
-
-  if (m_dirty_flags & DIRTY_FLAG_INITIAL)
-    return;
-
-  SetScissor(GetCommandList());
+  m_dirty_flags |= DIRTY_FLAG_SCISSOR;
 }
 
 void D3D12Device::PreDrawCheck()
@@ -2477,10 +2408,54 @@ void D3D12Device::PreDrawCheck()
 
   // TODO: Flushing cmdbuffer because of descriptor OOM will lose push constants.
 
-  DebugAssert(!(m_dirty_flags & DIRTY_FLAG_INITIAL));
   const u32 dirty = std::exchange(m_dirty_flags, 0);
   if (dirty != 0)
   {
+    ID3D12GraphicsCommandList4* const cmdlist = GetCommandList();
+
+    if (dirty & DIRTY_FLAG_PIPELINE)
+    {
+      DebugAssert(m_current_pipeline && !IsComputeLayout(m_current_pipeline_layout));
+      cmdlist->SetPipelineState(m_current_pipeline->GetPipeline());
+    }
+
+    if (dirty & DIRTY_FLAG_VERTEX_BUFFER)
+    {
+      const D3D12_VERTEX_BUFFER_VIEW vb_view = {m_vertex_buffer.GetGPUPointer(), m_vertex_buffer.GetSize(),
+                                                m_current_vertex_stride};
+      cmdlist->IASetVertexBuffers(0, 1, &vb_view);
+    }
+
+    if (dirty & DIRTY_FLAG_INDEX_BUFFER)
+    {
+      const D3D12_INDEX_BUFFER_VIEW ib_view = {m_index_buffer.GetGPUPointer(), m_index_buffer.GetSize(),
+                                               DXGI_FORMAT_R16_UINT};
+      cmdlist->IASetIndexBuffer(&ib_view);
+    }
+
+    if (dirty & DIRTY_FLAG_PRIMITIVE_TOPOLOGY)
+      cmdlist->IASetPrimitiveTopology(m_current_topology);
+
+    if (dirty & DIRTY_FLAG_BLEND_CONSTANTS)
+      cmdlist->OMSetBlendFactor(m_current_pipeline->GetBlendConstantsF().data());
+
+    if (dirty & DIRTY_FLAG_VIEWPORT)
+    {
+      const D3D12_VIEWPORT vp = {static_cast<float>(m_current_viewport.left),
+                                 static_cast<float>(m_current_viewport.top),
+                                 static_cast<float>(m_current_viewport.width()),
+                                 static_cast<float>(m_current_viewport.height()),
+                                 0.0f,
+                                 1.0f};
+      cmdlist->RSSetViewports(1, &vp);
+    }
+
+    if (dirty & DIRTY_FLAG_SCISSOR)
+    {
+      static_assert(sizeof(GSVector4i) == sizeof(D3D12_RECT));
+      cmdlist->RSSetScissorRects(1, reinterpret_cast<const D3D12_RECT*>(&m_current_scissor));
+    }
+
     if (dirty & DIRTY_FLAG_ROOT_SIGNATURE)
     {
       UpdateRootSignature();
@@ -2518,6 +2493,7 @@ void D3D12Device::PreDispatchCheck()
   {
     if (m_current_textures[i])
     {
+      m_current_textures[i]->CommitClear(cmdlist);
       m_current_textures[i]->TransitionToState(cmdlist, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
       m_current_textures[i]->SetUseFenceValue(GetCurrentFenceValue());
     }
@@ -2544,15 +2520,17 @@ void D3D12Device::PreDispatchCheck()
     cmdlist->ResourceBarrier(m_num_current_render_targets, barriers.data());
   }
 
-  // If this is a new command buffer, bind the pipeline and such.
-  if (m_dirty_flags & DIRTY_FLAG_INITIAL)
-    SetInitialPipelineState();
-
   // TODO: Flushing cmdbuffer because of descriptor OOM will lose push constants.
-  DebugAssert(!(m_dirty_flags & DIRTY_FLAG_INITIAL));
-  const u32 dirty = std::exchange(m_dirty_flags, 0);
+  const u32 dirty = m_dirty_flags & ~static_cast<u32>(GRAPHICS_ONLY_STATE);
+  m_dirty_flags &= GRAPHICS_ONLY_STATE;
   if (dirty != 0)
   {
+    if (dirty & DIRTY_FLAG_PIPELINE)
+    {
+      DebugAssert(m_current_pipeline && IsComputeLayout(m_current_pipeline_layout));
+      cmdlist->SetPipelineState(m_current_pipeline->GetPipeline());
+    }
+
     if (dirty & DIRTY_FLAG_ROOT_SIGNATURE)
     {
       UpdateRootSignature();
@@ -2564,7 +2542,7 @@ void D3D12Device::PreDispatchCheck()
       }
     }
     else if (dirty & (DIRTY_FLAG_CONSTANT_BUFFER | DIRTY_FLAG_TEXTURES | DIRTY_FLAG_TEXTURE_BUFFER |
-                      DIRTY_FLAG_SAMPLERS | DIRTY_FLAG_RT_UAVS))
+                      DIRTY_FLAG_SAMPLERS | DIRTY_FLAG_RT_UAVS | DIRTY_FLAG_COMPUTE_OUTPUT_BUFFER))
     {
       if (!UpdateRootParameters(dirty))
       {
@@ -2663,16 +2641,18 @@ bool D3D12Device::UpdateParametersForLayout(u32 dirty)
 {
   ID3D12GraphicsCommandList4* cmdlist = GetCommandList();
 
-  static_assert(layout == GPUPipeline::Layout::SingleTextureAndUBO ||
-                layout == GPUPipeline::Layout::SingleTextureAndPushConstants ||
-                layout == GPUPipeline::Layout::MultiTextureAndPushConstants ||
-                layout == GPUPipeline::Layout::MultiTextureAndUBOAndPushConstants ||
-                layout == GPUPipeline::Layout::ComputeMultiTextureAndUBO);
+  static_assert(
+    layout == GPUPipeline::Layout::SingleTextureAndUBO ||
+    layout == GPUPipeline::Layout::SingleTextureAndPushConstants ||
+    layout == GPUPipeline::Layout::MultiTextureAndPushConstants ||
+    layout == GPUPipeline::Layout::MultiTextureAndUBOAndPushConstants ||
+    (layout == GPUPipeline::Layout::ComputeImageOutput || layout == GPUPipeline::Layout::ComputeBufferOutput));
 
   constexpr bool is_compute = IsComputeLayout(layout);
-  constexpr bool has_ubo = (layout == GPUPipeline::Layout::SingleTextureAndUBO ||
-                            layout == GPUPipeline::Layout::MultiTextureAndUBOAndPushConstants ||
-                            layout == GPUPipeline::Layout::ComputeMultiTextureAndUBO);
+  constexpr bool has_ubo =
+    (layout == GPUPipeline::Layout::SingleTextureAndUBO ||
+     layout == GPUPipeline::Layout::MultiTextureAndUBOAndPushConstants ||
+     (layout == GPUPipeline::Layout::ComputeImageOutput || layout == GPUPipeline::Layout::ComputeBufferOutput));
 
   if constexpr (has_ubo)
   {
@@ -2738,7 +2718,7 @@ bool D3D12Device::UpdateParametersForLayout(u32 dirty)
     }
   }
 
-  if constexpr (is_compute)
+  if constexpr (layout == GPUPipeline::Layout::ComputeImageOutput)
   {
     if (dirty & DIRTY_FLAG_RT_UAVS)
     {
@@ -2765,6 +2745,20 @@ bool D3D12Device::UpdateParametersForLayout(u32 dirty)
         cmdlist->SetGraphicsRootDescriptorTable(base_param + 2, gpu_handle);
       else
         cmdlist->SetComputeRootDescriptorTable(base_param + 2, gpu_handle);
+    }
+  }
+
+  if constexpr (layout == GPUPipeline::Layout::ComputeBufferOutput)
+  {
+    if (dirty & DIRTY_FLAG_COMPUTE_OUTPUT_BUFFER)
+    {
+      DebugAssert(m_compute_output_buffer);
+      D3D12DescriptorHandle descriptor;
+      if (!m_command_lists[m_current_command_list].descriptor_allocator.Allocate(1, &descriptor))
+        return false;
+      m_device->CopyDescriptorsSimple(1, descriptor.cpu_handle, m_compute_output_buffer->GetUAVDescriptor(),
+                                      D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+      cmdlist->SetComputeRootDescriptorTable(base_param + 2, descriptor.gpu_handle);
     }
   }
 
@@ -2856,8 +2850,11 @@ bool D3D12Device::UpdateRootParameters(u32 dirty)
     case GPUPipeline::Layout::HWImageBatch:
       return UpdateParametersForHWBatchLayout(m_current_pipeline_layout, dirty);
 
-    case GPUPipeline::Layout::ComputeMultiTextureAndUBO:
-      return UpdateParametersForLayout<GPUPipeline::Layout::ComputeMultiTextureAndUBO>(dirty);
+    case GPUPipeline::Layout::ComputeImageOutput:
+      return UpdateParametersForLayout<GPUPipeline::Layout::ComputeImageOutput>(dirty);
+
+    case GPUPipeline::Layout::ComputeBufferOutput:
+      return UpdateParametersForLayout<GPUPipeline::Layout::ComputeBufferOutput>(dirty);
 
     default:
       UnreachableCode();
@@ -2906,8 +2903,9 @@ void D3D12Device::Dispatch(u32 threads_x, u32 threads_y, u32 threads_z, u32 grou
   PreDispatchCheck();
   s_stats.num_draws++;
 
-  const u32 groups_x = threads_x / group_size_x;
-  const u32 groups_y = threads_y / group_size_y;
-  const u32 groups_z = threads_z / group_size_z;
+  const auto [groups_x, groups_y, groups_z] =
+    GetDispatchCount(threads_x, threads_y, threads_z, group_size_x, group_size_y, group_size_z);
   GetCommandList()->Dispatch(groups_x, groups_y, groups_z);
+  if (m_current_pipeline_layout == GPUPipeline::Layout::ComputeBufferOutput && m_compute_output_buffer)
+    m_compute_output_buffer->RecordShaderWrite();
 }

@@ -61,7 +61,7 @@ static_assert(static_cast<u8>(AchievementNotificationCategory::None) == RC_CLIEN
 static_assert(static_cast<u8>(AchievementNotificationCategory::Missable) == RC_CLIENT_ACHIEVEMENT_TYPE_MISSABLE);
 static_assert(static_cast<u8>(AchievementNotificationCategory::Progression) == RC_CLIENT_ACHIEVEMENT_TYPE_PROGRESSION);
 static_assert(static_cast<u8>(AchievementNotificationCategory::Win) == RC_CLIENT_ACHIEVEMENT_TYPE_WIN);
-static_assert((AchievementNotificationCategory::Unofficial & AchievementNotificationCategory::TypeMask) ==
+static_assert((AchievementNotificationCategory::Unpromoted & AchievementNotificationCategory::TypeMask) ==
               AchievementNotificationCategory::None);
 
 namespace {
@@ -143,11 +143,11 @@ static void AddSubsetInfo(const rc_client_subset_t* subset);
 static bool IsCoreSubsetOpen();
 static void SetCurrentSubsetID(u32 subset_id);
 static void DrawSubsetSelector();
-template<typename T>
-static void CollectSubsetsFromList(const T* list, bool include_achievements, bool include_leaderboards);
+static void CollectSubsets(bool include_achievements, bool include_leaderboards);
 template<typename T>
 static bool IsBucketVisibleInCurrentSubset(const T& bucket);
 static void SortLockedAchievements();
+static bool RefreshAchievementList();
 static const std::string& GetHeadingBadgeURL();
 
 template<typename T>
@@ -156,8 +156,8 @@ static void CachePauseMenuAchievementInfo(const rc_client_achievement_t* achieve
 static void DrawAchievement(const rc_client_achievement_t* cheevo, const ImVec2& prefetch_range);
 static void OpenAchievementDetails(u32 achievement_id);
 static void SetAchievementPinned(u32 achievement_id, bool pinned);
-static void ConfirmResetUnofficialAchievementUnlock(u32 achievement_id);
-static void ConfirmResetAllUnofficialAchievementUnlocks();
+static void ConfirmResetUnpromotedAchievementUnlock(u32 achievement_id);
+static void ConfirmResetAllUnpromotedAchievementUnlocks();
 
 static void LeaderboardFetchNearbyCallback(int result, const char* error_message,
                                            rc_client_leaderboard_entry_list_t* list, rc_client_t* client,
@@ -266,8 +266,8 @@ FullscreenUI::GetAchievementNotificationCategory(const rc_client_achievement_t* 
 {
   AchievementNotificationCategory category = static_cast<FullscreenUI::AchievementNotificationCategory>(
     achievement->type & static_cast<u8>(FullscreenUI::AchievementNotificationCategory::TypeMask));
-  if (achievement->category == RC_CLIENT_ACHIEVEMENT_CATEGORY_UNOFFICIAL)
-    category |= FullscreenUI::AchievementNotificationCategory::Unofficial;
+  if (achievement->category == RC_CLIENT_ACHIEVEMENT_CATEGORY_UNPROMOTED)
+    category |= FullscreenUI::AchievementNotificationCategory::Unpromoted;
 
   return category;
 }
@@ -278,8 +278,8 @@ static constexpr const FullscreenUI::AchievementCategoryBadge s_achievement_cate
   {ICON_PF_ACHIEVEMENTS_PROGRESSION, TRANSLATE_NOOP("Achievements", "Progression"), IM_COL32(13, 71, 161, 255)},
   {ICON_PF_ACHIEVEMENTS_PROGRESSION, TRANSLATE_NOOP("Achievements", "Win Condition"), IM_COL32(50, 110, 30, 255)},
 };
-static constexpr FullscreenUI::AchievementCategoryBadge UNOFFICIAL_ACHIEVEMENT_BADGE = {
-  ICON_FA_FLASK_VIAL, TRANSLATE_NOOP("Achievements", "Unofficial"), IM_COL32(142, 64, 58, 255)};
+static constexpr FullscreenUI::AchievementCategoryBadge UNPROMOTED_ACHIEVEMENT_BADGE = {
+  ICON_FA_FLASK_VIAL, TRANSLATE_NOOP("Achievements", "Unpromoted"), IM_COL32(142, 64, 58, 255)};
 
 ImVec2 FullscreenUI::MeasureAchievementCategoryBadges(AchievementNotificationCategory category, float font_size,
                                                       float font_weight, const ImVec2& padding, float spacing)
@@ -287,10 +287,10 @@ ImVec2 FullscreenUI::MeasureAchievementCategoryBadges(AchievementNotificationCat
   ImVec2 size;
   TinyString text;
 
-  if ((category & AchievementNotificationCategory::Unofficial) != AchievementNotificationCategory::None)
+  if ((category & AchievementNotificationCategory::Unpromoted) != AchievementNotificationCategory::None)
   {
-    text.format("{} {}", UNOFFICIAL_ACHIEVEMENT_BADGE.icon,
-                Host::TranslateToStringView("Achievements", UNOFFICIAL_ACHIEVEMENT_BADGE.label));
+    text.format("{} {}", UNPROMOTED_ACHIEVEMENT_BADGE.icon,
+                Host::TranslateToStringView("Achievements", UNPROMOTED_ACHIEVEMENT_BADGE.label));
     size = UIStyle.Font->CalcTextSizeA(font_size, font_weight, FLT_MAX, 0.0f, IMSTR_START_END(text)) + padding * 2.0f;
   }
 
@@ -328,9 +328,9 @@ void FullscreenUI::DrawAchievementCategoryBadges(ImDrawList* dl, AchievementNoti
     position.x += size.x + spacing;
   };
 
-  if ((category & AchievementNotificationCategory::Unofficial) != AchievementNotificationCategory::None)
+  if ((category & AchievementNotificationCategory::Unpromoted) != AchievementNotificationCategory::None)
   {
-    draw_badge(UNOFFICIAL_ACHIEVEMENT_BADGE);
+    draw_badge(UNPROMOTED_ACHIEVEMENT_BADGE);
   }
 
   if (const AchievementCategoryBadge& badge =
@@ -1191,7 +1191,8 @@ void FullscreenUI::UpdateAchievementsPauseScreenInfo()
 
   rc_client_achievement_list_t* const achievements =
     Achievements::HasAchievements() ?
-      rc_client_create_achievement_list(Achievements::GetClient(), RC_CLIENT_ACHIEVEMENT_CATEGORY_CORE_AND_UNOFFICIAL,
+      rc_client_create_achievement_list(Achievements::GetClient(),
+                                        RC_CLIENT_ACHIEVEMENT_CATEGORY_PROMOTED_AND_UNPROMOTED,
                                         RC_CLIENT_ACHIEVEMENT_LIST_GROUPING_PROGRESS) :
       nullptr;
   if (achievements)
@@ -1354,10 +1355,10 @@ void FullscreenUI::DrawAchievementsPauseMenuOverlays(float start_pos_y)
                   TRANSLATE_DISAMBIG_SV("Achievements", "Achievements Unlocked", "Pause Menu"));
     dl->AddText(UIStyle.Font, UIStyle.MediumFontSize, UIStyle.BoldFontWeight, text_pos, box_title_text_color,
                 IMSTR_START_END(buffer));
-    const float unlocked_fraction =
-      (summary.num_core_achievements > 0) ?
-        (static_cast<float>(summary.num_unlocked_achievements) / static_cast<float>(summary.num_core_achievements)) :
-        0.0f;
+    const float unlocked_fraction = (summary.num_promoted_achievements > 0) ?
+                                      (static_cast<float>(summary.num_unlocked_achievements) /
+                                       static_cast<float>(summary.num_promoted_achievements)) :
+                                      0.0f;
     buffer.format("{}%", static_cast<u32>(std::round(unlocked_fraction * 100.0f)));
     text_size = UIStyle.Font->CalcTextSizeA(UIStyle.MediumFontSize, UIStyle.BoldFontWeight, FLT_MAX, 0.0f,
                                             IMSTR_START_END(buffer));
@@ -1376,7 +1377,7 @@ void FullscreenUI::DrawAchievementsPauseMenuOverlays(float start_pos_y)
         progress_bb.Min.x + (unlocked_fraction * progress_bb.GetWidth()), progress_rounding);
     }
 
-    buffer.format("{}/{}", summary.num_unlocked_achievements, summary.num_core_achievements);
+    buffer.format("{}/{}", summary.num_unlocked_achievements, summary.num_promoted_achievements);
     text_size = UIStyle.Font->CalcTextSizeA(UIStyle.MediumFontSize, UIStyle.BoldFontWeight, FLT_MAX, 0.0f,
                                             IMSTR_START_END(buffer));
     dl->AddText(UIStyle.Font, UIStyle.MediumFontSize, UIStyle.BoldFontWeight,
@@ -1879,18 +1880,24 @@ void FullscreenUI::SetCurrentSubsetID(u32 subset_id)
       s_achievements_locals.open_subset = &info;
       s_achievements_locals.last_open_subset_id = subset_id;
       QueueResetFocus(FocusResetType::ViewChanged);
+
+      // achievement lists are per-subset, so rebuild it. draw will close the window if it fails.
+      if (GetCurrentMainWindow() == MainWindowType::Achievements)
+      {
+        const auto lock = Achievements::GetLock();
+        RefreshAchievementList();
+      }
+
       return;
     }
   }
 }
 
-template<typename T>
-void FullscreenUI::CollectSubsetsFromList(const T* list, bool include_achievements, bool include_leaderboards)
+void FullscreenUI::CollectSubsets(bool include_achievements, bool include_leaderboards)
 {
   s_achievements_locals.open_subset = nullptr;
   s_achievements_locals.subset_info_list.clear();
 
-  // Prefer rc_client grabbing subsets if possible. Old external clients won't support this.
   rc_client_subset_list_t* subset_list = rc_client_create_subset_list(Achievements::GetClient());
   if (subset_list && subset_list->num_subsets > 0)
   {
@@ -1905,21 +1912,6 @@ void FullscreenUI::CollectSubsetsFromList(const T* list, bool include_achievemen
       {
         const rc_client_subset_t* subset = subset_list->subsets[i];
         if (subset_active(subset))
-          AddSubsetInfo(subset);
-      }
-    }
-  }
-  else if (std::any_of(list->buckets, list->buckets + list->num_buckets,
-                       [&list](const auto& it) { return it.subset_id != list->buckets[0].subset_id; }))
-  {
-    for (u32 bucket_idx = 0; bucket_idx < list->num_buckets; bucket_idx++)
-    {
-      const auto& bucket = list->buckets[bucket_idx];
-      if (std::ranges::none_of(s_achievements_locals.subset_info_list,
-                               [&bucket](const SubsetInfo& info) { return info.subset_id == bucket.subset_id; }))
-      {
-        const rc_client_subset_t* subset = rc_client_get_subset_info(Achievements::GetClient(), bucket.subset_id);
-        if (subset)
           AddSubsetInfo(subset);
       }
     }
@@ -1993,14 +1985,10 @@ void FullscreenUI::SwitchToAchievements(u32 scroll_to_achievement_id /*= 0*/)
     return;
   }
 
-  if (s_achievements_locals.achievement_list)
-    rc_client_destroy_achievement_list(s_achievements_locals.achievement_list);
-  s_achievements_locals.achievement_list =
-    rc_client_create_achievement_list(Achievements::GetClient(), RC_CLIENT_ACHIEVEMENT_CATEGORY_CORE_AND_UNOFFICIAL,
-                                      RC_CLIENT_ACHIEVEMENT_LIST_GROUPING_SUBSET_BUCKETS);
-  if (!s_achievements_locals.achievement_list)
+  // need the subset list first, since the achievement list only contains the open subset
+  CollectSubsets(true, false);
+  if (!RefreshAchievementList())
   {
-    ERROR_LOG("rc_client_create_achievement_list() returned null");
     ClosePauseMenuImmediately();
     return;
   }
@@ -2009,27 +1997,45 @@ void FullscreenUI::SwitchToAchievements(u32 scroll_to_achievement_id /*= 0*/)
   s_achievements_locals.achievement_buckets_collapsed.reset();
   s_achievements_locals.scroll_to_achievement_id = scroll_to_achievement_id;
 
+  SwitchToMainWindow(MainWindowType::Achievements);
+}
+
+bool FullscreenUI::RefreshAchievementList()
+{
+  if (s_achievements_locals.achievement_list)
+    rc_client_destroy_achievement_list(s_achievements_locals.achievement_list);
+
+  const rc_client_achievement_list_params_t params = {
+    .subset_id = s_achievements_locals.open_subset ? s_achievements_locals.open_subset->subset_id : 0,
+    .grouping = RC_CLIENT_ACHIEVEMENT_LIST_GROUPING_PROGRESS,
+    .category = RC_CLIENT_ACHIEVEMENT_CATEGORY_PROMOTED_AND_UNPROMOTED,
+  };
+  s_achievements_locals.achievement_list = rc_client_create_subset_achievement_list(Achievements::GetClient(), &params);
+  if (!s_achievements_locals.achievement_list)
+  {
+    ERROR_LOG("rc_client_create_subset_achievement_list() returned null");
+    return false;
+  }
+
   // sort unlocked achievements by unlock time
   for (size_t i = 0; i < s_achievements_locals.achievement_list->num_buckets; i++)
   {
     const rc_client_achievement_bucket_t* bucket = &s_achievements_locals.achievement_list->buckets[i];
     if (bucket->bucket_type == RC_CLIENT_ACHIEVEMENT_BUCKET_UNLOCKED)
     {
-      std::sort(bucket->achievements, bucket->achievements + bucket->num_achievements,
-                [](const rc_client_achievement_t* a, const rc_client_achievement_t* b) {
-                  return a->unlock_time > b->unlock_time;
-                });
+      std::stable_sort(bucket->achievements, bucket->achievements + bucket->num_achievements,
+                       [](const rc_client_achievement_t* a, const rc_client_achievement_t* b) {
+                         return a->unlock_time > b->unlock_time;
+                       });
     }
   }
-
-  CollectSubsetsFromList(s_achievements_locals.achievement_list, true, false);
 
   {
     const auto overlay_lock = Achievements::GetOverlayLock();
     SortLockedAchievements();
   }
 
-  SwitchToMainWindow(MainWindowType::Achievements);
+  return true;
 }
 
 void FullscreenUI::DrawAchievementsWindow()
@@ -2046,11 +2052,11 @@ void FullscreenUI::DrawAchievementsWindow()
   const rc_client_user_game_summary_t& summary =
     s_achievements_locals.open_subset ? s_achievements_locals.open_subset->summary : Achievements::GetGameSummary();
   const bool is_core_subset = IsCoreSubsetOpen();
-  const bool show_unofficial_summary =
-    (rc_client_get_unofficial_enabled(Achievements::GetClient()) && summary.num_unofficial_achievements > 0);
+  const bool show_unpromoted_summary =
+    (rc_client_get_unpromoted_enabled(Achievements::GetClient()) && summary.num_unpromoted_achievements > 0);
   const float heading_height_unscaled = ((summary.beaten_time > 0 || summary.completed_time) ? 122.0f : 102.0f) +
                                         ((summary.num_unsupported_achievements > 0) ? 20.0f : 0.0f) +
-                                        (show_unofficial_summary ? 20.0f : 0.0f);
+                                        (show_unpromoted_summary ? 20.0f : 0.0f);
 
   const ImVec4 background = ModAlpha(UIStyle.BackgroundColor, WINDOW_ALPHA);
   const ImVec4 heading_background = ModAlpha(DarkerColor(UIStyle.BackgroundColor, 1.5f), WINDOW_HEADING_ALPHA);
@@ -2113,12 +2119,12 @@ void FullscreenUI::DrawAchievementsWindow()
                               ImGui::GetColorU32(ImGuiCol_Text), text, nullptr, ImVec2(0.0f, 0.0f), 0.0f, &title_bb);
 
     const ImRect summary_bb(ImVec2(left, top), ImVec2(right, top + UIStyle.MediumFontSize));
-    if (summary.num_core_achievements > 0)
+    if (summary.num_promoted_achievements > 0)
     {
       text.assign(ICON_EMOJI_UNLOCKED " ");
       if (IsCoreSubsetOpen())
       {
-        if (summary.num_unlocked_achievements == summary.num_core_achievements)
+        if (summary.num_unlocked_achievements == summary.num_promoted_achievements)
         {
           text.append(TRANSLATE_PLURAL_SSTR("Achievements", "You have unlocked all achievements and earned %n points!",
                                             "Point count", summary.points_unlocked));
@@ -2128,13 +2134,13 @@ void FullscreenUI::DrawAchievementsWindow()
           text.append_format(
             TRANSLATE_FS("Achievements",
                          "You have unlocked {0} of {1} achievements, earning {2} of {3} possible points."),
-            summary.num_unlocked_achievements, summary.num_core_achievements, summary.points_unlocked,
-            summary.points_core);
+            summary.num_unlocked_achievements, summary.num_promoted_achievements, summary.points_unlocked,
+            summary.points_available);
         }
       }
       else
       {
-        if (summary.num_unlocked_achievements == summary.num_core_achievements)
+        if (summary.num_unlocked_achievements == summary.num_promoted_achievements)
         {
           text.append(TRANSLATE_PLURAL_SSTR("Achievements",
                                             "You have unlocked all achievements in this subset and earned %n points!",
@@ -2146,8 +2152,8 @@ void FullscreenUI::DrawAchievementsWindow()
             TRANSLATE_FS(
               "Achievements",
               "You have unlocked {0} of {1} achievements in this subset, earning {2} of {3} possible points."),
-            summary.num_unlocked_achievements, summary.num_core_achievements, summary.points_unlocked,
-            summary.points_core);
+            summary.num_unlocked_achievements, summary.num_promoted_achievements, summary.points_unlocked,
+            summary.points_available);
         }
       }
     }
@@ -2163,21 +2169,21 @@ void FullscreenUI::DrawAchievementsWindow()
                               summary_bb.Max, ImGui::GetColorU32(DarkerColor(ImGui::GetStyle().Colors[ImGuiCol_Text])),
                               text, nullptr, ImVec2(0.0f, 0.0f), 0.0f, &summary_bb);
 
-    if (show_unofficial_summary)
+    if (show_unpromoted_summary)
     {
       text.format(
         "{} {}", ICON_FA_FLASK_VIAL,
         SmallString::from_format(
           TRANSLATE_FS("Achievements",
-                       "You have unlocked {0} of {1} unofficial achievements, earning {2} of {3} possible points."),
-          summary.num_unlocked_unofficial_achievements, summary.num_unofficial_achievements,
-          summary.points_unlocked_unofficial, summary.points_unofficial));
+                       "You have unlocked {0} of {1} unpromoted achievements, earning {2} of {3} possible points."),
+          summary.num_unlocked_unpromoted_achievements, summary.num_unpromoted_achievements,
+          summary.points_unlocked_unpromoted, summary.points_unpromoted));
 
-      const ImRect unofficial_bb(ImVec2(left, top), ImVec2(right, top + UIStyle.MediumFontSize));
-      RenderShadowedTextClipped(UIStyle.Font, UIStyle.MediumFontSize, UIStyle.NormalFontWeight, unofficial_bb.Min,
-                                unofficial_bb.Max,
+      const ImRect unpromoted_bb(ImVec2(left, top), ImVec2(right, top + UIStyle.MediumFontSize));
+      RenderShadowedTextClipped(UIStyle.Font, UIStyle.MediumFontSize, UIStyle.NormalFontWeight, unpromoted_bb.Min,
+                                unpromoted_bb.Max,
                                 ImGui::GetColorU32(DarkerColor(ImGui::GetStyle().Colors[ImGuiCol_Text])), text, nullptr,
-                                ImVec2(0.0f, 0.0f), 0.0f, &unofficial_bb);
+                                ImVec2(0.0f, 0.0f), 0.0f, &unpromoted_bb);
       top += UIStyle.MediumFontSize + spacing;
     }
 
@@ -2243,13 +2249,13 @@ void FullscreenUI::DrawAchievementsWindow()
       top += UIStyle.MediumFontSize + spacing;
     }
 
-    if (summary.num_core_achievements > 0)
+    if (summary.num_promoted_achievements > 0)
     {
       const float progress_height = LayoutScale(20.0f);
       const float progress_rounding = LayoutScale(5.0f);
       const ImRect progress_bb(ImVec2(left, top), ImVec2(right, top + progress_height));
       const float fraction =
-        static_cast<float>(summary.num_unlocked_achievements) / static_cast<float>(summary.num_core_achievements);
+        static_cast<float>(summary.num_unlocked_achievements) / static_cast<float>(summary.num_promoted_achievements);
       dl->AddRectFilled(progress_bb.Min, progress_bb.Max,
                         ImGui::GetColorU32(ModAlpha(UIStyle.PrimaryDarkColor, PROGRESS_BAR_ALPHA)), progress_rounding);
 
@@ -2310,7 +2316,7 @@ void FullscreenUI::DrawAchievementsWindow()
       ICON_FA_LOCK,                 // Locked
       ICON_FA_UNLOCK,               // Unlocked
       ICON_FA_TRIANGLE_EXCLAMATION, // Unsupported
-      ICON_FA_FLASK_VIAL,           // Unofficial
+      ICON_FA_FLASK_VIAL,           // Unpromoted
       ICON_FA_LOCK_OPEN,            // Recently Unlocked
       ICON_FA_HAND_FIST,            // Active Challenges
       ICON_FA_FLAG_CHECKERED,       // Almost There
@@ -2333,7 +2339,7 @@ void FullscreenUI::DrawAchievementsWindow()
     for (u32 bucket_type : {RC_CLIENT_ACHIEVEMENT_BUCKET_UNSYNCED, RC_CLIENT_ACHIEVEMENT_BUCKET_ACTIVE_CHALLENGE,
                             RC_CLIENT_ACHIEVEMENT_BUCKET_RECENTLY_UNLOCKED, RC_CLIENT_ACHIEVEMENT_BUCKET_ALMOST_THERE,
                             RC_CLIENT_ACHIEVEMENT_BUCKET_UNLOCKED, RC_CLIENT_ACHIEVEMENT_BUCKET_UNLOCKED_SOFTCORE,
-                            RC_CLIENT_ACHIEVEMENT_BUCKET_LOCKED, RC_CLIENT_ACHIEVEMENT_BUCKET_UNOFFICIAL,
+                            RC_CLIENT_ACHIEVEMENT_BUCKET_LOCKED, RC_CLIENT_ACHIEVEMENT_BUCKET_UNPROMOTED,
                             RC_CLIENT_ACHIEVEMENT_BUCKET_UNSUPPORTED})
     {
       for (u32 bucket_idx = 0; bucket_idx < s_achievements_locals.achievement_list->num_buckets; bucket_idx++)
@@ -2365,10 +2371,10 @@ void FullscreenUI::DrawAchievementsWindow()
   }
   EndFullscreenWindow();
 
-  if (summary.num_unlocked_unofficial_achievements > 0 && !AreAnyDialogsOpen() &&
+  if (summary.num_unlocked_unpromoted_achievements > 0 && !AreAnyDialogsOpen() &&
       (ImGui::IsKeyPressed(ImGuiKey_F1, false) || ImGui::IsKeyPressed(ImGuiKey_GamepadFaceUp, false)))
   {
-    ConfirmResetAllUnofficialAchievementUnlocks();
+    ConfirmResetAllUnpromotedAchievementUnlocks();
   }
 
   if (IsGamepadInputSource())
@@ -2379,8 +2385,8 @@ void FullscreenUI::DrawAchievementsWindow()
         std::array{std::make_pair(ICON_PF_XBOX_DPAD_LEFT_RIGHT, TRANSLATE_SV("Achievements", "Change Subset")),
                    std::make_pair(ICON_PF_XBOX_DPAD_UP_DOWN, TRANSLATE_SV("Achievements", "Change Selection")),
                    std::make_pair(ICON_PF_BUTTON_X, TRANSLATE_SV("Achievements", "Pin Achievement")),
-                   (summary.num_unlocked_unofficial_achievements > 0) ?
-                     std::make_pair(ICON_PF_BUTTON_Y, TRANSLATE_SV("Achievements", "Reset Unofficial Unlocks")) :
+                   (summary.num_unlocked_unpromoted_achievements > 0) ?
+                     std::make_pair(ICON_PF_BUTTON_Y, TRANSLATE_SV("Achievements", "Reset Unpromoted Unlocks")) :
                      std::pair<const char*, std::string_view>(),
                    std::make_pair(ICON_PF_BUTTON_A, TRANSLATE_SV("Achievements", "View Details")),
                    std::make_pair(ICON_PF_BUTTON_B, TRANSLATE_SV("Achievements", "Back"))});
@@ -2390,8 +2396,8 @@ void FullscreenUI::DrawAchievementsWindow()
       SetFullscreenFooterText(
         std::array{std::make_pair(ICON_PF_XBOX_DPAD_UP_DOWN, TRANSLATE_SV("Achievements", "Change Selection")),
                    std::make_pair(ICON_PF_BUTTON_X, TRANSLATE_SV("Achievements", "Pin Achievement")),
-                   (summary.num_unlocked_unofficial_achievements > 0) ?
-                     std::make_pair(ICON_PF_BUTTON_Y, TRANSLATE_SV("Achievements", "Reset Unofficial Unlocks")) :
+                   (summary.num_unlocked_unpromoted_achievements > 0) ?
+                     std::make_pair(ICON_PF_BUTTON_Y, TRANSLATE_SV("Achievements", "Reset Unpromoted Unlocks")) :
                      std::pair<const char*, std::string_view>(),
                    std::make_pair(ICON_PF_BUTTON_A, TRANSLATE_SV("Achievements", "View Details")),
                    std::make_pair(ICON_PF_BUTTON_B, TRANSLATE_SV("Achievements", "Back"))});
@@ -2404,8 +2410,8 @@ void FullscreenUI::DrawAchievementsWindow()
       SetFullscreenFooterText(std::array{
         std::make_pair(ICON_PF_ARROW_LEFT ICON_PF_ARROW_RIGHT, TRANSLATE_SV("Achievements", "Change Subset")),
         std::make_pair(ICON_PF_ARROW_UP ICON_PF_ARROW_DOWN, TRANSLATE_SV("Achievements", "Change Selection")),
-        (summary.num_unlocked_unofficial_achievements > 0) ?
-          std::make_pair(ICON_PF_F1, TRANSLATE_SV("Achievements", "Reset Unofficial Unlocks")) :
+        (summary.num_unlocked_unpromoted_achievements > 0) ?
+          std::make_pair(ICON_PF_F1, TRANSLATE_SV("Achievements", "Reset Unpromoted Unlocks")) :
           std::pair<const char*, std::string_view>(),
         std::make_pair(ICON_PF_F4, TRANSLATE_SV("Achievements", "View Details")),
         std::make_pair(ICON_PF_ESC, TRANSLATE_SV("Achievements", "Back"))});
@@ -2414,8 +2420,8 @@ void FullscreenUI::DrawAchievementsWindow()
     {
       SetFullscreenFooterText(std::array{
         std::make_pair(ICON_PF_ARROW_UP ICON_PF_ARROW_DOWN, TRANSLATE_SV("Achievements", "Change Selection")),
-        (summary.num_unlocked_unofficial_achievements > 0) ?
-          std::make_pair(ICON_PF_F1, TRANSLATE_SV("Achievements", "Reset Unofficial Unlocks")) :
+        (summary.num_unlocked_unpromoted_achievements > 0) ?
+          std::make_pair(ICON_PF_F1, TRANSLATE_SV("Achievements", "Reset Unpromoted Unlocks")) :
           std::pair<const char*, std::string_view>(),
         std::make_pair(ICON_PF_F4, TRANSLATE_SV("Achievements", "Pin Achievement")),
         std::make_pair(ICON_PF_ENTER, TRANSLATE_SV("Achievements", "View Details")),
@@ -2444,15 +2450,15 @@ void FullscreenUI::DrawAchievement(const rc_client_achievement_t* cheevo, const 
   const bool is_unlocked = (cheevo->state == RC_CLIENT_ACHIEVEMENT_STATE_UNLOCKED);
   const bool is_pinned = (!is_unlocked && Achievements::IsAchievementPinned(cheevo->id));
   const bool is_measured = (!is_unlocked && !measured_progress.empty());
-  const bool is_unofficial = (cheevo->category == RC_CLIENT_ACHIEVEMENT_CATEGORY_UNOFFICIAL);
+  const bool is_unpromoted = (cheevo->category == RC_CLIENT_ACHIEVEMENT_CATEGORY_UNPROMOTED);
 
   const ImVec2 type_badge_padding = LayoutScale(5.0f, 3.0f);
   const float type_badge_spacing = LayoutScale(10.0f);
   const float type_badge_rounding = LayoutScale(3.0f);
   AchievementNotificationCategory category = static_cast<AchievementNotificationCategory>(
     cheevo->type & static_cast<u8>(AchievementNotificationCategory::TypeMask));
-  if (is_unofficial)
-    category |= AchievementNotificationCategory::Unofficial;
+  if (is_unpromoted)
+    category |= AchievementNotificationCategory::Unpromoted;
   const ImVec2 category_size = MeasureAchievementCategoryBadges(
     category, type_badge_font_size, ACHIEVEMENT_BADGE_FONT_WEIGHT, type_badge_padding, type_badge_spacing);
   SmallString text;
@@ -2483,7 +2489,7 @@ void FullscreenUI::DrawAchievement(const rc_client_achievement_t* cheevo, const 
                                                                 FLT_MAX, max_text_width, IMSTR_START_END(description));
   const float content_height =
     std::max((title_size.y + spacing + description_size.y +
-              ((is_unlocked || !is_unofficial) ? (spacing + UIStyle.MediumFontSize) : 0.0f)) +
+              ((is_unlocked || !is_unpromoted) ? (spacing + UIStyle.MediumFontSize) : 0.0f)) +
                (is_measured ? (spacing + LayoutScale(progress_height_unscaled)) : 0.0f),
              image_size.y + LayoutScale(BADGE_TEXT_Y_OFFSET)) +
     LayoutScale(LAYOUT_MENU_ITEM_EXTRA_HEIGHT);
@@ -2580,8 +2586,8 @@ void FullscreenUI::DrawAchievement(const rc_client_achievement_t* cheevo, const 
     const TinyString date = Host::FormatRelativeDateTime(cheevo->unlock_time, false, false);
     text.format(TRANSLATE_FS("Achievements", "Unlocked {}"), date);
 
-    // unofficial can't be unlocked so don't show the percentage
-    if (!is_unofficial)
+    // unpromoted can't be unlocked so don't show the percentage
+    if (!is_unpromoted)
     {
       text.append(" \u2022 ");
       text.append_format(TRANSLATE_FS("Achievements", "{:.1f}% of players have this achievement"), rarity_to_display);
@@ -2591,7 +2597,7 @@ void FullscreenUI::DrawAchievement(const rc_client_achievement_t* cheevo, const 
                               rarity_color, text, nullptr, ImVec2(0.0f, 0.0f), 0.0f, &rarity_bb);
     current_pos.y += UIStyle.MediumFontSize + spacing;
   }
-  else if (!is_unofficial)
+  else if (!is_unpromoted)
   {
     text.format(TRANSLATE_FS("Achievements", "{:.1f}% of players have this achievement"), rarity_to_display);
     RenderShadowedTextClipped(dl, UIStyle.Font, subtitle_font_size, subtitle_font_weight, rarity_bb.Min, rarity_bb.Max,
@@ -2641,12 +2647,12 @@ void FullscreenUI::DrawAchievement(const rc_client_achievement_t* cheevo, const 
 
   if (clicked)
   {
-    const bool can_reset_unofficial =
+    const bool can_reset_unpromoted =
       (cheevo->unlocked != RC_CLIENT_ACHIEVEMENT_UNLOCKED_NONE &&
-       cheevo->category == RC_CLIENT_ACHIEVEMENT_CATEGORY_UNOFFICIAL && !Achievements::IsUsingRAIntegration());
+       cheevo->category == RC_CLIENT_ACHIEVEMENT_CATEGORY_UNPROMOTED && !Achievements::IsUsingRAIntegration());
 
     // Open non-measured achievements directly.
-    if (is_measured || is_pinned || can_reset_unofficial)
+    if (is_measured || is_pinned || can_reset_unpromoted)
     {
       ChoiceDialogOptions options;
       options.emplace_back(FSUI_ICONSTR(ICON_FA_LINK, "Open on RetroAchievements"), false);
@@ -2657,18 +2663,18 @@ void FullscreenUI::DrawAchievement(const rc_client_achievement_t* cheevo, const 
                                          FSUI_ICONSTR(ICON_FA_THUMBTACK, "Pin to OSD"),
                              false);
       }
-      if (can_reset_unofficial)
+      if (can_reset_unpromoted)
         options.emplace_back(FSUI_ICONSTR(ICON_FA_ARROW_ROTATE_LEFT, "Reset Unlock"), false);
 
       OpenChoiceDialog(cheevo->title, false, std::move(options),
                        [achievement_id = cheevo->id, is_pinned, has_pin_option,
-                        can_reset_unofficial](s32 index, const std::string& title, bool checked) {
+                        can_reset_unpromoted](s32 index, const std::string& title, bool checked) {
                          if (index == 0)
                            OpenAchievementDetails(achievement_id);
                          else if (has_pin_option && index == 1)
                            SetAchievementPinned(achievement_id, !is_pinned);
-                         else if (can_reset_unofficial && index == (has_pin_option ? 2 : 1))
-                           ConfirmResetUnofficialAchievementUnlock(achievement_id);
+                         else if (can_reset_unpromoted && index == (has_pin_option ? 2 : 1))
+                           ConfirmResetUnpromotedAchievementUnlock(achievement_id);
                        });
     }
     else
@@ -2719,41 +2725,41 @@ void FullscreenUI::SetAchievementPinned(u32 achievement_id, bool pinned)
   });
 }
 
-void FullscreenUI::ConfirmResetUnofficialAchievementUnlock(u32 achievement_id)
+void FullscreenUI::ConfirmResetUnpromotedAchievementUnlock(u32 achievement_id)
 {
   const rc_client_achievement_t* achievement =
     rc_client_get_achievement_info(Achievements::GetClient(), achievement_id);
-  if (!achievement || achievement->category != RC_CLIENT_ACHIEVEMENT_CATEGORY_UNOFFICIAL)
+  if (!achievement || achievement->category != RC_CLIENT_ACHIEVEMENT_CATEGORY_UNPROMOTED)
     return;
 
   OpenConfirmMessageDialog(
-    ICON_EMOJI_WARNING, FSUI_STR("Reset Unofficial Achievement"),
+    ICON_EMOJI_WARNING, FSUI_STR("Reset Unpromoted Achievement"),
     fmt::format(FSUI_FSTR("The unlock state for '{}' will be removed. This cannot be undone."), achievement->title),
     [achievement_id](bool confirmed) {
       if (!confirmed)
         return;
 
       BeginTransition(DEFAULT_TRANSITION_TIME, [achievement_id]() {
-        Achievements::ResetUnofficialAchievementUnlock(achievement_id);
+        Achievements::ResetUnpromotedAchievementUnlock(achievement_id);
         SwitchToAchievements(achievement_id);
-        ShowToast(OSDMessageType::Info, {}, FSUI_STR("Unofficial achievement unlock reset."));
+        ShowToast(OSDMessageType::Info, {}, FSUI_STR("Unpromoted achievement unlock reset."));
       });
     });
 }
 
-void FullscreenUI::ConfirmResetAllUnofficialAchievementUnlocks()
+void FullscreenUI::ConfirmResetAllUnpromotedAchievementUnlocks()
 {
   OpenConfirmMessageDialog(
-    ICON_EMOJI_WARNING, FSUI_STR("Reset Unofficial Achievement Unlocks"),
-    FSUI_STR("All unofficial achievement progress for the current game will be removed. This cannot be undone."),
+    ICON_EMOJI_WARNING, FSUI_STR("Reset Unpromoted Achievement Unlocks"),
+    FSUI_STR("All unpromoted achievement progress for the current game will be removed. This cannot be undone."),
     [](bool confirmed) {
       if (!confirmed)
         return;
 
       BeginTransition(DEFAULT_TRANSITION_TIME, []() {
-        Achievements::ResetAllUnofficialAchievementUnlocks();
+        Achievements::ResetAllUnpromotedAchievementUnlocks();
         SwitchToAchievements();
-        ShowToast(OSDMessageType::Info, {}, FSUI_STR("Unofficial achievement unlocks reset."));
+        ShowToast(OSDMessageType::Info, {}, FSUI_STR("Unpromoted achievement unlocks reset."));
       });
     });
 }
@@ -2797,7 +2803,7 @@ void FullscreenUI::SwitchToLeaderboards()
     return;
   }
 
-  CollectSubsetsFromList(s_achievements_locals.leaderboard_list, false, true);
+  CollectSubsets(false, true);
   SwitchToMainWindow(MainWindowType::Leaderboards);
 }
 

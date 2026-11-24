@@ -76,10 +76,6 @@ public:
   std::pair<std::unique_lock<std::recursive_mutex>, const GameList::Entry*>
   getEntryForIndex(const QModelIndex& index) const;
 
-  const QPixmap& getNoAchievementsPixmap() const;
-  const QPixmap& getHasAchievementsPixmap() const;
-  const QPixmap& getMasteredAchievementsPixmap() const;
-
   const GameList::Entry* getTakenGameListEntry(u32 index) const;
   bool hasTakenGameList() const;
   void takeGameList();
@@ -169,12 +165,8 @@ private:
   std::array<QPixmap, static_cast<int>(GameList::EntryType::MaxCount)> m_type_pixmaps;
   std::array<QPixmap, static_cast<int>(GameDatabase::CompatibilityRating::Count)> m_compatibility_pixmaps;
 
-  QImage m_placeholder_image;
+  std::array<QImage, static_cast<int>(GameList::EntryType::MaxCount)> m_cover_badge_images;
   QPixmap m_loading_pixmap;
-
-  QPixmap m_no_achievements_pixmap;
-  QPixmap m_has_achievements_pixmap;
-  QPixmap m_mastered_achievements_pixmap;
 
   mutable UnorderedStringMap<QPixmap> m_flag_pixmap_cache;
 

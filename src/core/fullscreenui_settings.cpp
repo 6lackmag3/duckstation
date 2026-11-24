@@ -56,9 +56,9 @@ class InputBindingDialog : public PopupDialog
 {
 public:
   InputBindingDialog();
-  ~InputBindingDialog();
+  ~InputBindingDialog() override;
 
-  void Draw();
+  void Draw() override;
   void ClearState();
 
   void Start(SettingsInterface* bsi, InputBindingInfo::Type type, std::string_view section, std::string_view key,
@@ -88,6 +88,44 @@ private:
   float m_time_remaining = 0.0f;
   InputBindingInfo::Type m_binding_type = InputBindingInfo::Type::Unknown;
   bool m_game_settings = false;
+};
+
+/// Shows a macro's sequence, and records it or sets it up from a single bind.
+class MacroDialog : public PopupDialog
+{
+public:
+  MacroDialog();
+  ~MacroDialog() override;
+
+  void Draw() override;
+  void ClearState();
+
+  void Open(SettingsInterface* bsi, std::string_view section, u32 macro_index, const Controller::ControllerInfo* ci);
+
+private:
+  static constexpr float FIRST_INPUT_TIMEOUT_SECONDS = 10.0f;
+  static constexpr float IDLE_TIMEOUT_SECONDS = 3.0f;
+
+  void DrawSequence(float width);
+  void OpenQuickSetupDialog();
+  void StartRecording();
+  void OnRecordedAction(u32 recording_id, const InputManager::MacroSequenceAction& action);
+  void StopRecording(bool save);
+  void LoadSequence();
+  void SaveSequence();
+
+  std::string m_section;
+  const Controller::ControllerInfo* m_ci = nullptr;
+  std::vector<InputManager::MacroSequenceAction> m_actions;
+  std::vector<InputManager::MacroSequenceAction> m_recorded; // frames are from the start of the recording
+  std::vector<u32> m_held_binds;
+  u32 m_macro_index = 0;
+  u32 m_recording_id = 0;
+  float m_time_remaining = 0.0f;
+  bool m_game_settings = false;
+  bool m_loop = false;
+  bool m_recording = false;
+  bool m_scroll_to_bottom = false;
 };
 
 struct PostProcessingStageInfo
@@ -218,6 +256,8 @@ static void DrawEnumSetting(SettingsInterface* bsi, std::string_view title, std:
                             bool enabled = true, bool use_dropdown = true, void (*changed_callback)() = nullptr);
 static void DrawSpeedSelectorSetting(SettingsInterface* bsi, std::string_view title, std::string_view summary,
                                      const char* section, const char* key, float default_value, bool enabled = true);
+static void DrawCPUOverclockSetting(SettingsInterface* bsi, std::string_view title, std::string_view summary,
+                                    bool enabled = true);
 static void DrawFolderSetting(SettingsInterface* bsi, std::string_view title, const char* section, const char* key,
                               const std::string& runtime_var);
 
@@ -232,9 +272,15 @@ static void DrawInputBindingButton(SettingsInterface* bsi, InputBindingInfo::Typ
                                    bool show_type = true);
 static void StartAutomaticBindingForPort(u32 port);
 static void StartClearBindingsForPort(u32 port);
-
-static constexpr std::string_view ACHIEVEMENTS_LOGIN_DIALOG_NAME = "##achievements_login";
-static constexpr std::string_view COVER_DOWNLOADER_DIALOG_NAME = "##cover_downloader";
+static const Controller::ControllerBindingInfo* FindMacroBind(const Controller::ControllerInfo* ci, u32 bind_index);
+static bool MacroSequenceContainsBind(std::string_view sequence, char separator, std::string_view name);
+static std::vector<InputManager::MacroSequenceAction> LoadMacroSequence(const SettingsInterface* bsi,
+                                                                        const char* section, u32 macro_index,
+                                                                        const Controller::ControllerInfo* ci,
+                                                                        bool* loop);
+static void SaveMacroSequence(SettingsInterface* bsi, const char* section, u32 macro_index,
+                              const Controller::ControllerInfo* ci,
+                              std::span<const InputManager::MacroSequenceAction> actions, bool loop);
 
 namespace {
 struct SettingsLocals
@@ -254,13 +300,13 @@ struct SettingsLocals
   std::vector<const HotkeyInfo*> hotkey_list_cache;
   std::vector<ImageTrackInfo> image_track_list;
   std::string image_track_summary;
+  size_t rewind_state_size = 0;
   s8 selected_controller_port = -1;
   bool settings_changed = false;
   bool game_settings_changed = false;
   bool cover_downloader_urls_loaded = false;
   bool cover_downloader_use_serial_names = false;
   GPURenderer graphics_adapter_list_cache_renderer = GPURenderer::Count;
-  InputBindingDialog input_binding_dialog;
   std::unique_ptr<std::string> achievements_login_error;
   char achievements_login_username[256] = {};
   char achievements_login_password[256] = {};
@@ -446,7 +492,7 @@ void FullscreenUI::DrawInputBindingButton(SettingsInterface* bsi, InputBindingIn
     if (type == InputBindingInfo::Type::Motor || type == InputBindingInfo::Type::LED)
       BeginEffectBinding(bsi, type, section, name, display_name);
     else
-      s_settings_locals.input_binding_dialog.Start(bsi, type, section, name, display_name);
+      PushDialog<InputBindingDialog>()->Start(bsi, type, section, name, display_name);
   }
   else if (ImGui::IsItemClicked(ImGuiMouseButton_Right) ||
            (ImGui::IsItemFocused() && ImGui::IsKeyPressed(ImGuiKey_NavGamepadMenu, false)))
@@ -459,7 +505,12 @@ void FullscreenUI::DrawInputBindingButton(SettingsInterface* bsi, InputBindingIn
 
 FullscreenUI::InputBindingDialog::InputBindingDialog() = default;
 
-FullscreenUI::InputBindingDialog::~InputBindingDialog() = default;
+FullscreenUI::InputBindingDialog::~InputBindingDialog()
+{
+  // in case the dialog was removed without going through ClearState()
+  if (m_binding_type != InputBindingInfo::Type::Unknown)
+    Host::RunOnCoreThread(&InputManager::StopBindingCapture);
+}
 
 void FullscreenUI::InputBindingDialog::Start(SettingsInterface* bsi, InputBindingInfo::Type type,
                                              std::string_view section, std::string_view key,
@@ -519,21 +570,24 @@ void FullscreenUI::InputBindingDialog::SetStep(u32 step)
 void FullscreenUI::InputBindingDialog::StartCapture(bool continue_sequence)
 {
   // Updates from an earlier capture can still be queued, so each is tagged with the capture it came from. Only the
-  // video thread touches the dialog's state.
+  // video thread touches the dialog's state, and the dialog can be gone by the time an update arrives.
   // A sequence keeps the mouse for its buttons, even with mouse mapping.
   const u32 capture_id = ++m_capture_id;
   const bool capture_pointer = m_steps.empty();
-  Host::RunOnCoreThread([this, capture_id, type = m_binding_type, continue_sequence, capture_pointer]() {
-    InputManager::StartBindingCapture(
-      [this, capture_id, type](std::span<const InputBindingKey> keys, bool completed) {
-        VideoThread::RunOnThread(
-          [this, capture_id, completed,
-           binding = InputManager::ConvertInputBindingKeysToString(type, keys.data(), keys.size())]() mutable {
-            OnCaptureUpdate(capture_id, std::move(binding), completed);
-          });
-      },
-      continue_sequence, capture_pointer);
-  });
+  Host::RunOnCoreThread(
+    [serial = GetSerial(), capture_id, type = m_binding_type, continue_sequence, capture_pointer]() {
+      InputManager::StartBindingCapture(
+        [serial, capture_id, type](std::span<const InputBindingKey> keys, bool completed) {
+          VideoThread::RunOnThread(
+            [serial, capture_id, completed,
+             binding = InputManager::ConvertInputBindingKeysToString(type, keys.data(), keys.size())]() mutable {
+              // serials are unique, so the dialog with this serial can only be an input binding dialog
+              if (InputBindingDialog* const dialog = FindDialog<InputBindingDialog>(serial))
+                dialog->OnCaptureUpdate(capture_id, std::move(binding), completed);
+            });
+        },
+        continue_sequence, capture_pointer);
+    });
 }
 
 void FullscreenUI::InputBindingDialog::OnCaptureUpdate(u32 capture_id, SmallString binding, bool completed)
@@ -674,6 +728,439 @@ void FullscreenUI::InputBindingDialog::Draw()
       NextStep();
     else if (cancel)
       Finish();
+  }
+
+  EndRender();
+}
+
+const Controller::ControllerBindingInfo* FullscreenUI::FindMacroBind(const Controller::ControllerInfo* ci,
+                                                                     u32 bind_index)
+{
+  for (const Controller::ControllerBindingInfo& bi : ci->bindings)
+  {
+    if (bi.bind_index == bind_index)
+      return &bi;
+  }
+
+  return nullptr;
+}
+
+bool FullscreenUI::MacroSequenceContainsBind(std::string_view sequence, char separator, std::string_view name)
+{
+  // Binds can have a value after a colon, and the legacy settings join them with " & ".
+  for (size_t pos = 0; pos < sequence.size();)
+  {
+    const size_t end = std::min(sequence.find(separator, pos), sequence.size());
+    std::string_view token = StringUtil::StripWhitespace(sequence.substr(pos, end - pos));
+    if (token.substr(0, token.find(':')) == name)
+      return true;
+
+    pos = end + 1;
+  }
+
+  return false;
+}
+
+std::vector<InputManager::MacroSequenceAction> FullscreenUI::LoadMacroSequence(const SettingsInterface* bsi,
+                                                                               const char* section, u32 macro_index,
+                                                                               const Controller::ControllerInfo* ci,
+                                                                               bool* loop)
+{
+  // Macros from before sequences were added are shown converted, and only rewritten when changed.
+  const std::string sequence =
+    bsi->GetStringValue(section, TinyString::from_format("Macro{}Sequence", macro_index + 1).c_str());
+  const bool loop_value = bsi->GetBoolValue(section, TinyString::from_format("Macro{}Loop", macro_index + 1), false);
+  if (!sequence.empty())
+  {
+    *loop = loop_value;
+    return InputManager::ParseMacroSequence(sequence, *ci);
+  }
+
+  std::vector<InputManager::MacroSequenceAction> actions = InputManager::ConvertLegacyMacroToSequence(
+    bsi->GetSmallStringValue(section, TinyString::from_format("Macro{}Binds", macro_index + 1)),
+    bsi->GetFloatValue(section, TinyString::from_format("Macro{}Pressure", macro_index + 1), 1.0f),
+    bsi->GetUIntValue(section, TinyString::from_format("Macro{}Frequency", macro_index + 1), 0u), *ci);
+  *loop = !actions.empty() || loop_value;
+  return actions;
+}
+
+void FullscreenUI::SaveMacroSequence(SettingsInterface* bsi, const char* section, u32 macro_index,
+                                     const Controller::ControllerInfo* ci,
+                                     std::span<const InputManager::MacroSequenceAction> actions, bool loop)
+{
+  const TinyString sequence_key = TinyString::from_format("Macro{}Sequence", macro_index + 1);
+  const TinyString loop_key = TinyString::from_format("Macro{}Loop", macro_index + 1);
+  const std::string sequence = InputManager::FormatMacroSequence(actions, *ci);
+  if (sequence.empty())
+  {
+    bsi->DeleteValue(section, sequence_key);
+    bsi->DeleteValue(section, loop_key);
+  }
+  else
+  {
+    bsi->SetStringValue(section, sequence_key, sequence.c_str());
+    bsi->SetBoolValue(section, loop_key, loop);
+  }
+
+  // The sequence replaces the settings from before sequences were added.
+  bsi->DeleteValue(section, TinyString::from_format("Macro{}Binds", macro_index + 1));
+  bsi->DeleteValue(section, TinyString::from_format("Macro{}Pressure", macro_index + 1));
+  bsi->DeleteValue(section, TinyString::from_format("Macro{}Frequency", macro_index + 1));
+  SetSettingsChanged(bsi);
+}
+
+FullscreenUI::MacroDialog::MacroDialog() = default;
+
+FullscreenUI::MacroDialog::~MacroDialog()
+{
+  // in case the dialog was removed without going through ClearState()
+  if (m_recording)
+    InputManager::StopMacroRecording();
+}
+
+void FullscreenUI::MacroDialog::Open(SettingsInterface* bsi, std::string_view section, u32 macro_index,
+                                     const Controller::ControllerInfo* ci)
+{
+  m_section = section;
+  m_macro_index = macro_index;
+  m_ci = ci;
+  m_game_settings = IsEditingGameSettings(bsi);
+  m_actions = LoadMacroSequence(bsi, m_section.c_str(), m_macro_index, m_ci, &m_loop);
+  SetTitleAndOpen(fmt::format(FSUI_FSTR("Macro {} Sequence"), macro_index + 1));
+}
+
+void FullscreenUI::MacroDialog::ClearState()
+{
+  PopupDialog::ClearState();
+
+  if (m_recording)
+    InputManager::StopMacroRecording();
+
+  m_recording = false;
+  m_section = {};
+  m_ci = nullptr;
+  m_actions = {};
+  m_recorded = {};
+  m_held_binds = {};
+}
+
+void FullscreenUI::MacroDialog::LoadSequence()
+{
+  const auto lock = Core::GetSettingsLock();
+  m_actions =
+    LoadMacroSequence(GetEditingSettingsInterface(m_game_settings), m_section.c_str(), m_macro_index, m_ci, &m_loop);
+}
+
+void FullscreenUI::MacroDialog::SaveSequence()
+{
+  const auto lock = Core::GetSettingsLock();
+  SaveMacroSequence(GetEditingSettingsInterface(m_game_settings), m_section.c_str(), m_macro_index, m_ci, m_actions,
+                    m_loop);
+}
+
+void FullscreenUI::MacroDialog::OpenQuickSetupDialog()
+{
+  // Shared with the button selection dialog's callback.
+  struct QuickSetupState
+  {
+    u32 bind_index = InputManager::MacroSequenceAction::WAIT_BIND_INDEX;
+    s32 interval = 0;
+  };
+
+  OpenCustomDialog(
+    FSUI_STR("Quick Setup"), LAYOUT_SMALL_POPUP_PADDING, LAYOUT_SMALL_POPUP_PADDING, ImVec2(600.0f, 0.0f), ImVec2(),
+    [serial = GetSerial(), ci = m_ci, state = std::make_shared<QuickSetupState>()]() {
+      BeginMenuButtons();
+      ResetFocusHere();
+
+      const Controller::ControllerBindingInfo* bi = FindMacroBind(ci, state->bind_index);
+      if (MenuButtonWithValue(FSUI_ICONVSTR(ICON_FA_GAMEPAD, "Button"), FSUI_VSTR("The button to hold or toggle."),
+                              bi ? ci->GetBindingDisplayName(*bi) : FSUI_VSTR("-")))
+      {
+        ChoiceDialogOptions options;
+        std::vector<u32> option_binds;
+        for (const Controller::ControllerBindingInfo& obi : ci->bindings)
+        {
+          if (obi.type == InputBindingInfo::Type::Motor)
+            continue;
+
+          options.emplace_back(ci->GetBindingDisplayName(obi), obi.bind_index == state->bind_index);
+          option_binds.push_back(obi.bind_index);
+        }
+
+        OpenChoiceDialog(FSUI_VSTR("Select Button"), false, std::move(options),
+                         [state, option_binds = std::move(option_binds)](s32 index, const std::string&, bool) {
+                           if (index >= 0 && static_cast<size_t>(index) < option_binds.size())
+                             state->bind_index = option_binds[index];
+                         });
+      }
+
+      ImGui::SetNextItemWidth(ImGui::GetCurrentWindow()->WorkRect.GetWidth());
+      ImGui::SliderInt("##interval", &state->interval, 0, 60,
+                       (state->interval == 0) ? FSUI_CSTR("Hold") : FSUI_CSTR("Toggle every %d frames"),
+                       ImGuiSliderFlags_NoInput);
+
+      EndMenuButtons();
+
+      ImGui::Dummy(LayoutScale(0.0f, 10.0f));
+
+      BeginHorizontalMenuButtons(2, 200.0f);
+      const bool apply = HorizontalMenuButton(FSUI_ICONVSTR(ICON_FA_CHECK, "Apply"), bi != nullptr);
+      const bool cancel = HorizontalMenuButton(FSUI_ICONVSTR(ICON_FA_XMARK, "Cancel"));
+      EndHorizontalMenuButtons();
+
+      if (apply)
+      {
+        // Replaces the sequence with one which holds the button, or toggles it (turbo).
+        if (MacroDialog* const dialog = FindDialog<MacroDialog>(serial))
+        {
+          dialog->m_actions =
+            InputManager::ConvertLegacyMacroToSequence(bi->name, 1.0f, static_cast<u32>(state->interval), *ci);
+          dialog->m_loop = true;
+          dialog->SaveSequence();
+        }
+
+        CloseCurrentDialog();
+      }
+      else if (cancel)
+      {
+        CloseCurrentDialog();
+      }
+    });
+}
+
+void FullscreenUI::MacroDialog::StartRecording()
+{
+  m_recording = true;
+  m_recorded = {};
+  m_held_binds = {};
+  m_time_remaining = FIRST_INPUT_TIMEOUT_SECONDS;
+
+  // Updates from an earlier recording can still be queued, so each is tagged with the recording it came from. Serials
+  // are unique, so the dialog with this serial can only be a macro dialog.
+  InputManager::MacroRecordingCallback callback =
+    [serial = GetSerial(), recording_id = ++m_recording_id](const InputManager::MacroSequenceAction& action) {
+      VideoThread::RunOnThread([serial, recording_id, action]() {
+        if (MacroDialog* const dialog = FindDialog<MacroDialog>(serial))
+          dialog->OnRecordedAction(recording_id, action);
+      });
+    };
+
+  const auto lock = Core::GetSettingsLock();
+  InputManager::StartMacroRecording(*GetEditingSettingsInterface(m_game_settings), m_section, *m_ci,
+                                    std::move(callback));
+}
+
+void FullscreenUI::MacroDialog::OnRecordedAction(u32 recording_id, const InputManager::MacroSequenceAction& action)
+{
+  if (recording_id != m_recording_id || !m_recording)
+    return;
+
+  // Recording stops once nothing has been pressed for a while.
+  const auto it = std::ranges::find(m_held_binds, action.bind_index);
+  if (action.value != 0.0f && it == m_held_binds.end())
+    m_held_binds.push_back(action.bind_index);
+  else if (action.value == 0.0f && it != m_held_binds.end())
+    m_held_binds.erase(it);
+  m_time_remaining = IDLE_TIMEOUT_SECONDS;
+
+  m_recorded.push_back(action);
+  m_actions = InputManager::ConvertRecordedMacroActions(m_recorded, false);
+  m_scroll_to_bottom = true;
+}
+
+void FullscreenUI::MacroDialog::StopRecording(bool save)
+{
+  m_recording = false;
+  InputManager::StopMacroRecording();
+  QueueResetFocus(FocusResetType::Other);
+
+  // Nothing recorded leaves the sequence as it was.
+  if (!save || m_recorded.empty())
+  {
+    LoadSequence();
+    return;
+  }
+
+  m_actions = InputManager::ConvertRecordedMacroActions(m_recorded, true);
+  m_recorded = {};
+  m_held_binds = {};
+  m_scroll_to_bottom = true;
+  SaveSequence();
+}
+
+void FullscreenUI::MacroDialog::DrawSequence(float width)
+{
+  // TODO: Edit individual actions.
+  ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, LayoutScale(LAYOUT_MENU_ITEM_BORDER_ROUNDING));
+  ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, LayoutScale(10.0f, 10.0f));
+  ImGui::PushStyleColor(ImGuiCol_ChildBg, UIStyle.PopupFrameBackgroundColor);
+  ImGui::PushFont(nullptr, UIStyle.MediumFontSize, UIStyle.NormalFontWeight);
+
+  if (ImGui::BeginChild("##sequence", ImVec2(width, LayoutScale(230.0f)), ImGuiChildFlags_AlwaysUseWindowPadding,
+                        ImGuiWindowFlags_NoNav))
+  {
+    if (m_actions.empty())
+    {
+      ImGui::PushStyleColor(ImGuiCol_Text, UIStyle.MutedTextColor);
+      TextUnformatted(FSUI_VSTR("No inputs."));
+      ImGui::PopStyleColor();
+    }
+
+    // Press/release markers and waits get their own columns, with a line between rows.
+    const float marker_width = LayoutScale(36.0f);
+    const float row_padding = LayoutScale(8.0f);
+    const float row_width = ImGui::GetContentRegionAvail().x;
+    ImDrawList* const dl = ImGui::GetWindowDrawList();
+    for (const InputManager::MacroSequenceAction& action : m_actions)
+    {
+      const ImVec2 row_pos = ImGui::GetCursorScreenPos();
+      ImGui::PushStyleColor(ImGuiCol_Text, UIStyle.MutedTextColor);
+      if (action.bind_index == InputManager::MacroSequenceAction::WAIT_BIND_INDEX)
+      {
+        // Waits are dimmed.
+        TextUnformatted(TinyString::from_format(ICON_FA_HOURGLASS_HALF "  {}",
+                                                TinyString::from_format(FSUI_FSTR("{} frames"), action.frames)));
+        ImGui::PopStyleColor();
+      }
+      else
+      {
+        const bool released = (action.value == 0.0f);
+        ImGui::PushStyleColor(ImGuiCol_Text, released ? UIStyle.MutedTextColor : UIStyle.AccentColor);
+        TextUnformatted(released ? std::string_view(ICON_FA_ARROW_UP) : std::string_view(ICON_FA_ARROW_DOWN));
+        ImGui::PopStyleColor();
+        ImGui::PopStyleColor();
+
+        const Controller::ControllerBindingInfo* bi = FindMacroBind(m_ci, action.bind_index);
+        ImGui::SameLine(marker_width);
+        if (bi && bi->icon_name && bi->icon_name[0] != '\0')
+          TextUnformatted(TinyString::from_format("{} {}", bi->icon_name, m_ci->GetBindingDisplayName(*bi)));
+        else
+          TextUnformatted(bi ? m_ci->GetBindingDisplayName(*bi) : std::string_view());
+
+        // Only partial presses of analog inputs need a value.
+        if (action.value != 0.0f && action.value != 1.0f)
+        {
+          const TinyString value = TinyString::from_format("{}%", static_cast<int>(std::round(action.value * 100.0f)));
+          ImGui::SameLine(row_width - ImGui::CalcTextSize(value.c_str()).x);
+          ImGui::PushStyleColor(ImGuiCol_Text, UIStyle.MutedTextColor);
+          TextUnformatted(value);
+          ImGui::PopStyleColor();
+        }
+      }
+
+      // The same padding above and below the line.
+      const float line_y = row_pos.y + ImGui::GetTextLineHeight() + row_padding;
+      dl->AddLine(ImVec2(row_pos.x, line_y), ImVec2(row_pos.x + row_width, line_y),
+                  ImGui::GetColorU32(UIStyle.BorderColor));
+      ImGui::Dummy(ImVec2(
+        0.0f, std::max(line_y + row_padding - ImGui::GetCursorScreenPos().y - ImGui::GetStyle().ItemSpacing.y, 0.0f)));
+    }
+
+    if (m_scroll_to_bottom)
+    {
+      ImGui::SetScrollHereY(1.0f);
+      m_scroll_to_bottom = false;
+    }
+  }
+  ImGui::EndChild();
+
+  // Summary of the sequence below the list.
+  if (!m_actions.empty())
+  {
+    u32 num_inputs = 0, total_frames = 0;
+    for (const InputManager::MacroSequenceAction& action : m_actions)
+    {
+      if (action.bind_index == InputManager::MacroSequenceAction::WAIT_BIND_INDEX)
+        total_frames += action.frames;
+      else
+        num_inputs++;
+    }
+
+    ImGui::PushStyleColor(ImGuiCol_Text, UIStyle.MutedTextColor);
+    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + LayoutScale(10.0f));
+    TextUnformatted(TinyString::from_format(FSUI_FSTR("{0} inputs, {1} frames"), num_inputs, total_frames));
+    ImGui::PopStyleColor();
+  }
+
+  ImGui::PopFont();
+  ImGui::PopStyleColor();
+  ImGui::PopStyleVar(2);
+}
+
+void FullscreenUI::MacroDialog::Draw()
+{
+  if (!IsOpen())
+    return;
+
+  // Holding an input keeps the recording going.
+  if (m_recording && m_held_binds.empty())
+  {
+    m_time_remaining -= ImGui::GetIO().DeltaTime;
+    if (m_time_remaining <= 0.0f)
+    {
+      m_time_remaining = 0.0f;
+      StopRecording(true);
+    }
+  }
+
+  if (!BeginRender(LayoutScale(LAYOUT_SMALL_POPUP_PADDING), LayoutScale(LAYOUT_SMALL_POPUP_PADDING),
+                   LayoutScale(800.0f, 0.0f)))
+  {
+    ClearState();
+    return;
+  }
+
+  const float width = ImGui::GetContentRegionAvail().x;
+  DrawSequence(width);
+  ImGui::Dummy(LayoutScale(0.0f, 10.0f));
+
+  if (m_recording)
+  {
+    const float timeout = m_recorded.empty() ? FIRST_INPUT_TIMEOUT_SECONDS : IDLE_TIMEOUT_SECONDS;
+    ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, LayoutScale(3.0f));
+    ImGui::PushStyleColor(ImGuiCol_PlotHistogram, UIStyle.SecondaryColor);
+    ImGui::ProgressBar(m_time_remaining / timeout, ImVec2(width, LayoutScale(6.0f)), "");
+    ImGui::PopStyleColor();
+    ImGui::PopStyleVar();
+    ImGui::Dummy(LayoutScale(0.0f, 10.0f));
+
+    // The recording takes the pad and keyboard, so the buttons are for the mouse, which it leaves alone.
+    BeginHorizontalMenuButtons(2, 200.0f);
+    const bool stop = HorizontalMenuButton(FSUI_ICONVSTR(ICON_FA_STOP, "Stop"));
+    const bool cancel = HorizontalMenuButton(FSUI_ICONVSTR(ICON_FA_XMARK, "Cancel"));
+    EndHorizontalMenuButtons();
+
+    if (stop || cancel)
+      StopRecording(stop);
+  }
+  else
+  {
+    BeginHorizontalMenuButtons(4, 200.0f);
+    ResetFocusHere();
+    const bool record = HorizontalMenuButton(FSUI_ICONVSTR(ICON_FA_CIRCLE, "Record"));
+    const bool clear = HorizontalMenuButton(FSUI_ICONVSTR(ICON_FA_ERASER, "Clear"), !m_actions.empty());
+    const bool quick_setup = HorizontalMenuButton(FSUI_ICONVSTR(ICON_FA_WAND_MAGIC_SPARKLES, "Quick Setup"));
+    const bool close = HorizontalMenuButton(FSUI_ICONVSTR(ICON_FA_XMARK, "Close"));
+    EndHorizontalMenuButtons();
+
+    if (record)
+    {
+      StartRecording();
+    }
+    else if (clear)
+    {
+      m_actions = {};
+      SaveSequence();
+    }
+    else if (quick_setup)
+    {
+      OpenQuickSetupDialog();
+    }
+    else if (close)
+    {
+      StartClose();
+    }
   }
 
   EndRender();
@@ -1831,7 +2318,6 @@ void FullscreenUI::PopulateHotkeyList()
 
 void FullscreenUI::ClearSettingsState()
 {
-  s_settings_locals.input_binding_dialog.ClearState();
   s_settings_locals.game_list_directories_cache = {};
   s_settings_locals.game_settings_entry.reset();
   s_settings_locals.game_settings_interface.reset();
@@ -1869,6 +2355,12 @@ void FullscreenUI::SwitchToSettings(SettingsPage page /* = SettingsPage::Interfa
   const SettingsInterface* const sif = GetEditingSettingsInterface();
   PopulateGameListDirectoryCache(*Core::GetBaseSettingsLayer());
   PopulatePostProcessingChain(*sif, PostProcessing::Config::DISPLAY_CHAIN_SECTION_NAME);
+
+  // Memory state size depends on the running system, so has to be queried on the core thread.
+  Host::RunOnCoreThread([]() {
+    VideoThread::RunOnThread(
+      [size = System::GetMaxSaveStateSize(true)]() { s_settings_locals.rewind_state_size = size; });
+  });
 
   SwitchToMainWindow(MainWindowType::Settings);
   s_settings_locals.settings_page = page;
@@ -1922,6 +2414,11 @@ void FullscreenUI::SwitchToGameSettings(const GameList::Entry* entry, SettingsPa
   PopulatePatchesAndCheatsList();
   PopulatePostProcessingChain(*s_settings_locals.game_settings_interface,
                               PostProcessing::Config::DISPLAY_CHAIN_SECTION_NAME);
+  // Memory state size depends on the running system, so has to be queried on the core thread.
+  Host::RunOnCoreThread([]() {
+    VideoThread::RunOnThread(
+      [size = System::GetMaxSaveStateSize(true)]() { s_settings_locals.rewind_state_size = size; });
+  });
   s_settings_locals.settings_page = page;
   s_settings_locals.selected_controller_port = -1;
   SwitchToMainWindow(MainWindowType::Settings);
@@ -2019,16 +2516,6 @@ void FullscreenUI::DoClearGameSettings()
 FullscreenUI::SettingsPage FullscreenUI::GetCurrentSettingsPage()
 {
   return s_settings_locals.settings_page;
-}
-
-bool FullscreenUI::IsInputBindingDialogOpen()
-{
-  return s_settings_locals.input_binding_dialog.IsOpen();
-}
-
-bool FullscreenUI::IsInputBindingDialogInteractable()
-{
-  return s_settings_locals.input_binding_dialog.IsInteractable();
 }
 
 void FullscreenUI::DrawSettingsWindow()
@@ -2264,13 +2751,6 @@ void FullscreenUI::DrawSettingsWindow()
                                    std::pair<const char*, std::string_view>(),
                  std::make_pair(ICON_PF_ENTER, FSUI_VSTR("Select")), std::make_pair(ICON_PF_ESC, FSUI_VSTR("Back"))});
   }
-
-  if (IsFixedPopupDialogOpen(COVER_DOWNLOADER_DIALOG_NAME))
-    DrawCoverDownloaderWindow();
-  else if (IsFixedPopupDialogOpen(ACHIEVEMENTS_LOGIN_DIALOG_NAME))
-    DrawAchievementsLoginWindow();
-  else
-    s_settings_locals.input_binding_dialog.Draw();
 
   if (s_settings_locals.settings_changed)
   {
@@ -3033,21 +3513,22 @@ void FullscreenUI::DrawGameListSettingsPage()
   {
     ResetFocusHere();
 
-    bool settings_changed = DrawToggleSetting(bsi, FSUI_ICONVSTR(ICON_FA_TABLE_CELLS_LARGE, "Grid View"),
-                                              FSUI_VSTR("Shows the game list as a grid instead of a vertical list."),
-                                              GameList::UI_SECTION_NAME, GameList::SETTING_KEY_FULLSCREENUI_GRID_VIEW,
-                                              GameList::DEFAULT_FULLSCREENUI_GRID_VIEW);
-    DrawEnumSetting(bsi, FSUI_ICONVSTR(ICON_FA_SORT, "Sort By"),
-                    FSUI_VSTR("Determines that field that the game list will be sorted by."), GameList::UI_SECTION_NAME,
-                    GameList::SETTING_KEY_SORT_COLUMN, GameList::DEFAULT_SORT_COLUMN, &GameList::ParseColumnName,
-                    &GameList::GetColumnName, &GameList::GetColumnDisplayName, GameList::Column::MaxCount, true, false,
+    DrawEnumSetting(bsi, FSUI_ICONVSTR(ICON_FA_TABLE_CELLS_LARGE, "View"),
+                    FSUI_VSTR("Determines how the game list is displayed."), GameList::UI_SECTION_NAME,
+                    GameList::SETTING_KEY_FULLSCREENUI_VIEW, DEFAULT_GAME_LIST_VIEW, &ParseGameListViewName,
+                    &GetGameListViewName, &GetGameListViewDisplayName, GameListView::MaxCount, true, false,
                     &FullscreenUI::ReloadGameListSettings);
     DrawEnumSetting(bsi, FSUI_ICONVSTR(ICON_FA_IMAGE, "List Icons"),
                     FSUI_VSTR("Determines the image shown next to each game in the list view."),
                     GameList::UI_SECTION_NAME, GameList::SETTING_KEY_ICON_SOURCE, GameList::DEFAULT_ICON_SOURCE,
                     &GameList::ParseIconSourceName, &GameList::GetIconSourceName, &GameList::GetIconSourceDisplayName,
                     GameList::IconSource::MaxCount, true, false, &FullscreenUI::ReloadGameListSettings);
-    settings_changed |= DrawToggleSetting(
+    DrawEnumSetting(bsi, FSUI_ICONVSTR(ICON_FA_SORT, "Sort By"),
+                    FSUI_VSTR("Determines that field that the game list will be sorted by."), GameList::UI_SECTION_NAME,
+                    GameList::SETTING_KEY_SORT_COLUMN, GameList::DEFAULT_SORT_COLUMN, &GameList::ParseColumnName,
+                    &GameList::GetColumnName, &GameList::GetColumnDisplayName, GameList::Column::MaxCount, true, false,
+                    &FullscreenUI::ReloadGameListSettings);
+    bool settings_changed = DrawToggleSetting(
       bsi, FSUI_ICONVSTR(ICON_FA_ARROW_DOWN_Z_A, "Sort Reversed"),
       FSUI_VSTR("Reverses the game list sort order from the default (usually ascending to descending)."),
       GameList::UI_SECTION_NAME, GameList::SETTING_KEY_SORT_REVERSED, GameList::DEFAULT_SORT_REVERSED);
@@ -3163,7 +3644,8 @@ void FullscreenUI::DrawGameListSettingsPage()
     if (MenuButton(FSUI_ICONVSTR(ICON_FA_DOWNLOAD, "Download Covers"),
                    FSUI_VSTR("Downloads covers from a user-specified URL template.")))
     {
-      OpenFixedPopupDialog(COVER_DOWNLOADER_DIALOG_NAME);
+      OpenCustomDialog("##cover_downloader", LAYOUT_LARGE_POPUP_PADDING, LAYOUT_LARGE_POPUP_ROUNDING,
+                       ImVec2(1000.0f, 0.0f), ImVec2(0.0f, 400.0f), &DrawCoverDownloaderWindow);
     }
   }
 
@@ -3186,12 +3668,6 @@ void FullscreenUI::DrawGameListSettingsPage()
 
 void FullscreenUI::DrawCoverDownloaderWindow()
 {
-  if (!BeginFixedPopupDialog(LayoutScale(LAYOUT_LARGE_POPUP_PADDING), LayoutScale(LAYOUT_LARGE_POPUP_ROUNDING),
-                             LayoutScale(1000.0f, 0.0f), LayoutScale(0.0, 400.0f)))
-  {
-    return;
-  }
-
   if (!s_settings_locals.cover_downloader_urls_loaded)
   {
     s_settings_locals.cover_downloader_urls_loaded = true;
@@ -3257,50 +3733,47 @@ void FullscreenUI::DrawCoverDownloaderWindow()
 
     // TODO: Remove release once using move_only_function
     std::unique_ptr<ProgressCallback> progress = OpenModalProgressDialog(FSUI_STR("Cover Downloader"), 1000.0f);
-    Host::QueueAsyncTask([progress = progress.release(),
+    Host::QueueAsyncTask([progress = progress.release(), dialog_serial = GetCurrentDialogSerial(),
                           urls = StringUtil::SplitNewString(s_settings_locals.cover_downloader_template_urls, '\n'),
                           use_serial_names = s_settings_locals.cover_downloader_use_serial_names]() {
       Error error;
-      if (!GameList::DownloadCovers(
-            urls, use_serial_names, progress, &error, [](const GameList::Entry* entry, std::string save_path) {
-              // cache the cover path on our side once it's saved
-              Host::RunOnCoreThread([path = entry->path, save_path = std::move(save_path)]() mutable {
-                VideoThread::RunOnThread([path = std::move(path), save_path = std::move(save_path)]() mutable {
-                  FullscreenUI::SetCoverCacheEntry(std::move(path), std::move(save_path));
-                });
-              });
-            }))
-      {
-        OpenInfoMessageDialog(ICON_EMOJI_NO_ENTRY_SIGN, FSUI_STR("Cover Download Error"), error.TakeDescription());
-      }
-
-      // close the parent window if we weren't cancelled
-      if (!progress->IsCancelled())
-      {
-        Host::RunOnCoreThread([]() {
-          VideoThread::RunOnThread([]() {
-            if (IsFixedPopupDialogOpen(COVER_DOWNLOADER_DIALOG_NAME))
-              CloseFixedPopupDialog();
+      const bool result = GameList::DownloadCovers(
+        urls, use_serial_names, progress, &error, [](const GameList::Entry* entry, std::string save_path) {
+          // cache the cover path on our side once it's saved
+          Host::RunOnCoreThread([path = entry->path, save_path = std::move(save_path)]() mutable {
+            VideoThread::RunOnThread([path = std::move(path), save_path = std::move(save_path)]() mutable {
+              FullscreenUI::SetCoverCacheEntry(std::move(path), std::move(save_path));
+            });
           });
         });
-      }
-
+      const bool cancelled = progress->IsCancelled();
       delete progress;
+
+      // Queued after the progress dialog's close. The parent window is closed before the error is opened, so that the
+      // error isn't stacked on a closing dialog, and dialogs can only be opened on the video thread.
+      Host::RunOnCoreThread([dialog_serial, result, cancelled, error = std::move(error)]() mutable {
+        VideoThread::RunOnThread([dialog_serial, result, cancelled, error = std::move(error)]() mutable {
+          // close the parent window if we weren't cancelled
+          if (!cancelled)
+            CloseDialog(dialog_serial);
+
+          if (!result)
+            OpenInfoMessageDialog(ICON_EMOJI_NO_ENTRY_SIGN, FSUI_STR("Cover Download Error"), error.TakeDescription());
+        });
+      });
     });
   }
 
   if (HorizontalMenuButton(FSUI_ICONSTR(ICON_FA_XMARK, "Close")))
   {
     SaveCoverDownloaderURLs();
-    CloseFixedPopupDialog();
+    CloseCurrentDialog();
   }
 
   EndHorizontalMenuButtons();
 
   ImGui::PopFont();
   ImGui::PopStyleVar(2);
-
-  EndFixedPopupDialog();
 }
 
 void FullscreenUI::SaveCoverDownloaderURLs()
@@ -3495,6 +3968,16 @@ void FullscreenUI::DrawConsoleSettingsPage()
                   Settings::GPU_SECTION_NAME, "ForceVideoTiming", Settings::DEFAULT_FORCE_VIDEO_TIMING_MODE,
                   &Settings::ParseForceVideoTimingName, &Settings::GetForceVideoTimingName,
                   &Settings::GetForceVideoTimingDisplayName, ForceVideoTimingMode::Count);
+  DrawEnumSetting(
+    bsi, FSUI_ICONVSTR(ICON_FA_MEMORY, "Installed RAM"),
+    FSUI_VSTR("Changes the amount of RAM installed in the emulated console. Retail games do not use extra RAM."),
+    Settings::CPU_SECTION_NAME, "RAMSize", Settings::DEFAULT_CPU_RAM_SIZE, &Settings::ParseCPURAMSize,
+    &Settings::GetCPURAMSizeName, &Settings::GetCPURAMSizeDisplayName, CPURAMSize::Count);
+  DrawEnumSetting(
+    bsi, FSUI_ICONVSTR(ICON_FA_IMAGE, "Installed VRAM"),
+    FSUI_VSTR("Changes the amount of video RAM installed in the emulated console. Retail games do not use extra VRAM."),
+    Settings::CONSOLE_SECTION_NAME, "VRAMSize", Settings::DEFAULT_GPU_VRAM_SIZE, &Settings::ParseGPUVRAMSize,
+    &Settings::GetGPUVRAMSizeName, &Settings::GetGPUVRAMSizeDisplayName, GPUVRAMSize::Count);
   DrawToggleSetting(bsi, FSUI_ICONVSTR(ICON_FA_SHIELD_HALVED, "Safe Mode"),
                     FSUI_VSTR("Temporarily disables all enhancements, useful when testing."),
                     Settings::INTERFACE_SECTION_NAME, "DisableAllEnhancements", false);
@@ -3511,17 +3994,10 @@ void FullscreenUI::DrawConsoleSettingsPage()
                     FSUI_VSTR("Fast forwards through memory card access, both loading and saving. Can reduce waiting "
                               "times in games that frequently access memory cards."),
                     Settings::MEMORY_CARDS_SECTION_NAME, "FastForwardAccess", false);
-  DrawEnumSetting(bsi, FSUI_ICONVSTR(ICON_FA_MEMORY, "Installed RAM"),
-                  FSUI_VSTR("Changes the amount of RAM installed in the emulated console."), Settings::CPU_SECTION_NAME,
-                  "RAMSize", Settings::DEFAULT_CPU_RAM_SIZE, &Settings::ParseCPURAMSize, &Settings::GetCPURAMSizeName,
-                  &Settings::GetCPURAMSizeDisplayName, CPURAMSize::Count);
-  DrawToggleSetting(
-    bsi, FSUI_ICONVSTR(ICON_FA_MAXIMIZE, "Force Full RAM Mapping"),
-    FSUI_VSTR("Maps all installed RAM, regardless of the size configured by the BIOS or game. Needed for 16MB with "
-              "retail BIOSes."),
-    Settings::CPU_SECTION_NAME, "ForceFullRAMMapping", false,
-    Settings::ParseCPURAMSize(GetEffectiveTinyStringSetting(bsi, Settings::CPU_SECTION_NAME, "RAMSize"))
-        .value_or(Settings::DEFAULT_CPU_RAM_SIZE) != Settings::DEFAULT_CPU_RAM_SIZE);
+  DrawToggleSetting(bsi, FSUI_ICONVSTR(ICON_FA_BARS_PROGRESS, "Fast Forward While Loading"),
+                    FSUI_VSTR("Fast forwards when the game stops updating the screen while reading from the disc. "
+                              "Does not apply to animated loading screens."),
+                    Settings::INTERFACE_SECTION_NAME, "FastForwardLoading", false);
 
   MenuHeading(FSUI_VSTR("CPU Emulation"));
 
@@ -3535,26 +4011,21 @@ void FullscreenUI::DrawConsoleSettingsPage()
                     FSUI_VSTR("When this option is chosen, the clock speed set below will be used."),
                     Settings::CPU_SECTION_NAME, "OverclockEnable", false);
 
-  const bool oc_enable = GetEffectiveBoolSetting(bsi, Settings::CPU_SECTION_NAME, "OverclockEnable", false);
-  if (oc_enable)
-  {
-    u32 oc_numerator = GetEffectiveUIntSetting(bsi, Settings::CPU_SECTION_NAME, "OverclockNumerator", 1);
-    u32 oc_denominator = GetEffectiveUIntSetting(bsi, Settings::CPU_SECTION_NAME, "OverclockDenominator", 1);
-    s32 oc_percent = static_cast<s32>(Settings::CPUOverclockFractionToPercent(oc_numerator, oc_denominator));
-    if (RangeButton(FSUI_ICONVSTR(ICON_FA_GAUGE_SIMPLE_HIGH, "Overclocking Percentage"),
-                    FSUI_VSTR("Selects the percentage of the normal clock speed the emulated hardware will run at."),
-                    &oc_percent, 10, 1000, 10, "%d%%"))
-    {
-      Settings::CPUOverclockPercentToFraction(oc_percent, &oc_numerator, &oc_denominator);
-      bsi->SetUIntValue(Settings::CPU_SECTION_NAME, "OverclockNumerator", oc_numerator);
-      bsi->SetUIntValue(Settings::CPU_SECTION_NAME, "OverclockDenominator", oc_denominator);
-      SetSettingsChanged(bsi);
-    }
-  }
+  DrawCPUOverclockSetting(
+    bsi, FSUI_ICONVSTR(ICON_FA_GAUGE_SIMPLE_HIGH, "Overclocking Percentage"),
+    FSUI_VSTR("Selects the percentage of the normal clock speed the emulated hardware will run at."),
+    GetEffectiveBoolSetting(bsi, Settings::CPU_SECTION_NAME, "OverclockEnable", false));
 
+  const bool is_interpreter =
+    (Settings::ParseCPUExecutionMode(GetEffectiveTinyStringSetting(bsi, Settings::CPU_SECTION_NAME, "ExecutionMode"))
+       .value_or(Settings::DEFAULT_CPU_EXECUTION_MODE) == CPUExecutionMode::Interpreter);
   DrawToggleSetting(bsi, FSUI_ICONVSTR(ICON_FA_MICROCHIP, "Enable Recompiler ICache"),
                     FSUI_VSTR("Makes games run closer to their console framerate, at a small cost to performance."),
-                    Settings::CPU_SECTION_NAME, "RecompilerICache", false);
+                    Settings::CPU_SECTION_NAME, "RecompilerICache", false, !is_interpreter);
+
+  DrawToggleSetting(bsi, FSUI_ICONVSTR(ICON_FA_GAUGE_SIMPLE_HIGH, "Scale Idle Timeout"),
+                    FSUI_VSTR("Stops games from timing out while waiting for vertical blank when overclocking."),
+                    Settings::CPU_SECTION_NAME, "IdleTimeoutScale", true, !is_interpreter);
 
   MenuHeading(FSUI_VSTR("CD-ROM Emulation"));
 
@@ -3737,6 +4208,153 @@ void FullscreenUI::DrawSpeedSelectorSetting(SettingsInterface* bsi, std::string_
   EndFixedPopupDialog();
 }
 
+void FullscreenUI::DrawCPUOverclockSetting(SettingsInterface* bsi, std::string_view title, std::string_view summary,
+                                           bool enabled /* = true */)
+{
+  // I hate having a function for this, but thankfully it'll disappear with the FullscreenUI rewrite.
+  static constexpr int MIN_VALUE = 10;
+  static constexpr int MAX_VALUE = 1000;
+  static constexpr int STEP_VALUE = 1;
+  static constexpr int DEFAULT_VALUE = 100;
+
+  const bool game_settings = IsEditingGameSettings(bsi);
+  const bool has_value = !game_settings || bsi->ContainsValue(Settings::CPU_SECTION_NAME, "OverclockNumerator") ||
+                         bsi->ContainsValue(Settings::CPU_SECTION_NAME, "OverclockDenominator");
+  const int effective_value = static_cast<int>(Settings::CPUOverclockFractionToPercent(
+    GetEffectiveUIntSetting(bsi, Settings::CPU_SECTION_NAME, "OverclockNumerator", 1),
+    GetEffectiveUIntSetting(bsi, Settings::CPU_SECTION_NAME, "OverclockDenominator", 1)));
+
+  TinyString sstr;
+  if (has_value)
+    sstr.format("{}%", effective_value);
+  else
+    sstr = FSUI_VSTR("Use Global Setting");
+
+  static bool manual_input = false;
+  static bool activate_manual_input = false;
+
+  const bool pressed = MenuActionButton(title, summary, sstr, false, enabled);
+
+  sstr.format("{}##cpu-overclock", title);
+  if (pressed)
+  {
+    OpenFixedPopupDialog(sstr);
+    manual_input = false;
+    activate_manual_input = false;
+  }
+
+  if (!IsFixedPopupDialogOpen(sstr) ||
+      !BeginFixedPopupDialog(LayoutScale(LAYOUT_SMALL_POPUP_PADDING), LayoutScale(LAYOUT_SMALL_POPUP_PADDING),
+                             LayoutScale(650.0f, 0.0f), LayoutScale(0.0, 250.0f)))
+  {
+    return;
+  }
+
+  ImGui::PushFont(UIStyle.Font, UIStyle.MediumLargeFontSize, UIStyle.NormalFontWeight);
+  TextAlignedMultiLine(0.0f, IMSTR_START_END(summary));
+  ImGui::PushFont(UIStyle.Font, UIStyle.MediumLargeFontSize, UIStyle.BoldFontWeight);
+  ImGui::Text("%s: ", FSUI_CSTR("Value Range"));
+  ImGui::PopFont();
+  ImGui::SameLine();
+  ImGui::Text("%d%% - %d%%", MIN_VALUE, MAX_VALUE);
+  ImGui::PushFont(UIStyle.Font, UIStyle.MediumLargeFontSize, UIStyle.BoldFontWeight);
+  ImGui::Text("%s: ", FSUI_CSTR("Default Value"));
+  ImGui::PopFont();
+  ImGui::SameLine();
+  ImGui::Text("%d%%", DEFAULT_VALUE);
+  ImGui::PopFont();
+  ImGui::SetCursorPosY(ImGui::GetCursorPosY() + LayoutScale(10.0f));
+
+  ResetFocusHere();
+
+  int dlg_value = effective_value;
+  bool dlg_value_changed = false;
+
+  char str_value[32];
+  *fmt::format_to_n(str_value, std::size(str_value) - 1, "{}{}", dlg_value, manual_input ? "" : "%").out = '\0';
+
+  if (manual_input)
+  {
+    BeginMenuButtons();
+
+    ImGui::SetNextItemWidth(ImGui::GetCurrentWindow()->WorkRect.GetWidth());
+
+    ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, LayoutScale(LAYOUT_WIDGET_FRAME_ROUNDING));
+    ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.0f);
+    if (InputTextWithSuffix("##value", "%", str_value, std::size(str_value),
+                            ImGuiInputTextFlags_CharsDecimal |
+                              (std::exchange(activate_manual_input, false) ? ImGuiInputTextFlags_AlwaysActivate :
+                                                                             ImGuiInputTextFlags_None)))
+    {
+      dlg_value = StringUtil::FromChars<int>(str_value).value_or(dlg_value);
+      dlg_value_changed = true;
+    }
+    HandleOnScreenKeyboard(OnScreenKeyboardMode::Numeric, false, false);
+    ImGui::PopStyleVar(2);
+
+    ImGui::SetCursorPosY(ImGui::GetCursorPosY() + LayoutScale(10.0f));
+  }
+  else
+  {
+    BeginHorizontalMenuButtons(5);
+    HorizontalMenuButton(str_value, false);
+
+    int step = 0;
+    ImGui::PushItemFlag(ImGuiItemFlags_ButtonRepeat, true);
+    if (HorizontalMenuButton(ICON_FA_CHEVRON_UP))
+      step = STEP_VALUE;
+    if (HorizontalMenuButton(ICON_FA_CHEVRON_DOWN))
+      step = -STEP_VALUE;
+    ImGui::PopItemFlag();
+    if (HorizontalMenuButton(ICON_FA_KEYBOARD))
+    {
+      manual_input = true;
+      activate_manual_input = true;
+      QueueResetFocus(FocusResetType::Other);
+    }
+    if (HorizontalMenuButton(ICON_FA_ARROW_ROTATE_LEFT))
+    {
+      dlg_value = DEFAULT_VALUE;
+      dlg_value_changed = true;
+    }
+
+    EndHorizontalMenuButtons(10.0f);
+
+    if (step != 0)
+    {
+      dlg_value += step;
+      dlg_value_changed = true;
+    }
+
+    BeginMenuButtons();
+  }
+
+  if (dlg_value_changed)
+  {
+    dlg_value = std::clamp(dlg_value, MIN_VALUE, MAX_VALUE);
+    if (game_settings && dlg_value == DEFAULT_VALUE)
+    {
+      bsi->DeleteValue(Settings::CPU_SECTION_NAME, "OverclockNumerator");
+      bsi->DeleteValue(Settings::CPU_SECTION_NAME, "OverclockDenominator");
+    }
+    else
+    {
+      u32 new_numerator, new_denominator;
+      Settings::CPUOverclockPercentToFraction(static_cast<u32>(dlg_value), &new_numerator, &new_denominator);
+      bsi->SetUIntValue(Settings::CPU_SECTION_NAME, "OverclockNumerator", new_numerator);
+      bsi->SetUIntValue(Settings::CPU_SECTION_NAME, "OverclockDenominator", new_denominator);
+    }
+
+    SetSettingsChanged(bsi);
+  }
+
+  if (MenuButtonWithoutSummary(FSUI_VSTR("OK"), true, LAYOUT_CENTER_ALIGN_TEXT))
+    CloseFixedPopupDialog();
+  EndMenuButtons();
+
+  EndFixedPopupDialog();
+}
+
 void FullscreenUI::DrawEmulationSettingsPage()
 {
   SettingsInterface* bsi = GetEditingSettingsInterface();
@@ -3851,11 +4469,19 @@ void FullscreenUI::DrawEmulationSettingsPage()
   {
     const u32 resolution_scale = GetEffectiveUIntSetting(bsi, Settings::GPU_SECTION_NAME, "ResolutionScale", 1);
     const u32 multisamples = GetEffectiveUIntSetting(bsi, Settings::GPU_SECTION_NAME, "Multisamples", 1);
-    const bool use_software_renderer =
+    const GPURenderer renderer =
+      Settings::ParseRendererName(
+        GetEffectiveTinyStringSetting(bsi, Settings::GPU_SECTION_NAME, "Renderer",
+                                      Settings::GetRendererName(Settings::DEFAULT_GPU_RENDERER))
+          .c_str())
+        .value_or(Settings::DEFAULT_GPU_RENDERER);
+    const bool use_software_renderer_for_memory_states =
       GetEffectiveBoolSetting(bsi, Settings::GPU_SECTION_NAME, "UseSoftwareRendererForMemoryStates", false);
-    const CPURAMSize ram_size =
-      Settings::ParseCPURAMSize(GetEffectiveTinyStringSetting(bsi, Settings::CPU_SECTION_NAME, "RAMSize"))
-        .value_or(Settings::DEFAULT_CPU_RAM_SIZE);
+    const bool use_software_renderer_for_readbacks =
+      GetEffectiveBoolSetting(bsi, Settings::GPU_SECTION_NAME, "UseSoftwareRendererForReadbacks", false);
+    const bool vram_2mb =
+      Settings::ParseGPUVRAMSize(GetEffectiveTinyStringSetting(bsi, Settings::CONSOLE_SECTION_NAME, "VRAMSize"))
+        .value_or(Settings::DEFAULT_GPU_VRAM_SIZE) != GPUVRAMSize::Default;
     const bool enable_texture_cache =
       GetEffectiveBoolSetting(bsi, Settings::GPU_SECTION_NAME, "EnableTextureCache", false);
     const float rewind_frequency =
@@ -3866,18 +4492,20 @@ void FullscreenUI::DrawEmulationSettingsPage()
       static_cast<float>(rewind_save_slots);
 
     u64 ram_usage, vram_usage;
-    System::CalculateRewindMemoryUsage(rewind_save_slots, resolution_scale, multisamples, use_software_renderer,
-                                       ram_size, enable_texture_cache, &ram_usage, &vram_usage);
+    System::CalculateRewindMemoryUsage(rewind_save_slots, s_settings_locals.rewind_state_size, renderer,
+                                       resolution_scale, multisamples, use_software_renderer_for_memory_states,
+                                       use_software_renderer_for_readbacks, vram_2mb, enable_texture_cache, &ram_usage,
+                                       &vram_usage);
     if (vram_usage > 0)
     {
       rewind_summary.format(
-        FSUI_FSTR("Rewind for {0} frames, lasting {1:.2f} seconds will require {2} MB of RAM and {3} MB of VRAM."),
-        rewind_save_slots, duration, ram_usage / 1048576, vram_usage / 1048576);
+        FSUI_FSTR("Rewind for {0} frames, lasting {1:.2f} seconds will require {2} of RAM and {3} of VRAM."),
+        rewind_save_slots, duration, Host::FormatByteSize(ram_usage), Host::FormatByteSize(vram_usage));
     }
     else
     {
-      rewind_summary.format(FSUI_FSTR("Rewind for {0} frames, lasting {1:.2f} seconds will require {2} MB of RAM."),
-                            rewind_save_slots, duration, ram_usage / 1048576);
+      rewind_summary.format(FSUI_FSTR("Rewind for {0} frames, lasting {1:.2f} seconds will require {2} of RAM."),
+                            rewind_save_slots, duration, Host::FormatByteSize(ram_usage));
     }
   }
   else
@@ -4281,7 +4909,7 @@ void FullscreenUI::DrawControllerSettingsPage()
     if (MenuButton(FSUI_ICONVSTR(ICON_FA_LIST_OL, "Bind All Buttons"),
                    FSUI_VSTR("Asks for each button and axis of this controller in turn.")))
     {
-      s_settings_locals.input_binding_dialog.StartBindAll(bsi, section, ci);
+      PushDialog<InputBindingDialog>()->StartBindAll(bsi, section, ci);
     }
 
     if (MenuButton(FSUI_ICONVSTR(ICON_FA_TRASH, "Clear Mappings"),
@@ -4369,141 +4997,48 @@ void FullscreenUI::DrawControllerSettingsPage()
                              TinyString::from_format("Macro{}", macro_index + 1), FSUI_CSTR("Trigger"),
                              std::string_view(), true);
 
-      SmallString binds_string =
-        bsi->GetSmallStringValue(section.c_str(), TinyString::from_format("Macro{}Binds", macro_index + 1).c_str());
-      TinyString pretty_binds_string;
-      if (!binds_string.empty())
+      // Summarized without parsing the sequence, since this is drawn every frame. Macros from before sequences were
+      // added are shown converted, and loop.
+      std::string_view sequence =
+        bsi->GetStringViewValue(section.c_str(), TinyString::from_format("Macro{}Sequence", macro_index + 1));
+      const bool legacy = sequence.empty();
+      if (legacy)
+        sequence = bsi->GetStringViewValue(section.c_str(), TinyString::from_format("Macro{}Binds", macro_index + 1));
+
+      const u32 num_binds = static_cast<u32>(std::ranges::count_if(ci->bindings, [sequence, legacy](const auto& bi) {
+        return MacroSequenceContainsBind(sequence, legacy ? '&' : ' ', bi.name);
+      }));
+      bool loop = (legacy && num_binds > 0) ||
+                  bsi->GetBoolValue(section.c_str(), TinyString::from_format("Macro{}Loop", macro_index + 1), false);
+
+      if (MenuButtonWithValue(FSUI_ICONVSTR(ICON_FA_LIST_OL, "Sequence"),
+                              FSUI_VSTR("The inputs this macro plays, recorded or set up from a single button."),
+                              (num_binds > 0) ?
+                                TRANSLATE_PLURAL_SSTR("FullscreenUI", "%n button(s)", "", num_binds).view() :
+                                FSUI_VSTR("Not Configured")))
       {
-        for (const std::string_view& bind : StringUtil::SplitString(binds_string, '&', true))
-        {
-          std::string_view dispname;
-          for (const Controller::ControllerBindingInfo& bi : ci->bindings)
-          {
-            if (bind == bi.name)
-            {
-              dispname = bi.icon_name ? std::string_view(bi.icon_name) : ci->GetBindingDisplayName(bi);
-              break;
-            }
-          }
-          pretty_binds_string.append_format("{}{}", pretty_binds_string.empty() ? "" : " ", dispname);
-        }
+        PushDialog<MacroDialog>()->Open(bsi, section, macro_index, ci);
       }
-      if (MenuButtonWithValue(FSUI_ICONVSTR(ICON_FA_KEYBOARD, "Buttons"), std::string_view(),
-                              pretty_binds_string.empty() ? FSUI_VSTR("-") : pretty_binds_string.view()))
+
+      if (ToggleButton(FSUI_ICONVSTR(ICON_FA_REPEAT, "Loop While Active"),
+                       FSUI_VSTR("Repeats the sequence while the macro is active, instead of playing it once for each "
+                                 "press. The current repeat is always finished."),
+                       &loop, num_binds > 0))
       {
-        std::vector<std::string_view> buttons_split(StringUtil::SplitString(binds_string, '&', true));
-        ChoiceDialogOptions options;
-        for (const Controller::ControllerBindingInfo& bi : ci->bindings)
-        {
-          if (bi.type != InputBindingInfo::Type::Button && bi.type != InputBindingInfo::Type::Axis &&
-              bi.type != InputBindingInfo::Type::HalfAxis)
-          {
-            continue;
-          }
-          options.emplace_back(ci->GetBindingDisplayName(bi),
-                               std::any_of(buttons_split.begin(), buttons_split.end(),
-                                           [bi](const std::string_view& it) { return (it == bi.name); }));
-        }
-
-        OpenChoiceDialog(
-          TinyString::from_format(FSUI_FSTR("Select Macro {} Binds"), macro_index + 1), true, std::move(options),
-          [game_settings, section, macro_index, ci](s32 index, const std::string& title, bool checked) {
-            // convert display name back to bind name
-            std::string_view to_modify;
-            for (const Controller::ControllerBindingInfo& bi : ci->bindings)
-            {
-              if (title == ci->GetBindingDisplayName(bi))
-              {
-                to_modify = bi.name;
-                break;
-              }
-            }
-            if (to_modify.empty())
-            {
-              // wtf?
-              return;
-            }
-
-            const auto lock = Core::GetSettingsLock();
-            SettingsInterface* bsi = GetEditingSettingsInterface(game_settings);
-            const TinyString key = TinyString::from_format("Macro{}Binds", macro_index + 1);
-
-            std::string binds_string = bsi->GetStringValue(section.c_str(), key.c_str());
-            std::vector<std::string_view> buttons_split(StringUtil::SplitString(binds_string, '&', true));
-            auto it = std::find(buttons_split.begin(), buttons_split.end(), to_modify);
-            if (checked)
-            {
-              if (it == buttons_split.end())
-                buttons_split.push_back(to_modify);
-            }
-            else
-            {
-              if (it != buttons_split.end())
-                buttons_split.erase(it);
-            }
-
-            binds_string = StringUtil::JoinString(buttons_split.begin(), buttons_split.end(), " & ");
-            if (binds_string.empty())
-              bsi->DeleteValue(section.c_str(), key.c_str());
-            else
-              bsi->SetStringValue(section.c_str(), key.c_str(), binds_string.c_str());
-          });
+        bool old_loop;
+        const std::vector<InputManager::MacroSequenceAction> actions =
+          LoadMacroSequence(bsi, section.c_str(), macro_index, ci, &old_loop);
+        SaveMacroSequence(bsi, section.c_str(), macro_index, ci, actions, loop);
       }
 
       DrawToggleSetting(bsi, FSUI_ICONVSTR(ICON_FA_GAMEPAD, "Press To Toggle"),
                         FSUI_VSTR("Toggles the macro when the button is pressed, instead of held."), section.c_str(),
-                        TinyString::from_format("Macro{}Toggle", macro_index + 1), false, true, false);
-
-      const TinyString freq_key = TinyString::from_format("Macro{}Frequency", macro_index + 1);
-      const TinyString freq_label =
-        TinyString::from_format(ICON_FA_CLOCK " {}##macro_{}_frequency", FSUI_VSTR("Frequency"), macro_index + 1);
-      s32 frequency = bsi->GetIntValue(section.c_str(), freq_key.c_str(), 0);
-      const TinyString freq_summary = ((frequency == 0) ? TinyString(FSUI_VSTR("Disabled")) :
-                                                          TinyString::from_format(FSUI_FSTR("{} Frames"), frequency));
-      if (MenuActionButton(
-            freq_label,
-            FSUI_VSTR(
-              "Determines the frequency at which the macro will toggle the buttons on and off (aka auto fire)."),
-            freq_summary))
-      {
-        OpenFixedPopupDialog(freq_label);
-      }
-
-      DrawFloatSpinBoxSetting(bsi, FSUI_ICONVSTR(ICON_FA_ARROW_DOWN, "Pressure"),
-                              FSUI_VSTR("Determines how much pressure is simulated when macro is active."), section,
-                              TinyString::from_format("Macro{}Pressure", macro_index + 1), 1.0f, 0.01f, 1.0f, 0.01f,
-                              100.0f, "%.0f%%");
+                        TinyString::from_format("Macro{}Toggle", macro_index + 1), false, loop, false);
 
       DrawFloatSpinBoxSetting(bsi, FSUI_ICONVSTR(ICON_FA_SKULL, "Deadzone"),
                               FSUI_VSTR("Determines how much button pressure is ignored before activating the macro."),
                               section, TinyString::from_format("Macro{}Deadzone", macro_index + 1).c_str(), 0.0f, 0.00f,
                               1.0f, 0.01f, 100.0f, "%.0f%%");
-
-      if (IsFixedPopupDialogOpen(freq_label) &&
-          BeginFixedPopupDialog(LayoutScale(LAYOUT_SMALL_POPUP_PADDING), LayoutScale(LAYOUT_SMALL_POPUP_PADDING),
-                                LayoutScale(500.0f, 200.0f)))
-      {
-        BeginMenuButtons();
-
-        ImGui::SetNextItemWidth(ImGui::GetCurrentWindow()->WorkRect.GetWidth());
-        if (ImGui::SliderInt("##value", &frequency, 0, 60,
-                             (frequency == 0) ? FSUI_CSTR("Disabled") : FSUI_CSTR("Toggle every %d frames"),
-                             ImGuiSliderFlags_NoInput))
-        {
-          if (frequency == 0)
-            bsi->DeleteValue(section.c_str(), freq_key.c_str());
-          else
-            bsi->SetIntValue(section.c_str(), freq_key.c_str(), frequency);
-        }
-
-        ImGui::SetCursorPosY(ImGui::GetCursorPosY() + LayoutScale(10.0f));
-        if (MenuButtonWithoutSummary(FSUI_VSTR("OK"), true, LAYOUT_CENTER_ALIGN_TEXT))
-          CloseFixedPopupDialog();
-
-        EndMenuButtons();
-
-        EndFixedPopupDialog();
-      }
 
       ImGui::PopID();
     }
@@ -5075,7 +5610,7 @@ void FullscreenUI::DrawGraphicsSettingsPage()
         bsi, FSUI_ICONVSTR(ICON_FA_RULER_VERTICAL, "Minimum Framebuffer Upload Height"),
         FSUI_VSTR("Only filters framebuffer uploads at least this tall. Increase this value to avoid filtering texture "
                   "data."),
-        Settings::GPU_SECTION_NAME, "FilterFramebufferUploadsMinimumHeight", 1, 1, VRAM_HEIGHT, 1, "%dpx",
+        Settings::GPU_SECTION_NAME, "FilterFramebufferUploadsMinimumHeight", 1, 1, VRAM_1MB_HEIGHT, 1, "%dpx",
         filter_framebuffer_upload_sizes_enabled);
     }
 
@@ -5900,7 +6435,17 @@ void FullscreenUI::DrawAchievementsSettingsHeader(SettingsInterface* bsi,
       if (logged_in)
         Host::RunOnCoreThread(&Achievements::Logout);
       else
-        OpenFixedPopupDialog(ACHIEVEMENTS_LOGIN_DIALOG_NAME);
+      {
+        OpenCustomDialog("##achievements_login", LAYOUT_LARGE_POPUP_PADDING, LAYOUT_LARGE_POPUP_ROUNDING,
+                         ImVec2(600.0f, 0.0f), ImVec2(0.0f, 250.0f), &DrawAchievementsLoginWindow, []() {
+                           // NOTE: Deliberately memset()'ed because it's credentials.
+                           std::memset(s_settings_locals.achievements_login_username, 0,
+                                       sizeof(s_settings_locals.achievements_login_username));
+                           std::memset(s_settings_locals.achievements_login_password, 0,
+                                       sizeof(s_settings_locals.achievements_login_password));
+                           s_settings_locals.achievements_login_error.reset();
+                         });
+      }
     }
   }
 
@@ -5955,8 +6500,8 @@ void FullscreenUI::DrawAchievementsSettingsPage(std::unique_lock<Threading::Mute
                     Settings::ACHIEVEMENTS_SECTION_NAME, "EncoreMode", false,
                     enabled &&
                       !GetEffectiveBoolSetting(bsi, Settings::ACHIEVEMENTS_SECTION_NAME, "SpectatorMode", false));
-  DrawToggleSetting(bsi, FSUI_ICONVSTR(ICON_FA_FLASK_VIAL, "Track Unofficial Achievements"),
-                    FSUI_VSTR("When enabled, DuckStation will track unofficial achievements. Unlocks will be saved "
+  DrawToggleSetting(bsi, FSUI_ICONVSTR(ICON_FA_FLASK_VIAL, "Track Unpromoted Achievements"),
+                    FSUI_VSTR("When enabled, DuckStation will track unpromoted achievements. Unlocks will be saved "
                               "locally and not sent to RetroAchievements."),
                     Settings::ACHIEVEMENTS_SECTION_NAME, "UnofficialTestMode", false, enabled);
 
@@ -6111,14 +6656,12 @@ void FullscreenUI::DrawAchievementsSettingsPage(std::unique_lock<Threading::Mute
 
     if (const ObjectArchive& cache = HTTPCache::GetCacheArchive(); cache.IsOpen())
     {
-      static constexpr auto to_mb = [](s64 size) { return static_cast<u32>((size + 1048575) / 1048576); };
-
       const u64 size = cache.GetTotalSize();
       const u64 object_size = cache.GetTotalObjectSize();
       const size_t count = cache.GetSize();
 
-      str.format(fmt::runtime(FSUI_ICONVSTR(ICON_FA_GLOBE, "Web Cache Size: {0} MB ({1} MB in {2} objects)")),
-                 to_mb(size), to_mb(object_size), count);
+      str.format(fmt::runtime(FSUI_ICONVSTR(ICON_FA_GLOBE, "Web Cache Size: {0} ({1} in {2} objects)")),
+                 Host::FormatByteSize(size), Host::FormatByteSize(object_size), count);
       MenuButtonWithoutSummary(str, false);
     }
   }
@@ -6129,18 +6672,6 @@ void FullscreenUI::DrawAchievementsSettingsPage(std::unique_lock<Threading::Mute
 void FullscreenUI::DrawAchievementsLoginWindow()
 {
   static constexpr const char* LOGIN_PROGRESS_NAME = "AchievementsLogin";
-
-  if (!BeginFixedPopupDialog(LayoutScale(LAYOUT_LARGE_POPUP_PADDING), LayoutScale(LAYOUT_LARGE_POPUP_ROUNDING),
-                             LayoutScale(600.0f, 0.0f), LayoutScale(0.0f, 250.0f)))
-  {
-    // NOTE: Deliberately memset()'ed because it's credentials.
-    std::memset(s_settings_locals.achievements_login_username, 0,
-                sizeof(s_settings_locals.achievements_login_username));
-    std::memset(s_settings_locals.achievements_login_password, 0,
-                sizeof(s_settings_locals.achievements_login_password));
-    s_settings_locals.achievements_login_error.reset();
-    return;
-  }
 
   static constexpr std::string_view ra_title = "RetroAchivements";
   const ImVec2 ra_title_size = UIStyle.Font->CalcTextSizeA(UIStyle.LargeFontSize, UIStyle.BoldFontWeight, FLT_MAX, 0.0f,
@@ -6215,7 +6746,8 @@ void FullscreenUI::DrawAchievementsLoginWindow()
 
     Achievements::LoginAsync(
       s_settings_locals.achievements_login_username, s_settings_locals.achievements_login_password,
-      [](bool result, std::string&& error_message, Achievements::LoginResult&& data) {
+      [dialog_serial = GetCurrentDialogSerial()](bool result, std::string&& error_message,
+                                                 Achievements::LoginResult&& data) {
         // callback runs on core thread
         DebugAssert(Host::IsOnCoreThread());
         if (result)
@@ -6225,12 +6757,12 @@ void FullscreenUI::DrawAchievementsLoginWindow()
           Host::CommitBaseSettingChanges();
         }
 
-        VideoThread::RunOnThread([result, error_message = std::move(error_message)]() {
+        VideoThread::RunOnThread([dialog_serial, result, error_message = std::move(error_message)]() {
           CloseBackgroundProgressDialog(LOGIN_PROGRESS_NAME);
 
           if (result)
           {
-            CloseFixedPopupDialog();
+            CloseDialog(dialog_serial);
             return;
           }
 
@@ -6242,11 +6774,9 @@ void FullscreenUI::DrawAchievementsLoginWindow()
   }
 
   if (HorizontalMenuButton(FSUI_ICONVSTR(ICON_FA_XMARK, "Cancel"), !is_logging_in))
-    CloseFixedPopupDialog();
+    CloseCurrentDialog();
 
   EndHorizontalMenuButtons();
-
-  EndFixedPopupDialog();
 }
 
 void FullscreenUI::StartAchievementsDatabaseRefresh()
@@ -6312,8 +6842,20 @@ void FullscreenUI::DrawAdvancedSettingsPage()
 
   BeginMenuButtons();
 
-  MenuHeading(FSUI_VSTR("Logging Settings"));
+  MenuHeading(FSUI_VSTR("Interface Settings"));
   ResetFocusHere();
+
+  DrawIntRangeSetting(
+    bsi, FSUI_VSTR("Texture Cache Size"),
+    FSUI_VSTR("Maximum amount of video memory used to cache cover art and other images in the Big Picture UI."),
+    Settings::INTERFACE_SECTION_NAME, "FullscreenUITextureCacheSize", DEFAULT_TEXTURE_CACHE_SIZE_MB, 256, 4096,
+    [](const void* param, int value) {
+      return SmallString(Host::FormatByteSize(static_cast<u64>(value) * 1048576, false));
+    },
+    nullptr, true,
+    []() { Host::RunOnCoreThread([]() { VideoThread::RunOnThread(&FullscreenUI::UpdateWidgetsSettings); }); });
+
+  MenuHeading(FSUI_VSTR("Logging Settings"));
 
   DrawEnumSetting(bsi, FSUI_VSTR("Log Level"),
                   FSUI_VSTR("Sets the verbosity of messages logged. Higher levels will log more messages."),
@@ -6396,6 +6938,9 @@ void FullscreenUI::DrawAdvancedSettingsPage()
                   Settings::CPU_SECTION_NAME, "FastmemMode", Settings::DEFAULT_CPU_FASTMEM_MODE,
                   &Settings::ParseCPUFastmemMode, &Settings::GetCPUFastmemModeName,
                   &Settings::GetCPUFastmemModeDisplayName, CPUFastmemMode::Count);
+  DrawToggleSetting(bsi, FSUI_VSTR("Enable Recompiler Idle Loop Fast Forward"),
+                    FSUI_VSTR("Skips over the busy loop that games use to wait for vertical blank."),
+                    Settings::CPU_SECTION_NAME, "IdleFastForward", true);
 
   MenuHeading(FSUI_VSTR("CD-ROM Emulation"));
 

@@ -33,6 +33,7 @@ enum class VideoThreadCommandType : u8
   UpdateSettings,
   UpdateGameInfo,
   Shutdown,
+  EnableThread,
   ClearVRAM,
   ClearDisplay,
   UpdateDisplay,
@@ -87,6 +88,7 @@ struct VideoThreadReconfigureCommand : public VideoThreadCommand
   bool start_fullscreen_ui;
   bool force_recreate_device;
   bool upload_vram;
+  std::optional<bool> enable_2mb_vram; ///< Keeps the size of the current backend if not set.
   GPUSettings settings;
 };
 
@@ -128,13 +130,17 @@ struct VideoThreadAsyncBufferCallCommand : public VideoThreadCommand
 };
 static_assert(std::is_trivially_destructible_v<VideoThreadAsyncBufferCallCommand>);
 
+struct VideoThreadEnableThreadCommand : public VideoThreadCommand
+{
+  bool thread_enabled;
+};
+
 struct GPUBackendLoadStateCommand : public VideoThreadCommand
 {
-  u16 vram_data[VRAM_WIDTH * VRAM_HEIGHT];
   u16 clut_data[GPU_CLUT_SIZE];
   u32 texture_cache_state_version;
   u32 texture_cache_state_size;
-  u8 texture_cache_state[0]; // texture_cache_state_size
+  u16 vram_data[0]; // physical VRAM size, followed by texture_cache_state_size bytes of texture cache state
 };
 
 struct GPUBackendDoMemoryStateCommand : public VideoThreadCommand
@@ -243,6 +249,7 @@ struct GPUBackendCopyVRAMCommand : public VideoThreadCommand
 struct GPUBackendSetDrawingAreaCommand : public VideoThreadCommand
 {
   GPUDrawingArea new_area;
+  u16 vram_height; ///< Addressable VRAM height, Y coordinates of draws and VRAM transfers wrap at this line.
 };
 
 struct GPUBackendUpdateCLUTCommand : public VideoThreadCommand

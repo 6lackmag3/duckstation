@@ -330,14 +330,13 @@ void Host::OnHTTPDownloaderActiveChanged(bool active)
   //
 }
 
-void Host::OnGDBServerActiveClientsChanged(bool has_clients)
-{
-  //
-}
-
-void Host::PumpMessagesOnCoreThread()
+void Host::PumpMessagesOnCoreThread(u64 wait_until)
 {
   RegTestHost::ProcessCoreThreadEvents();
+
+  // Only the per-frame call counts towards the frame limit.
+  if (wait_until != 0)
+    return;
 
   s_frames_remaining--;
   RegTestHost::ApplyScheduledInputs(s_frames_to_run - s_frames_remaining);
@@ -723,7 +722,7 @@ void RegTestHost::DumpSystemStateHashes()
   // don't save full state on gpu dump, it's not going to be complete...
   if (!System::IsReplayingGPUDump())
   {
-    DynamicHeapArray<u8> state_data(System::GetMaxSaveStateSize(g_settings.cpu_ram_size, g_settings.gpu_texture_cache));
+    DynamicHeapArray<u8> state_data(System::GetMaxSaveStateSize(false));
     size_t state_data_size;
     if (!System::SaveStateDataToBuffer(state_data, &state_data_size, &error))
     {
@@ -737,9 +736,20 @@ void RegTestHost::DumpSystemStateHashes()
              SHA256Digest::DigestToString(SHA256Digest::GetDigest(std::span<const u8>(g_bus.ram, g_bus.ram_size))));
     INFO_LOG("SPU RAM Hash: {}", SHA256Digest::DigestToString(SHA256Digest::GetDigest(SPU::GetRAM())));
   }
+  else
+  {
+    // Saving state reads back VRAM, but GPU dumps skip that above. Download it from the hardware renderers, and wait
+    // for the software renderer to finish drawing.
+    GPUBackendReadVRAMCommand* cmd = GPUBackend::NewReadVRAMCommand();
+    cmd->x = 0;
+    cmd->y = 0;
+    cmd->width = VRAM_WIDTH;
+    cmd->height = Truncate16(GPU::GetVRAMHeight());
+    GPUBackend::PushCommandAndSync(cmd, false);
+  }
 
-  INFO_LOG("VRAM Hash: {}", SHA256Digest::DigestToString(SHA256Digest::GetDigest(
-                              std::span<const u8>(reinterpret_cast<const u8*>(g_vram), VRAM_SIZE))));
+  INFO_LOG("VRAM Hash: {}", SHA256Digest::DigestToString(SHA256Digest::GetDigest(std::span<const u8>(
+                              reinterpret_cast<const u8*>(g_vram), VRAM_WIDTH * GPU::GetVRAMHeight() * sizeof(u16)))));
 }
 
 void RegTestHost::InitializeEarlyConsole()
@@ -781,7 +791,7 @@ void RegTestHost::PrintCommandLineHelp(const char* progname)
   std::fprintf(stderr, "  -pgxp-cpu: Forces PGXP CPU mode.\n");
   std::fprintf(stderr, "  -renderer <renderer>: Sets the graphics renderer. Default to software.\n");
   std::fprintf(stderr, "  -upscale <multiplier>: Enables upscaled rendering at the specified multiplier.\n");
-  std::fprintf(stderr, "  -setting <section>/<key>:<value>: Sets a setting, e.g. GPU/ResolutionScale:2.\n");
+  std::fprintf(stderr, "  -setting <section>/<key>=<value>: Sets a setting, e.g. GPU/ResolutionScale=2.\n");
   std::fprintf(stderr, "  --: Signals that no more arguments will follow and the remaining\n"
                        "    parameters make up the filename. Use when the filename contains\n"
                        "    spaces or starts with a dash.\n");

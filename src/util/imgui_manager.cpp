@@ -102,6 +102,8 @@ static void ReloadFontDataIfActive();
 static bool CreateFontAtlas(Error* error);
 static bool CompilePipelines(Error* error);
 static void UpdateTextures(const ImDrawData* draw_data);
+static void DrawWithNearestSampler(const ImDrawList* parent_list, const ImDrawCmd* cmd, u32 base_vertex,
+                                   u32 base_index);
 static void DestroyTextures(bool recycle);
 static void SetCommonIOOptions(ImGuiIO& io, ImGuiPlatformIO& pio);
 static void SetImKeyState(ImGuiIO& io, ImGuiKey imkey, bool pressed);
@@ -246,6 +248,7 @@ struct ALIGN_TO_CACHE_LINE State
   bool notification_draw_list_used = false;
 
   std::unique_ptr<GPUPipeline> imgui_pipeline;
+  GSMatrix4x4 projection_matrix = GSMatrix4x4::Identity();
 
   ImFont* text_font = nullptr;
   ImFont* fixed_font = nullptr;
@@ -737,6 +740,7 @@ void ImGuiManager::RenderDrawLists(const ImDrawData* draw_data, u32 window_width
   }
   if (prerotated)
     uniforms.mproj = GSMatrix4x4::RotationZ(WindowInfo::GetZRotationForPreRotation(prerotation)) * uniforms.mproj;
+  s_state.projection_matrix = uniforms.mproj;
   GSVector2::store<true>(uniforms.blur_texture_scale, FullscreenUI::GetBlurTextureScale());
   uniforms.blur_background_weight = FullscreenUI::UIStyle.BlurBackgroundWeight;
   uniforms.inv_blur_background_weight = 1.0f - FullscreenUI::UIStyle.BlurBackgroundWeight;
@@ -790,6 +794,39 @@ void ImGuiManager::RenderDrawLists(const ImDrawData* draw_data, u32 window_width
   }
 }
 
+void ImGuiManager::PushNearestSampler(ImDrawList* dl, GPUTexture* texture)
+{
+  dl->PushTexture(texture);
+
+  // The push can merge with the previous command, so flush it. The callback is set in PopNearestSampler(), imgui
+  // asserts if a command with a callback changes vertex offset.
+  if (dl->CmdBuffer.back().ElemCount > 0)
+    dl->AddDrawCmd();
+}
+
+void ImGuiManager::PopNearestSampler(ImDrawList* dl)
+{
+  if (dl->CmdBuffer.back().ElemCount > 0)
+  {
+    dl->CmdBuffer.back().UserCallback = &DrawWithNearestSampler;
+    dl->AddDrawCmd();
+  }
+
+  dl->PopTexture();
+}
+
+void ImGuiManager::DrawWithNearestSampler(const ImDrawList* parent_list, const ImDrawCmd* cmd, u32 base_vertex,
+                                          u32 base_index)
+{
+  g_gpu_device->SetTextureSampler(0, cmd->GetTexID(), g_gpu_device->GetNearestSampler());
+  g_gpu_device->DrawIndexed(cmd->ElemCount, base_index + cmd->IdxOffset, base_vertex + cmd->VtxOffset);
+}
+
+const GSMatrix4x4& ImGuiManager::GetCurrentProjectionMatrix()
+{
+  return s_state.projection_matrix;
+}
+
 void ImGuiManager::UpdateTextures(const ImDrawData* draw_data)
 {
   for (ImTextureData* const tex : *draw_data->Textures)
@@ -833,7 +870,10 @@ void ImGuiManager::UpdateTextures(const ImDrawData* draw_data)
 
         gtex->MakeReadyForSampling();
 
-        // Updates is cleared by ImGui NewFrame.
+        // Consume the updates now rather than waiting for NewFrame, since we can upload multiple times per frame.
+        tex->Updates.resize(0);
+        tex->UpdateRect.x = tex->UpdateRect.y = static_cast<unsigned short>(~0);
+        tex->UpdateRect.w = tex->UpdateRect.h = 0;
         tex->SetStatus(ImTextureStatus_OK);
       }
       break;

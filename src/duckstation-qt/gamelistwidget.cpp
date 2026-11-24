@@ -33,7 +33,9 @@
 #include <QtGui/QActionGroup>
 #include <QtGui/QGuiApplication>
 #include <QtGui/QIcon>
+#include <QtGui/QLinearGradient>
 #include <QtGui/QPainter>
+#include <QtGui/QPainterPath>
 #include <QtGui/QPixmap>
 #include <QtGui/QWheelEvent>
 #include <QtWidgets/QHeaderView>
@@ -42,6 +44,7 @@
 #include <QtWidgets/QStyledItemDelegate>
 #include <QtWidgets/QToolTip>
 #include <algorithm>
+#include <cmath>
 #include <limits>
 
 #include "moc_gamelistwidget.cpp"
@@ -198,6 +201,110 @@ static void fastResizePixmap(QPixmap& pm, const QSize& expected_size)
   }
 }
 
+// Draws an entry's artwork for when it has no cover image, filling the image. Covers have the title and a badge if one
+// is given, icons only have the monogram. Only uses QImage and QFont, so it can be called from worker threads.
+static void drawGeneratedArtwork(QImage* image, std::string_view title, const QImage& badge, bool icon_style)
+{
+  using namespace GameList::GeneratedArtwork;
+
+  image->fill(Qt::transparent);
+
+  QPainter painter;
+  if (!painter.begin(image))
+    return;
+
+  painter.setRenderHint(QPainter::Antialiasing, true);
+  painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
+
+  const QSize unscaled_size = QtUtils::GetDeviceIndependentSize(image->size(), image->devicePixelRatio());
+  const qreal size = static_cast<qreal>(unscaled_size.width());
+  const QRectF rect(0.0, 0.0, size, size);
+  const qreal corner_radius = size * (icon_style ? ICON_CORNER_RADIUS : COVER_CORNER_RADIUS);
+  const auto [start_color, end_color] = GetColors(title);
+  constexpr auto to_qcolor = [](u32 rgba) {
+    return QColor(static_cast<int>(rgba & 0xFF), static_cast<int>((rgba >> 8) & 0xFF),
+                  static_cast<int>((rgba >> 16) & 0xFF));
+  };
+  QLinearGradient gradient(rect.topLeft(), rect.bottomRight());
+  gradient.setColorAt(0.0, to_qcolor(start_color));
+  gradient.setColorAt(1.0, to_qcolor(end_color));
+  QPainterPath background;
+  background.addRoundedRect(rect, corner_radius, corner_radius);
+  painter.fillPath(background, gradient);
+
+  // Everything else is only drawn where the background is, so it stays inside the rounded corners.
+  painter.setCompositionMode(QPainter::CompositionMode_SourceAtop);
+
+  QFont font;
+  font.setFamilies(QtHost::GetRobotoFontFamilies());
+  font.setBold(true);
+  font.setVariableAxis(QFont::Tag("wght"), 700.0f); // otherwise large text from the variable font is drawn thin
+
+  // Covers have a large faint monogram behind the title, which gives covers of different games distinct shapes.
+  const QString monogram = QtUtils::StringViewToQString(GetMonogram(title).view());
+  if (!monogram.isEmpty())
+  {
+    const qreal max_width = size * (icon_style ? ICON_MONOGRAM_MAX_WIDTH : COVER_MONOGRAM_MAX_WIDTH);
+    int font_size = std::max(static_cast<int>(size * (icon_style ? ICON_MONOGRAM_SIZE : COVER_MONOGRAM_SIZE)), 1);
+    font.setPixelSize(font_size);
+    const qreal width = QFontMetricsF(font).horizontalAdvance(monogram);
+    if (width > max_width)
+    {
+      font_size = std::max(static_cast<int>(static_cast<qreal>(font_size) * max_width / width), 1);
+      font.setPixelSize(font_size);
+    }
+
+    // Centre the ascent and descent on the point.
+    const QFontMetricsF fm(font);
+    const qreal center_y = size * (icon_style ? 0.5 : COVER_MONOGRAM_CENTER_Y);
+    painter.setFont(font);
+    painter.setPen(QColor(255, 255, 255, icon_style ? 255 : COVER_MONOGRAM_ALPHA));
+    painter.drawText(
+      QPointF((size - fm.horizontalAdvance(monogram)) * 0.5, center_y + (fm.ascent() - fm.descent()) * 0.5), monogram);
+  }
+
+  if (!icon_style)
+  {
+    // Long titles shrink until they fit in the lower half, and are cut off after a few lines.
+    const QString qtitle = QtUtils::StringViewToQString(title);
+    const qreal margin = size * MARGIN;
+    const qreal layout_width = size - margin * 2.0;
+    const qreal min_font_size = size * MIN_TITLE_SIZE;
+    int font_size = std::max(static_cast<int>(size * TITLE_SIZE), 1);
+    const auto measure_title = [&font, &font_size, &qtitle, layout_width]() {
+      font.setPixelSize(font_size);
+      return QFontMetricsF(font).boundingRect(QRectF(0.0, 0.0, layout_width, 0.0), Qt::TextWordWrap, qtitle).height();
+    };
+    qreal title_height = measure_title();
+    while (title_height > size * MAX_TITLE_HEIGHT && font_size > min_font_size && font_size > 1)
+    {
+      font_size = std::max(static_cast<int>(static_cast<qreal>(font_size) * TITLE_SHRINK_FACTOR), 1);
+      title_height = measure_title();
+    }
+
+    title_height = std::min(title_height, QFontMetricsF(font).lineSpacing() * static_cast<qreal>(MAX_TITLE_LINES));
+    painter.setFont(font);
+    painter.setPen(Qt::white);
+    painter.drawText(QRectF(margin, size - margin - title_height, layout_width, title_height),
+                     Qt::AlignLeft | Qt::AlignTop | Qt::TextWordWrap, qtitle);
+
+    // Content that isn't a plain disc gets a badge with its type.
+    if (!badge.isNull())
+    {
+      const qreal radius = size * BADGE_RADIUS;
+      const qreal icon_size = radius * BADGE_ICON_SIZE;
+      const QPointF center(size - margin - radius, margin + radius);
+      painter.setPen(Qt::NoPen);
+      painter.setBrush(QColor(0, 0, 0, BADGE_ALPHA));
+      painter.drawEllipse(center, radius, radius);
+      painter.drawImage(QRectF(center.x() - icon_size * 0.5, center.y() - icon_size * 0.5, icon_size, icon_size),
+                        badge);
+    }
+  }
+
+  painter.end();
+}
+
 template<class T>
 static void resizeGameIcon(T& pm, int icon_size)
 {
@@ -215,8 +322,7 @@ static void resizeGameIcon(T& pm, int icon_size)
 
 static QString sizeToString(s64 size)
 {
-  static constexpr s64 one_mb = 1024 * 1024;
-  return (size >= 0) ? QStringLiteral("%1 MB").arg((size + (one_mb - 1)) / one_mb) :
+  return (size >= 0) ? QtUtils::StringViewToQString(Host::FormatByteSize(static_cast<u64>(size))) :
                        QCoreApplication::translate("GameList", "Unknown");
 }
 
@@ -357,17 +463,27 @@ void GameListModel::loadCoverScaleDependentPixmaps()
   }
   m_loading_pixmap = QPixmap::fromImage(loading_image);
 
-  m_placeholder_image = QImage();
-  if (m_placeholder_image.load(QtHost::GetResourceQPath("images/cover-placeholder.png", true)))
+  // Badges of generated covers are drawn in white. QIcon can't be used on the worker threads that generate covers.
+  using namespace GameList::GeneratedArtwork;
+  const int badge_size = std::max(static_cast<int>(std::ceil(static_cast<qreal>(getCoverArtSize().width()) *
+                                                             BADGE_RADIUS * BADGE_ICON_SIZE * m_device_pixel_ratio)),
+                                  1);
+  for (u32 i = 0; i < static_cast<u32>(GameList::EntryType::MaxCount); i++)
   {
-    m_placeholder_image.setDevicePixelRatio(m_device_pixel_ratio);
-    resizeImage(&m_placeholder_image, getDeviceScaledCoverArtSize());
-  }
-  else
-  {
-    m_placeholder_image = QImage(getDeviceScaledCoverArtSize(), QImage::Format_RGB32);
-    m_placeholder_image.setDevicePixelRatio(m_device_pixel_ratio);
-    m_placeholder_image.fill(QColor(0, 0, 0, 0));
+    QImage& badge = m_cover_badge_images[i];
+    if (static_cast<GameList::EntryType>(i) == GameList::EntryType::Disc)
+    {
+      badge = QImage();
+      continue;
+    }
+
+    badge = QtUtils::GetIconForEntryType(static_cast<GameList::EntryType>(i))
+              .pixmap(QSize(badge_size, badge_size), 1.0)
+              .toImage()
+              .convertToFormat(QImage::Format_ARGB32_Premultiplied);
+    QPainter painter(&badge);
+    painter.setCompositionMode(QPainter::CompositionMode_SourceIn);
+    painter.fillRect(badge.rect(), Qt::white);
   }
 }
 
@@ -410,7 +526,6 @@ void GameListModel::setDevicePixelRatio(qreal dpr)
     return;
 
   m_device_pixel_ratio = dpr;
-  m_placeholder_image.setDevicePixelRatio(dpr);
   m_loading_pixmap.setDevicePixelRatio(dpr);
   m_flag_pixmap_cache.clear();
   loadCommonImages();
@@ -428,8 +543,8 @@ void GameListModel::reloadThemeSpecificImages()
 void GameListModel::loadOrGenerateCover(const GameList::Entry* ge)
 {
   Host::QueueAsyncTask([path = ge->path, serial = ge->serial, save_title = std::string(ge->GetSaveTitle()),
-                        display_title = QtUtils::StringViewToQString(ge->GetDisplayTitle(m_show_localized_titles)),
-                        placeholder_image = m_placeholder_image, list = QPointer(this),
+                        display_title = std::string(ge->GetDisplayTitle(m_show_localized_titles)),
+                        badge = m_cover_badge_images[static_cast<u32>(ge->type)], list = QPointer(this),
                         size = getDeviceScaledCoverArtSize(), scale = m_cover_scale, dpr = m_device_pixel_ratio,
                         is_custom_title = ge->has_custom_title]() mutable {
     QImage image;
@@ -448,34 +563,9 @@ void GameListModel::loadOrGenerateCover(const GameList::Entry* ge)
     // generate cover if one doesn't exist
     if (image.isNull())
     {
-      image = placeholder_image.copy();
-      if (image.isNull())
-        return;
-
-      resizeImage(&image, size);
-
-      QPainter painter;
-      if (!painter.begin(&image))
-        return;
-
-      QFont font;
-      font.setPixelSize(std::max(static_cast<int>(64.0f * scale), 1));
-      font.setFamilies(QtHost::GetRobotoFontFamilies());
-      painter.setFont(font);
-
-      const int margin = static_cast<int>(30.0f * scale);
-      const QSize unscaled_size = QtUtils::GetDeviceIndependentSize(image.size(), image.devicePixelRatio());
-      const QRect text_rc(margin, margin, static_cast<int>(static_cast<float>(unscaled_size.width() - margin - margin)),
-                          static_cast<int>(static_cast<float>(unscaled_size.height() - margin - margin)));
-
-      // draw shadow first
-      painter.setPen(QColor(0, 0, 0, 160)); // semi-transparent black
-      painter.drawText(text_rc.translated(1, 1), Qt::AlignCenter | Qt::TextWordWrap, display_title);
-
-      painter.setPen(Qt::white);
-      painter.drawText(text_rc, Qt::AlignCenter | Qt::TextWordWrap, display_title);
-
-      painter.end();
+      image = QImage(size, QImage::Format_ARGB32_Premultiplied);
+      image.setDevicePixelRatio(dpr);
+      drawGeneratedArtwork(&image, display_title, badge, false);
     }
 
     Host::RunOnUIThread([path = std::move(path), image = std::move(image), list = std::move(list), scale]() {
@@ -496,7 +586,35 @@ void GameListModel::loadOrGenerateCover(const GameList::Entry* ge)
 void GameListModel::loadOrGenerateIcon(const GameList::Entry* ge)
 {
   Host::QueueAsyncTask([list = QPointer(this), path = ge->path, icon_source = m_icon_source, icon_size = m_icon_size,
-                        dpr = m_device_pixel_ratio]() mutable {
+                        dpr = m_device_pixel_ratio, localized_titles = m_show_localized_titles]() mutable {
+    static constexpr auto insert_image = [](QImage&& image, std::string&& path, std::string&& serial,
+                                            const QPointer<GameListModel>& list, int icon_size,
+                                            GameList::IconSource icon_source) {
+      Host::RunOnUIThread([path = std::move(path), serial = std::move(serial), image = std::move(image), list,
+                           icon_size, icon_source]() mutable {
+        // old request before mode or icon size change?
+        const bool keyed_by_path = (icon_source == GameList::IconSource::Cover || serial.empty());
+        std::string& key = keyed_by_path ? path : serial;
+        if (!list || list->m_icon_source != icon_source || list->m_icon_size != icon_size ||
+            !list->m_icon_pixmap_cache.Lookup(key))
+        {
+          return;
+        }
+
+        // ughhhhh
+        if (keyed_by_path)
+        {
+          list->invalidateColumnForPath(path, Column_Icon, false);
+        }
+        else
+        {
+          list->invalidateRowsMatchingFunc([&serial](const GameList::Entry* ge) { return ge->serial == serial; },
+                                           Column_Icon, false);
+        }
+
+        list->m_icon_pixmap_cache.Insert(std::move(key), QPixmap::fromImage(image));
+      });
+    };
     static constexpr auto finish_load = [](const std::span<const u8> data, std::string&& path, std::string&& serial,
                                            const QPointer<GameListModel>& list, int icon_size,
                                            GameList::IconSource icon_source, qreal dpr, const TinyString& extension) {
@@ -515,33 +633,12 @@ void GameListModel::loadOrGenerateIcon(const GameList::Entry* ge)
         resizeImage(&image, QSize(device_size, device_size));
       }
 
-      Host::RunOnUIThread([path = std::move(path), serial = std::move(serial), image = std::move(image), list,
-                           icon_size, icon_source]() mutable {
-        // old request before mode or icon size change?
-        std::string& key = (icon_source == GameList::IconSource::Cover) ? path : serial;
-        if (!list || list->m_icon_source != icon_source || list->m_icon_size != icon_size ||
-            !list->m_icon_pixmap_cache.Lookup(key))
-        {
-          return;
-        }
-
-        // ughhhhh
-        if (icon_source == GameList::IconSource::Cover)
-        {
-          list->invalidateColumnForPath(path, Column_Icon, false);
-        }
-        else
-        {
-          list->invalidateRowsMatchingFunc([&serial](const GameList::Entry* ge) { return ge->serial == serial; },
-                                           Column_Icon, false);
-        }
-
-        list->m_icon_pixmap_cache.Insert(std::move(key), QPixmap::fromImage(image));
-      });
+      insert_image(std::move(image), std::move(path), std::move(serial), list, icon_size, icon_source);
     };
 
     std::string serial;
     std::string cover_path;
+    std::string title;
     {
       // need the lock because of memory card extraction
       const auto lock = GameList::GetLock();
@@ -549,11 +646,22 @@ void GameListModel::loadOrGenerateIcon(const GameList::Entry* ge)
       if (!ge)
         return;
 
+      // Games without an icon get generated artwork instead.
       cover_path = GameList::GetGameIconPath(ge, icon_source);
       if (cover_path.empty())
-        return;
+        title = ge->GetDisplayTitle(localized_titles);
 
       serial = ge->serial;
+    }
+
+    if (cover_path.empty())
+    {
+      const int device_size = static_cast<int>(static_cast<qreal>(icon_size) * dpr);
+      QImage image(device_size, device_size, QImage::Format_ARGB32_Premultiplied);
+      image.setDevicePixelRatio(dpr);
+      drawGeneratedArtwork(&image, title, QImage(), true);
+      insert_image(std::move(image), std::move(path), std::move(serial), list, icon_size, icon_source);
+      return;
     }
 
     if (HTTPCache::IsHTTPURL(cover_path))
@@ -646,8 +754,10 @@ void GameListModel::invalidateColumn(int column, bool invalidate_cache /* = true
     }
     else if (column == Column_Title)
     {
-      // if we're changing the title, the generated cover could change
+      // if we're changing the title, the generated cover and icon could change
       invalidateColumn(Column_Cover, invalidate_cache);
+      if (m_icon_source != GameList::IconSource::Cover)
+        invalidateColumn(Column_Icon, invalidate_cache);
     }
   }
 
@@ -696,7 +806,13 @@ void GameListModel::invalidateColumnForPath(const std::string& path, int column,
 {
   // if we're changing the title, the cover could change
   if (column == Column_Title)
+  {
     invalidateColumnForPath(path, Column_Cover, invalidate_cache);
+
+    // and so could the generated icon, which is shared by serial unless icons are covers
+    if (m_icon_source != GameList::IconSource::Cover)
+      invalidateColumn(Column_Icon, invalidate_cache);
+  }
 
   if (invalidate_cache)
   {
@@ -748,11 +864,12 @@ const QPixmap& GameListModel::getCoverForEntry(const GameList::Entry* ge) const
 
 const QPixmap* GameListModel::lookupIconPixmapForEntry(const GameList::Entry* ge) const
 {
-  // Covers are per-path, not per-serial.
-  const std::string& key = (m_icon_source == GameList::IconSource::Cover) ? ge->path : ge->serial;
-  if (key.empty())
+  if (m_icon_source == GameList::IconSource::None)
     return nullptr;
-  else if (const QPixmap* item = m_icon_pixmap_cache.Lookup(key))
+
+  // Covers are per-path, not per-serial, as are the generated icons of entries without a serial.
+  const std::string& key = (m_icon_source == GameList::IconSource::Cover || ge->serial.empty()) ? ge->path : ge->serial;
+  if (const QPixmap* item = m_icon_pixmap_cache.Lookup(key))
     return item->isNull() ? nullptr : item;
 
   // Insert an empty pixmap so we don't repeatedly queue loading jobs for this game.
@@ -1155,21 +1272,6 @@ QVariant GameListModel::headerData(int section, Qt::Orientation orientation, int
   return {};
 }
 
-const QPixmap& GameListModel::getNoAchievementsPixmap() const
-{
-  return m_no_achievements_pixmap;
-}
-
-const QPixmap& GameListModel::getHasAchievementsPixmap() const
-{
-  return m_has_achievements_pixmap;
-}
-
-const QPixmap& GameListModel::getMasteredAchievementsPixmap() const
-{
-  return m_mastered_achievements_pixmap;
-}
-
 const GameList::Entry* GameListModel::getTakenGameListEntry(u32 index) const
 {
   return (m_taken_entries.has_value() && index < m_taken_entries->size()) ? &m_taken_entries.value()[index] : nullptr;
@@ -1251,13 +1353,6 @@ void GameListModel::loadCommonImages()
     m_compatibility_pixmaps[i] = QtUtils::GetIconForCompatibility(static_cast<GameDatabase::CompatibilityRating>(i))
                                    .pixmap(COMPATIBILITY_PIXMAP_SIZE, m_device_pixel_ratio);
   }
-
-  m_no_achievements_pixmap = QIcon(QtHost::GetResourceQPath("images/trophy-icon-gray.svg", true))
-                               .pixmap(ACHIEVEMENT_PIXMAP_SIZE, m_device_pixel_ratio);
-  m_has_achievements_pixmap = QIcon(QtHost::GetResourceQPath("images/trophy-icon.svg", true))
-                                .pixmap(ACHIEVEMENT_PIXMAP_SIZE, m_device_pixel_ratio);
-  m_mastered_achievements_pixmap = QIcon(QtHost::GetResourceQPath("images/trophy-icon-star.svg", true))
-                                     .pixmap(ACHIEVEMENT_PIXMAP_SIZE, m_device_pixel_ratio);
 }
 
 class GameListSortModel final : public QSortFilterProxyModel
@@ -1420,52 +1515,74 @@ public:
 
     QRect r = option.rect;
 
-    const QPixmap& icon = (num_achievements > 0) ? (mastered ? m_model->getMasteredAchievementsPixmap() :
-                                                               m_model->getHasAchievementsPixmap()) :
-                                                   m_model->getNoAchievementsPixmap();
-    const QSize icon_size = QtUtils::GetDeviceIndependentSize(icon.size(), icon.devicePixelRatio());
-    painter->drawPixmap(r.topLeft() + QPoint(5, (r.height() - icon_size.height() + 2) / 2), icon);
-    r.setLeft(r.left() + 12 + icon_size.width());
-
     const QPalette& palette = static_cast<QWidget*>(parent())->palette();
-    const QColor& text_color =
-      palette.color((option.state & QStyle::State_Selected) ? QPalette::HighlightedText : QPalette::Text);
+    const bool selected = (option.state & QStyle::State_Selected);
+    const QColor& text_color = palette.color(selected ? QPalette::HighlightedText : QPalette::Text);
 
     painter->save();
 
-    if (num_achievements > 0)
+    // Left column is a progress ring, or a filled ring with a tick when mastered. The count follows it, and games
+    // without achievements have a dashed ring and N/A.
+    const QSize icon_size = ACHIEVEMENT_PIXMAP_SIZE;
+    const QRect icon_rect(r.topLeft() + QPoint(5, (r.height() - icon_size.height() + 2) / 2), icon_size);
+    r.setLeft(r.left() + 12 + icon_size.width());
+
+    constexpr qreal ring_width = 2.5;
+    const qreal radius = static_cast<qreal>(icon_size.width() - 2) * 0.5;
+    const QPointF center = QRectF(icon_rect).center();
+    const QRectF ring_rect(center.x() - radius + ring_width * 0.5, center.y() - radius + ring_width * 0.5,
+                           radius * 2.0 - ring_width, radius * 2.0 - ring_width);
+    QColor track_color = text_color;
+    track_color.setAlpha(60);
+    painter->setRenderHint(QPainter::Antialiasing, true);
+
+    if (num_achievements == 0)
     {
-      const QFontMetrics fm(painter->fontMetrics());
-
-      // display hardcore in parenthesis only if there are actually hc unlocks
-      const bool display_hardcore = (num_unlocked_hardcore > 0);
-      const bool display_hardcore_only =
-        (display_hardcore && (num_unlocked == 0 || num_unlocked == num_unlocked_hardcore));
-      const QString first = QStringLiteral("%1").arg(display_hardcore_only ? num_unlocked_hardcore : num_unlocked);
-      const QString total = QStringLiteral("/%3").arg(num_achievements);
-
-      const QColor hc_color = QColor(44, 151, 250);
-
-      painter->setPen(display_hardcore_only ? hc_color : text_color);
-      painter->drawText(r, Qt::AlignVCenter, first);
-      r.setLeft(r.left() + fm.size(Qt::TextSingleLine, first).width());
-
-      if (display_hardcore && !display_hardcore_only)
-      {
-        const QString hc = QStringLiteral("(%2)").arg(num_unlocked_hardcore);
-        painter->setPen(hc_color);
-        painter->drawText(r, Qt::AlignVCenter, hc);
-        r.setLeft(r.left() + fm.size(Qt::TextSingleLine, hc).width());
-      }
+      QPen dashed_pen(track_color, 1.5, Qt::CustomDashLine, Qt::FlatCap);
+      dashed_pen.setDashPattern({2.0, 1.6});
+      painter->setPen(dashed_pen);
+      painter->drawEllipse(ring_rect);
 
       painter->setPen(text_color);
-      painter->drawText(r, Qt::AlignVCenter, total);
+      painter->drawText(r, Qt::AlignVCenter, QStringLiteral("N/A"));
+      painter->restore();
+      return;
+    }
+
+    const QColor hc_color = QColor(44, 151, 250);
+    const u32 total_unlocked = std::max(num_unlocked, num_unlocked_hardcore);
+    if (mastered)
+    {
+      // Filled ring with a tick.
+      painter->setPen(Qt::NoPen);
+      painter->setBrush(QColor(248, 183, 5));
+      painter->drawEllipse(center, radius, radius);
+      painter->setPen(QPen(QColor(0, 0, 0, 170), 1.8, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+      painter->setBrush(Qt::NoBrush);
+      const QPointF tick[] = {center + QPointF(-radius * 0.45, 0.0), center + QPointF(-radius * 0.1, radius * 0.35),
+                              center + QPointF(radius * 0.45, -radius * 0.35)};
+      painter->drawPolyline(tick, std::size(tick));
     }
     else
     {
-      painter->setPen(text_color);
-      painter->drawText(r, Qt::AlignVCenter, QStringLiteral("N/A"));
+      // Hardcore unlocks are the first part of the ring, clockwise from the top.
+      const auto draw_arc = [painter, &ring_rect, num_achievements](u32 start, u32 end, const QColor& color) {
+        if (end <= start)
+          return;
+        painter->setPen(QPen(color, ring_width, Qt::SolidLine, Qt::FlatCap));
+        painter->drawArc(ring_rect, 90 * 16 - static_cast<int>(start * 360 * 16 / num_achievements),
+                         -static_cast<int>((end - start) * 360 * 16 / num_achievements));
+      };
+
+      painter->setPen(QPen(track_color, ring_width));
+      painter->drawEllipse(ring_rect);
+      draw_arc(0, num_unlocked_hardcore, hc_color);
+      draw_arc(num_unlocked_hardcore, total_unlocked, QColor(248, 183, 5));
     }
+
+    // The tooltip has the hardcore breakdown, the count is only blue if everything was unlocked in hardcore.
+    painter->setPen((total_unlocked > 0 && num_unlocked_hardcore == total_unlocked) ? hc_color : text_color);
+    painter->drawText(r, Qt::AlignVCenter, QStringLiteral("%1/%2").arg(total_unlocked).arg(num_achievements));
 
     painter->restore();
   }
@@ -2494,7 +2611,7 @@ void GameListListView::updateFixedColumnWidths()
               width_for(QtUtils::StringViewToQString(Host::FormatRelativeDate(std::time(nullptr), false, true)))}));
 
   // Assume 8 is the widest digit.
-  const int size_width = std::max(width_for(QStringLiteral("%1 MB").arg(8888)),
+  const int size_width = std::max(width_for(sizeToString(888 * 1024 * 1024)),
                                   width_for(sizeToString(-1))); // Unknown size
   setFixedColumnWidth(fm, GameListModel::Column_FileSize, size_width);
   setFixedColumnWidth(fm, GameListModel::Column_DataSize, size_width);

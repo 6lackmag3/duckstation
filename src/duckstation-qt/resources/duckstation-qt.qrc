@@ -171,6 +171,7 @@
 		<file>icons/monochrome/svg/memcard-line.svg</file>
 		<file>icons/monochrome/svg/memcards-line.svg</file>
 		<file>icons/monochrome/svg/minus-line.svg</file>
+		<file>icons/monochrome/svg/more-fill.svg</file>
 		<file>icons/monochrome/svg/mouse-line.svg</file>
 		<file>icons/monochrome/svg/multi-discs.svg</file>
 		<file>icons/monochrome/svg/negcon-line.svg</file>
@@ -184,11 +185,14 @@
 		<file>icons/monochrome/svg/price-tag-3-line.svg</file>
 		<file>icons/monochrome/svg/pushpin-line.svg</file>
 		<file>icons/monochrome/svg/ram-2-line.svg</file>
+		<file>icons/monochrome/svg/record-circle-line.svg</file>
 		<file>icons/monochrome/svg/refresh-line.svg</file>
+		<file>icons/monochrome/svg/reset-left-line.svg</file>
 		<file>icons/monochrome/svg/restart-line.svg</file>
 		<file>icons/monochrome/svg/ruler-line.svg</file>
 		<file>icons/monochrome/svg/save-3-line.svg</file>
 		<file>icons/monochrome/svg/screenshot-2-line.svg</file>
+		<file>icons/monochrome/svg/search-line.svg</file>
 		<file>icons/monochrome/svg/settings-3-line.svg</file>
 		<file>icons/monochrome/svg/shader-glsl.svg</file>
 		<file>icons/monochrome/svg/shader-reshade.svg</file>
@@ -202,6 +206,7 @@
 		<file>icons/monochrome/svg/sparkle-fill.svg</file>
 		<file>icons/monochrome/svg/sparkling-line.svg</file>
 		<file>icons/monochrome/svg/stack-line.svg</file>
+		<file>icons/monochrome/svg/stop-circle-line.svg</file>
 		<file>icons/monochrome/svg/sun-fill.svg</file>
 		<file>icons/monochrome/svg/swap-line.svg</file>
 		<file>icons/monochrome/svg/terminal-box-line.svg</file>
@@ -477,6 +482,7 @@
 		<file>themes/darkruby.qss</file>
 		<file>themes/greengiant.qss</file>
 		<file>themes/greymatter.qss</file>
+		<file>themes/midnightamber.qss</file>
 		<file>themes/pinkypals.qss</file>
 		<file>themes/purplerain.qss</file>
 	</qresource>

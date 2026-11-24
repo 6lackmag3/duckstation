@@ -7,6 +7,9 @@
 #include "settingswindow.h"
 #include "settingwidgetbinder.h"
 
+#include "util/translation.h"
+
+#include <QtCore/QPointer>
 #include <QtCore/QSignalBlocker>
 #include <algorithm>
 #include <cmath>
@@ -235,6 +238,17 @@ EmulationSettingsWidget::EmulationSettingsWidget(SettingsWindow* dialog, QWidget
   onOptimalFramePacingChanged();
   updateSkipDuplicateFramesEnabled();
   updateRewind();
+
+  // Memory state size depends on the running system, so has to be queried on the core thread.
+  Host::RunOnCoreThread([widget = QPointer(this)]() mutable {
+    Host::RunOnUIThread([widget = std::move(widget), size = System::GetMaxSaveStateSize(true)]() {
+      if (!widget)
+        return;
+
+      widget->m_rewind_state_size = size;
+      widget->updateRewind();
+    });
+  });
 }
 
 EmulationSettingsWidget::~EmulationSettingsWidget() = default;
@@ -278,11 +292,19 @@ void EmulationSettingsWidget::updateRewind()
     const u32 resolution_scale =
       static_cast<u32>(m_dialog->getEffectiveIntValue(Settings::GPU_SECTION_NAME, "ResolutionScale", 1));
     const u32 multisamples = m_dialog->getEffectiveIntValue(Settings::GPU_SECTION_NAME, "Multisamples", 1);
-    const bool use_software_renderer =
+    const GPURenderer renderer =
+      Settings::ParseRendererName(m_dialog
+                                    ->getEffectiveStringValue(Settings::GPU_SECTION_NAME, "Renderer",
+                                                              Settings::GetRendererName(Settings::DEFAULT_GPU_RENDERER))
+                                    .c_str())
+        .value_or(Settings::DEFAULT_GPU_RENDERER);
+    const bool use_software_renderer_for_memory_states =
       m_dialog->getEffectiveBoolValue(Settings::GPU_SECTION_NAME, "UseSoftwareRendererForMemoryStates", false);
-    const CPURAMSize ram_size =
-      Settings::ParseCPURAMSize(m_dialog->getEffectiveStringValue(Settings::CPU_SECTION_NAME, "RAMSize"))
-        .value_or(Settings::DEFAULT_CPU_RAM_SIZE);
+    const bool use_software_renderer_for_readbacks =
+      m_dialog->getEffectiveBoolValue(Settings::GPU_SECTION_NAME, "UseSoftwareRendererForReadbacks", false);
+    const bool vram_2mb =
+      Settings::ParseGPUVRAMSize(m_dialog->getEffectiveStringValue(Settings::CONSOLE_SECTION_NAME, "VRAMSize"))
+        .value_or(Settings::DEFAULT_GPU_VRAM_SIZE) != GPUVRAMSize::Default;
     const bool enable_texture_cache =
       m_dialog->getEffectiveBoolValue(Settings::GPU_SECTION_NAME, "EnableTextureCache", false);
     const u32 frames = static_cast<u32>(m_ui.rewindSaveSlots->value());
@@ -291,18 +313,19 @@ void EmulationSettingsWidget::updateRewind()
       ((frequency <= std::numeric_limits<float>::epsilon()) ? (1.0f / 60.0f) : frequency) * static_cast<float>(frames);
 
     u64 ram_usage, vram_usage;
-    System::CalculateRewindMemoryUsage(frames, resolution_scale, multisamples, use_software_renderer, ram_size,
-                                       enable_texture_cache, &ram_usage, &vram_usage);
+    System::CalculateRewindMemoryUsage(frames, m_rewind_state_size, renderer, resolution_scale, multisamples,
+                                       use_software_renderer_for_memory_states, use_software_renderer_for_readbacks,
+                                       vram_2mb, enable_texture_cache, &ram_usage, &vram_usage);
 
     m_ui.rewindSummary->setText(
       (vram_usage > 0) ?
-        tr("Rewind for %n frame(s), lasting %1 second(s) will require %2MB of RAM and %3MB of VRAM.", "", frames)
+        tr("Rewind for %n frame(s), lasting %1 second(s) will require %2 of RAM and %3 of VRAM.", "", frames)
           .arg(duration)
-          .arg(ram_usage / 1048576)
-          .arg(vram_usage / 1048576) :
-        tr("Rewind for %n frame(s), lasting %1 second(s) will require %2MB of RAM.", "", frames)
+          .arg(QtUtils::StringViewToQString(Host::FormatByteSize(ram_usage)))
+          .arg(QtUtils::StringViewToQString(Host::FormatByteSize(vram_usage))) :
+        tr("Rewind for %n frame(s), lasting %1 second(s) will require %2 of RAM.", "", frames)
           .arg(duration)
-          .arg(ram_usage / 1048576));
+          .arg(QtUtils::StringViewToQString(Host::FormatByteSize(ram_usage))));
     m_ui.rewindSaveFrequency->setEnabled(true);
     m_ui.rewindSaveSlots->setEnabled(true);
   }

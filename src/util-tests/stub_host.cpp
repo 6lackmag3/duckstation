@@ -21,6 +21,11 @@ bool Core::GetBaseBoolSettingValue(const char* section, const char* key, bool de
   return default_value;
 }
 
+u32 Core::GetBaseUIntSettingValue(const char* section, const char* key, u32 default_value /* = 0 */)
+{
+  return default_value;
+}
+
 TinyString Host::TranslatePluralToTinyString(const char* context, const char* msg, const char* disambiguation,
                                              int count)
 {

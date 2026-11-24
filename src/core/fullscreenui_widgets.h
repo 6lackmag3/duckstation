@@ -7,9 +7,9 @@
 
 #include "util/translation.h"
 
+#include "common/move_only_function.h"
 #include "common/small_string.h"
 #include "common/types.h"
-#include "common/move_only_function.h"
 
 #include "IconsEmoji.h"
 #include "IconsFontAwesome.h"
@@ -68,6 +68,7 @@ inline constexpr float LAYOUT_FOOTER_X_PADDING = 15.0f;
 inline constexpr float LAYOUT_FOOTER_Y_PADDING = 10.0f;
 inline constexpr float LAYOUT_FOOTER_HEIGHT = LAYOUT_MEDIUM_FONT_SIZE + LAYOUT_FOOTER_Y_PADDING * 2.0f;
 inline constexpr float LAYOUT_HORIZONTAL_MENU_HEIGHT = 280.0f;
+inline constexpr float LAYOUT_SCROLL_FADE_HEIGHT = 40.0f;
 inline constexpr float LAYOUT_HORIZONTAL_MENU_PADDING = 24.0f;
 inline constexpr float LAYOUT_HORIZONTAL_MENU_ITEM_WIDTH = 250.0f;
 inline constexpr float LAYOUT_HORIZONTAL_MENU_ITEM_IMAGE_SIZE = 112.0f;
@@ -77,7 +78,26 @@ inline constexpr float LAYOUT_LARGE_POPUP_PADDING = 30.0f;
 inline constexpr float LAYOUT_LARGE_POPUP_ROUNDING = 40.0f;
 inline constexpr float LAYOUT_WIDGET_FRAME_ROUNDING = 20.0f;
 inline constexpr float LAYOUT_FRAME_BORDER_SIZE = 1.0f;
+inline constexpr float LAYOUT_PAGE_HEADER_HEIGHT = 52.0f;
+inline constexpr float LAYOUT_PAGE_X_PADDING = 10.0f;
 inline constexpr ImVec2 LAYOUT_CENTER_ALIGN_TEXT = ImVec2(0.5f, 0.0f);
+
+/// Font size, weight and colour for text in the UI font. The colour goes through ImGui::GetColorU32() when drawn, so it
+/// follows the style alpha.
+struct TextStyle
+{
+  float font_size;
+  float font_weight;
+  ImVec4 color;
+
+  ALWAYS_INLINE TextStyle WithColor(const ImVec4& new_color) const { return {font_size, font_weight, new_color}; }
+  ALWAYS_INLINE TextStyle WithSize(float new_size) const { return {new_size, font_weight, color}; }
+  ALWAYS_INLINE TextStyle WithWeight(float new_weight) const { return {font_size, new_weight, color}; }
+  ALWAYS_INLINE TextStyle WithSizeAndWeight(float new_size, float new_weight) const
+  {
+    return {new_size, new_weight, color};
+  }
+};
 
 struct ALIGN_TO_CACHE_LINE UIStyles
 {
@@ -102,6 +122,14 @@ struct ALIGN_TO_CACHE_LINE UIStyles
   ImVec4 ToastBackgroundColor;
   ImVec4 ToastTextColor;
 
+  // Semantic colours, derived from the theme colours above.
+  ImVec4 SurfaceColor;
+  ImVec4 SurfaceRaisedColor;
+  ImVec4 BorderColor;
+  ImVec4 MutedTextColor;
+  ImVec4 AccentColor;
+  ImVec4 AccentTextColor;
+
   ImFont* Font;
 
   u32 ShadowColor;
@@ -116,8 +144,17 @@ struct ALIGN_TO_CACHE_LINE UIStyles
   float MediumSmallFontSize;
   float BlurBackgroundWeight;
 
+  // Text presets, updated with the layout scale and the theme.
+  TextStyle HeadingText;    // large bold, page titles
+  TextStyle TitleText;      // medium bold, row titles
+  TextStyle BodyText;       // medium
+  TextStyle MutedText;      // medium, muted colour
+  TextStyle SmallBoldText;  // medium-small bold
+  TextStyle SmallMutedText; // medium-small, muted colour
+
   static constexpr float NormalFontWeight = 0.0f;
   static constexpr float BoldFontWeight = 500.0f;
+  static constexpr float ExtraBoldFontWeight = 800.0f;
 
   bool Animations : 1;
   bool SmoothScrolling : 1;
@@ -173,6 +210,26 @@ ALWAYS_INLINE ImRect ImRectFromLayoutExtent(const ImVec2& pos, const ImVec2& siz
 ALWAYS_INLINE ImRect ImRectFromLayoutExtent(const ImVec2& pos, const float width, const float height)
 {
   return ImRectFromExtent(pos, LayoutScale(width, height));
+}
+
+/// Size of a single unwrapped line of text in the UI font.
+ALWAYS_INLINE ImVec2 MeasureText(float font_size, float font_weight, std::string_view text)
+{
+  return text.empty() ?
+           ImVec2() :
+           UIStyle.Font->CalcTextSizeA(font_size, font_weight, FLT_MAX, 0.0f, text.data(), text.data() + text.size());
+}
+ALWAYS_INLINE ImVec2 MeasureText(const TextStyle& style, std::string_view text)
+{
+  return MeasureText(style.font_size, style.font_weight, text);
+}
+
+/// Size of text word-wrapped to wrap_width.
+ALWAYS_INLINE ImVec2 MeasureText(const TextStyle& style, std::string_view text, float wrap_width)
+{
+  return text.empty() ? ImVec2() :
+                        UIStyle.Font->CalcTextSizeA(style.font_size, style.font_weight, FLT_MAX, wrap_width,
+                                                    text.data(), text.data() + text.size());
 }
 
 ALWAYS_INLINE ImVec4 ModAlpha(const ImVec4& v, float a)
@@ -249,6 +306,9 @@ ImRect CenterImage(const ImVec2& fit_rect, const GPUTexture* texture);
 ImRect CenterImage(const ImRect& fit_rect, const ImVec2& image_size);
 ImRect CenterImage(const ImRect& fit_rect, const GPUTexture* texture);
 
+/// Placeholder for an empty save slot: dimmed fill, dashed border and a centred plus.
+void DrawEmptySlotTile(ImDrawList* dl, const ImRect& bb, float rounding, float alpha = 1.0f);
+
 /// Fits an image to the specified bounds, cropping if needed. Returns UV coordinates.
 ImRect FitImage(const ImVec2& fit_size, const ImVec2& image_size);
 
@@ -261,6 +321,7 @@ void ShutdownWidgets();
 bool CreateWidgetsGPUResources(Error* error);
 void DestroyWidgetsGPUResources();
 GPUPipeline* GetPresentCopyPipeline();
+GPUPipeline* GetCarouselPipeline();
 
 std::span<const char* const> GetThemeNames();
 std::span<const char* const> GetThemeDisplayNames();
@@ -271,6 +332,8 @@ void SetFont(ImFont* ui_font);
 bool UpdateLayoutScale();
 
 /// Texture cache.
+inline constexpr std::string_view GENERATED_ARTWORK_KEY_PREFIX = "generated:";
+inline constexpr u32 DEFAULT_TEXTURE_CACHE_SIZE_MB = 512;
 GPUTexture* GetPlaceholderTexture();
 std::unique_ptr<GPUTexture> LoadTexture(std::string_view path);
 std::unique_ptr<GPUTexture> LoadTexture(std::string_view path, std::string_view name);
@@ -287,6 +350,7 @@ GPUTexture* GetCachedTextureAsync(std::string_view name);
 GPUTexture* GetCachedTextureAsync(std::string_view path, std::string_view name);
 GPUTexture* GetCachedTextureAsync(std::string_view name, u32 svg_width, u32 svg_height);
 GPUTexture* GetCachedTextureAsync(std::string_view name, const ImVec2& size);
+GPUTexture* InsertCachedTexture(std::string name, std::unique_ptr<GPUTexture> texture);
 bool InvalidateCachedTexture(std::string_view path);
 bool TextureNeedsSVGDimensions(std::string_view path);
 void UploadAsyncTextures();
@@ -347,15 +411,29 @@ void EnqueueSoundEffect(std::string_view sound_effect);
 
 float GetScreenBottomMargin();
 
-bool IsAnyFixedPopupDialogOpen();
 bool IsFixedPopupDialogOpen(std::string_view name);
 void OpenFixedPopupDialog(std::string_view name);
 void CloseFixedPopupDialog();
-void CloseFixedPopupDialogImmediately();
 bool BeginFixedPopupDialog(float scaled_window_padding = LayoutScale(20.0f),
                            float scaled_window_rounding = LayoutScale(20.0f),
                            const ImVec2& scaled_window_size = ImVec2(), const ImVec2& min_window_size = ImVec2());
 void EndFixedPopupDialog();
+
+/// Stacked dialog whose contents are drawn by a callback. Sizes are unscaled. The close callback runs once the
+/// dialog has been removed, however it was closed.
+using CustomDialogDrawCallback = MoveOnlyFunction<void()>;
+using CustomDialogCloseCallback = MoveOnlyFunction<void()>;
+void OpenCustomDialog(std::string title, float window_padding, float window_rounding, const ImVec2& window_size,
+                      const ImVec2& min_window_size, CustomDialogDrawCallback draw_callback,
+                      CustomDialogCloseCallback close_callback = {});
+
+/// Closes the dialog currently being drawn, i.e. call from within a custom dialog's draw callback.
+void CloseCurrentDialog();
+void CloseCurrentDialogImmediately();
+u32 GetCurrentDialogSerial();
+
+/// Closes a dialog later, e.g. from an async callback. Does nothing if the dialog has already gone.
+void CloseDialog(u32 serial);
 
 void RenderOverlays();
 
@@ -420,6 +498,15 @@ enum class FooterBackground : u8
 
 bool IsGamepadInputSource();
 std::string_view GetControllerIconMapping(std::string_view icon);
+
+/// The gamepad icon (mapped for the controller in use) or the keyboard icon, depending on the last input source.
+std::string_view GetInputHint(std::string_view gamepad_icon, std::string_view keyboard_icon);
+
+/// Input hints are drawn in the muted text style, vertically centred in [pos.y, pos.y + height].
+/// DrawInputHint() returns the width used.
+float MeasureInputHint(std::string_view hint);
+float DrawInputHint(ImDrawList* dl, const ImVec2& pos, float height, std::string_view hint);
+
 void SetFullscreenFooterText(std::span<const std::pair<const char*, std::string_view>> items);
 void SetFullscreenFooterText(std::span<const std::pair<const char*, std::string_view>> left_items,
                              std::span<const std::pair<const char*, std::string_view>> right_items);
@@ -431,11 +518,125 @@ void BeginMenuButtons(u32 num_items = 0, float y_align = 0.0f, float x_padding =
                       float y_padding = LAYOUT_MENU_BUTTON_Y_PADDING, float x_spacing = 0.0f,
                       float y_spacing = LAYOUT_MENU_BUTTON_SPACING);
 void EndMenuButtons();
+
+/// Fades out the content drawn between Begin/End towards the top/bottom edges of the current window when there is
+/// more to scroll in that direction. Works per-vertex, so large quads fade across their whole height.
+void BeginScrollFade();
+void EndScrollFade();
 float GetMenuButtonAvailableWidth();
 bool MenuButtonFrame(std::string_view str_id, float height, bool enabled, ImRect* item_bb, bool* visible, bool* hovered,
                      ImGuiButtonFlags flags = 0);
 bool MenuButtonFrame(std::string_view str_id, bool enabled, const ImRect& bb, bool* visible, bool* hovered,
                      ImGuiButtonFlags flags = 0);
+
+/// For windows that handle pointer drags themselves instead of scrolling, e.g. a horizontal carousel. Drags are
+/// detected like drag scrolling, which cancels the press underneath. Returns true while the current window is being
+/// dragged, and on the frame it's released, when fling_distance is how much further a fling would carry the content.
+bool GetWindowDrag(ImVec2* fling_distance);
+
+/// A single line of text, pills and spaces, laid out when drawn. Each item is vertically centred in the rect passed to
+/// Draw(), or put on its bottom edge. Shrink items are ellipsised to make the line fit, each getting an equal share of
+/// what's left, Fill items share the space left over, and without any Fill items the line is aligned by align_x. Text
+/// is copied, so the caller's buffers can be reused straight away.
+class InlineRun
+{
+public:
+  enum Flags : u8
+  {
+    Shadow = (1 << 0),
+    Shrink = (1 << 1), // also drawn with a shadow
+    Bottom = (1 << 2), // e.g. smaller text after a title
+  };
+
+  explicit InlineRun(float spacing);
+
+  u32 Text(const TextStyle& style, std::string_view text, u8 flags = 0);
+  template<typename... T>
+  u32 TextFmt(const TextStyle& style, fmt::format_string<T...> fmt, T&&... args)
+  {
+    const u32 offset = m_buffer.length();
+    m_buffer.append_format(fmt, std::forward<T>(args)...);
+    return AddText(style, offset, 0);
+  }
+
+  /// Input hint, see DrawInputHint().
+  u32 Hint(std::string_view hint);
+  u32 Pill(std::string_view text, const TextStyle& style, u32 bg_color, float height, float rounding = -1.0f);
+  template<typename... T>
+  u32 PillFmt(const TextStyle& style, u32 bg_color, float height, float rounding, fmt::format_string<T...> fmt,
+              T&&... args)
+  {
+    const u32 offset = m_buffer.length();
+    m_buffer.append_format(fmt, std::forward<T>(args)...);
+    return AddPill(style, offset, bg_color, height, rounding);
+  }
+
+  /// Empty slot, e.g. for a widget drawn afterwards at GetItemRect(). Height 0 is the full height of the line.
+  u32 Space(float width, float height = 0.0f, u8 flags = 0);
+
+  /// Takes no spacing of its own, only the item after it is spaced.
+  u32 Fill();
+
+  /// Overrides the spacing before the next item.
+  void Spacing(float spacing);
+
+  /// Width of the line before any shrinking or filling.
+  float GetWidth() const;
+  void Draw(ImDrawList* dl, const ImRect& bb, float align_x = 0.0f);
+
+  /// Only valid after Draw().
+  const ImRect& GetItemRect(u32 index) const { return m_items[index].rect; }
+
+private:
+  static constexpr u32 MAX_ITEMS = 8;
+
+  enum class ItemType : u8
+  {
+    Text,
+    Pill,
+    Space,
+    Fill,
+  };
+
+  struct Item
+  {
+    ItemType type;
+    u8 flags;
+    u16 text_offset;
+    u16 text_length;
+    float spacing;
+    float width;
+    float height;
+    float rounding;
+    u32 bg_color;
+    TextStyle style;
+    ImRect rect;
+  };
+
+  Item& AddItem(ItemType type, float width, float height);
+  u32 AddText(const TextStyle& style, u32 offset, u8 flags);
+  u32 AddPill(const TextStyle& style, u32 offset, u32 bg_color, float height, float rounding);
+
+  Item m_items[MAX_ITEMS];
+  u32 m_num_items = 0;
+  float m_spacing;
+  float m_next_spacing;
+  SmallString m_buffer;
+};
+
+/// Rounded label. Rounding < 0 rounds the ends fully. DrawPill() returns the width used.
+ImVec2 MeasurePill(std::string_view text, float height, float font_size, float font_weight);
+ALWAYS_INLINE ImVec2 MeasurePill(std::string_view text, float height, const TextStyle& style)
+{
+  return MeasurePill(text, height, style.font_size, style.font_weight);
+}
+float DrawPill(ImDrawList* dl, const ImVec2& pos, float height, std::string_view text, const TextStyle& style,
+               u32 bg_color, float rounding = -1.0f);
+
+/// Mouse-clickable pill, not gamepad navigable. A transparent bg_color is filled when hovered.
+bool PillButton(ImGuiID id, std::string_view label, float height, u32 bg_color, u32 text_color, u32 border_color,
+                bool* hovered, GPUTexture* icon = nullptr);
+
 void DrawMenuButtonFrame(const ImVec2& p_min, const ImVec2& p_max, bool held);
 void ResetMenuButtonFrame();
 void RenderShadowedTextClipped(ImFont* font, float font_size, float font_weight, const ImVec2& pos_min,
@@ -454,6 +655,18 @@ void RenderMultiLineShadowedTextClipped(ImDrawList* draw_list, ImFont* font, flo
                                         const ImVec2& pos_min, const ImVec2& pos_max, u32 color, std::string_view text,
                                         const ImVec2& align, float wrap_width, const ImRect* clip_rect = nullptr,
                                         float shadow_offset = LayoutScale(LAYOUT_SHADOW_OFFSET));
+void RenderShadowedTextClipped(ImDrawList* draw_list, const ImVec2& pos_min, const ImVec2& pos_max,
+                               const TextStyle& style, std::string_view text, const ImVec2& align = ImVec2(0.0f, 0.0f),
+                               const ImRect* clip_rect = nullptr);
+
+/// Single line, truncated with an ellipsis if it does not fit between pos_min.x and pos_max.x.
+void RenderShadowedTextEllipsis(ImDrawList* draw_list, const ImVec2& pos_min, const ImVec2& pos_max,
+                                const TextStyle& style, std::string_view text,
+                                const ImVec2& align = ImVec2(0.0f, 0.0f));
+
+/// Unshadowed single line at pos. Returns the width used.
+float RenderText(ImDrawList* draw_list, const ImVec2& pos, const TextStyle& style, std::string_view text);
+
 ImVec2 RenderOutlinedText(ImDrawList* draw_list, ImFont* font, float size, float weight, const ImVec2& pos, ImU32 col,
                           std::string_view text);
 void RenderAutoLabelText(ImDrawList* draw_list, ImFont* font, float font_size, float font_weight, float label_weight,
@@ -485,10 +698,6 @@ bool FloatingButton(std::string_view text, float x, float y, float anchor_x = 0.
 bool ToggleButton(std::string_view title, std::string_view summary, bool* v, bool enabled = true);
 bool ThreeWayToggleButton(std::string_view title, std::string_view summary, std::optional<bool>* v,
                           bool enabled = true);
-bool RangeButton(std::string_view title, std::string_view summary, s32* value, s32 min, s32 max, s32 increment,
-                 const char* format = "%d", bool enabled = true, std::string_view ok_text = FSUI_VSTR("OK"));
-bool RangeButton(std::string_view title, std::string_view summary, float* value, float min, float max, float increment,
-                 const char* format = "%f", bool enabled = true, std::string_view ok_text = FSUI_VSTR("OK"));
 bool EnumChoiceButtonImpl(std::string_view title, std::string_view summary, s32* value_pointer,
                           const char* (*to_display_name_function)(s32 value, void* opaque), void* opaque, u32 count,
                           bool enabled);
@@ -533,6 +742,27 @@ void RightAlignNavButtons(u32 num_items);
 void RightAlignNavButtons(float total_width);
 bool NavButton(std::string_view title, bool is_active, bool enabled = true, bool show_active_indicator = false);
 bool NavTab(std::string_view title, bool is_active, bool enabled, float width);
+
+/// Mouse-clickable segmented control, not gamepad navigable. Call Segment() for each item between
+/// BeginSegmentedControl() and EndSegmentedControl(), it returns true when an inactive segment is clicked.
+/// MeasureSegment() and GetSegmentedControlFrameSize() give the size beforehand, e.g. for right alignment.
+inline constexpr float SEGMENTED_CONTROL_HEIGHT = 30.0f;
+inline constexpr float SEGMENTED_CONTROL_PADDING = 4.0f;
+float MeasureSegment(std::string_view label, bool has_icon = false);
+ImVec2 GetSegmentedControlFrameSize(float segments_width);
+void BeginSegmentedControl(std::string_view str_id);
+bool Segment(std::string_view label, bool active, GPUTexture* icon = nullptr);
+void EndSegmentedControl();
+
+/// Page header: a non-navigable window across the top of the screen, with a border along the bottom.
+bool BeginPageHeader(const char* name, const ImVec4& background, bool blur, float height = LAYOUT_PAGE_HEADER_HEIGHT);
+
+/// Round back button, returns true when clicked.
+bool PageHeaderBackButton();
+
+/// Heading-sized title, followed by a muted " / breadcrumb" if one is given. Items after it continue on the same line.
+void PageHeaderTitle(std::string_view title, std::string_view breadcrumb = {});
+void EndPageHeader();
 
 bool BeginFloatingNavBar(float x, float y, float items_width, float font_size = UIStyle.LargeFontSize,
                          float anchor_x = 0.0f, float anchor_y = 0.0f, float x_padding = LAYOUT_MENU_BUTTON_X_PADDING,
@@ -594,44 +824,51 @@ bool InputTextWithSuffix(const char* str_id, std::string_view suffix, char* buf,
 bool AreAnyWidgetsDialogOpen();
 bool AreAnyWidgetsDialogInteractable();
 
+/// Dialogs are drawn as a stack, each nested inside the one below it. Only the top dialog receives input.
+class PopupDialog;
+PopupDialog* PushDialog(std::unique_ptr<PopupDialog> dialog);
+PopupDialog* FindDialog(u32 serial);
+
+/// Creates a dialog of type T with the given constructor arguments, and pushes it.
+template<typename T, typename... Args>
+T* PushDialog(Args&&... args)
+{
+  return static_cast<T*>(PushDialog(std::make_unique<T>(std::forward<Args>(args)...)));
+}
+
+/// Returns the open dialog with the given serial, or null. Serials are unique, so T must be the type that was pushed.
+template<typename T = PopupDialog>
+T* FindDialog(u32 serial)
+{
+  return static_cast<T*>(FindDialog(serial));
+}
+
 using FileSelectorCallback = MoveOnlyFunction<void(std::string path)>;
 using FileSelectorFilters = std::vector<std::string>;
-bool IsFileSelectorOpen();
 void OpenFileSelector(std::string_view title, FileSelectorFilters filters, std::string initial_directory,
                       FileSelectorCallback callback);
-void CloseFileSelector();
 
 using DirectorySelectorCallback = MoveOnlyFunction<void(std::string path)>;
-bool IsDirectorySelectorOpen();
 void OpenDirectorySelector(std::string_view title, std::string initial_directory, std::string default_directory,
                            DirectorySelectorCallback callback);
-void CloseDirectorySelector();
 
 using ChoiceDialogCallback = MoveOnlyFunction<void(s32 index, const std::string& title, bool checked)>;
 using ChoiceDialogOptions = std::vector<std::pair<std::string, bool>>;
-bool IsChoiceDialogOpen();
 void OpenChoiceDialog(std::string_view title, bool checkable, ChoiceDialogOptions options,
                       ChoiceDialogCallback callback);
-void CloseChoiceDialog();
 
 using DropdownDialogCallback = MoveOnlyFunction<void(s32 index, const std::string& title)>;
 using DropdownDialogOptions = std::vector<std::pair<std::string, bool>>;
-bool IsDropdownDialogOpen();
-std::string_view GetDropdownDialogHiddenTitle();
 void OpenDropdownDialog(std::string_view hidden_title, DropdownDialogOptions options, DropdownDialogCallback callback,
                         float min_width = 0.0f);
-void CloseDropdownDialog();
 
 using InputStringDialogCallback = MoveOnlyFunction<void(std::string text)>;
-bool IsInputDialogOpen();
 void OpenInputStringDialog(std::string_view title, std::string message, std::string caption, std::string ok_button_text,
                            std::string initial_value, InputStringDialogCallback callback);
-void CloseInputDialog();
 
 using ConfirmMessageDialogCallback = MoveOnlyFunction<void(bool)>;
 using InfoMessageDialogCallback = MoveOnlyFunction<void()>;
 using MessageDialogCallback = MoveOnlyFunction<void(s32)>;
-bool IsMessageBoxDialogOpen();
 void OpenConfirmMessageDialog(std::string icon, std::string_view title, std::string message,
                               ConfirmMessageDialogCallback callback,
                               std::string yes_button_text = FSUI_ICONSTR(ICON_FA_CHECK, "Yes"),
@@ -641,7 +878,6 @@ void OpenInfoMessageDialog(std::string icon, std::string_view title, std::string
                            std::string button_text = FSUI_ICONSTR(ICON_FA_SQUARE_XMARK, "Close"));
 void OpenMessageDialog(std::string icon, std::string_view title, std::string message, MessageDialogCallback callback,
                        std::string first_button_text, std::string second_button_text, std::string third_button_text);
-void CloseMessageDialog();
 
 std::unique_ptr<ProgressCallbackWithPrompt> OpenModalProgressDialog(std::string title,
                                                                     float window_unscaled_width = 500.0f);
@@ -697,11 +933,14 @@ class PopupDialog
 {
 public:
   PopupDialog();
-  ~PopupDialog();
+  virtual ~PopupDialog();
 
+  ALWAYS_INLINE u32 GetSerial() const { return m_serial; }
   ALWAYS_INLINE const std::string& GetTitle() const { return m_title; }
   ALWAYS_INLINE bool IsOpen() const { return (m_state != State::Inactive); }
   ALWAYS_INLINE bool IsInteractable() const { return (m_state >= State::Open && m_state <= State::Opening); }
+
+  virtual void Draw() = 0;
 
   void StartClose();
   void CloseImmediately();
@@ -732,9 +971,11 @@ protected:
 
   std::string m_title;
   float m_animation_time_remaining = 0.0f;
+  u32 m_serial;
   State m_state = State::Inactive;
   bool m_user_closeable = true;
   bool m_reverse_animation = false;
+  bool m_close_when_top = false; // StartClose() was called with dialogs above this one, close once they have gone.
 };
 
 // Wrapper for computing menu button bounds.

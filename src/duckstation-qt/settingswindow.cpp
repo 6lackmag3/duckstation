@@ -10,6 +10,7 @@
 #include "consolesettingswidget.h"
 #include "debuggingsettingswidget.h"
 #include "emulationsettingswidget.h"
+#include "folderssettingswidget.h"
 #include "gamecheatsettingswidget.h"
 #include "gamelistsettingswidget.h"
 #include "gamepatchsettingswidget.h"
@@ -34,6 +35,7 @@
 #include "common/log.h"
 #include "common/threading.h"
 
+#include <QtGui/QTextDocument>
 #include <QtGui/QWheelEvent>
 #include <QtWidgets/QScrollBar>
 
@@ -108,9 +110,8 @@ void SettingsWindow::addPages()
     addWidget(
       new GameListSettingsWidget(this, m_ui.settingsContainer), tr("Game List"),
       u":/icons/monochrome/svg/folder-open-line.svg"_s,
-      tr("<strong>Game List Settings</strong><hr>The list above shows the directories which will be searched by "
-         "DuckStation to populate the game list. Search directories can be added, removed, and switched to "
-         "recursive/non-recursive."));
+      tr("<strong>Game List Settings</strong><hr>These options control which directories are scanned to populate "
+         "the game list.<br><br>Mouse over an option for additional information."));
   }
 
   addWidget(new BIOSSettingsWidget(this, m_ui.settingsContainer), tr("BIOS"), u":/icons/monochrome/svg/chip-line.svg"_s,
@@ -185,6 +186,11 @@ void SettingsWindow::addPages()
 
   if (!isPerGameSettings())
   {
+    addWidget(
+      new FoldersSettingsWidget(this, m_ui.settingsContainer), tr("Folders"),
+      u":/icons/monochrome/svg/folder-line.svg"_s,
+      tr("<strong>Folder Settings</strong><hr>These options control where DuckStation reads and stores its "
+         "files.<br><br>Mouse over an option for additional information, and Shift+Wheel to scroll this panel."));
     addWidget(new AdvancedSettingsWidget(this, m_ui.settingsContainer), tr("Advanced"),
               u":/icons/monochrome/svg/alert-line.svg"_s,
               tr("<strong>Advanced Settings</strong><hr>These options control logging and internal behavior of the "
@@ -262,6 +268,8 @@ void SettingsWindow::connectUi()
   m_ui.settingsCategory->setCurrentRow(0);
   m_ui.settingsContainer->setCurrentIndex(0);
   m_ui.helpText->setOpenExternalLinks(true);
+  m_ui.helpText->document()->setDefaultStyleSheet(
+    QStringLiteral("hr { background-color: rgba(128, 128, 128, 40%); }")); // faint rule in light and dark themes
   m_ui.helpText->setText(m_category_help_text[0]);
   connect(m_ui.settingsCategory, &QListWidget::currentRowChanged, this, &SettingsWindow::onCategoryCurrentRowChanged);
   connect(m_ui.close, &QPushButton::clicked, this, &SettingsWindow::close);

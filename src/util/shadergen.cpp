@@ -176,9 +176,14 @@ void ShaderGen::WriteHeader(std::stringstream& ss, bool enable_rov /* = false */
               (!enable_rov && enable_framebuffer_fetch && !enable_dual_source_blend) ||
               (!enable_rov && !enable_framebuffer_fetch && enable_dual_source_blend));
   if (m_shader_language == GPUShaderLanguage::GLSL || m_shader_language == GPUShaderLanguage::GLSLES)
+  {
     ss << m_glsl_version_string << "\n\n";
+  }
   else if (m_spirv)
-    ss << "#version 450 core\n\n";
+  {
+    ss << "#version 450 core\n";
+    ss << "#extension GL_EXT_control_flow_attributes : require\n\n";
+  }
 
 #ifdef __APPLE__
   // TODO: Do this for Vulkan as well.
@@ -286,8 +291,8 @@ void ShaderGen::WriteHeader(std::stringstream& ss, bool enable_rov /* = false */
 
     ss << "#define CONSTANT const\n";
     ss << "#define GLOBAL\n";
-    ss << "#define FOR_UNROLL for\n";
-    ss << "#define FOR_LOOP for\n";
+    ss << (m_spirv ? "#define FOR_UNROLL [[unroll]] for\n" : "#define FOR_UNROLL for\n");
+    ss << (m_spirv ? "#define FOR_LOOP [[dont_unroll]] for\n" : "#define FOR_LOOP for\n");
     ss << "#define IF_BRANCH if\n";
     ss << "#define IF_FLATTEN if\n";
     ss << "#define VECTOR_EQ(a, b) ((a) == (b))\n";
@@ -441,6 +446,26 @@ void ShaderGen::DeclareTexture(std::stringstream& ss, const char* name, u32 inde
        << "> " << name << " : register(t" << index << ");\n";
     ss << "SamplerState " << name << "_ss : register(s" << index << ");\n";
   }
+}
+
+void ShaderGen::DeclareComputeOutputBuffer(std::stringstream& ss, const char* name) const
+{
+  if (m_glsl)
+    ss << "layout(std430, " << (m_spirv ? "set = 2, " : "")
+       << "binding = 0) writeonly restrict buffer OutputBuffer { uint " << name << "[]; };\n";
+  else
+    ss << "RWStructuredBuffer<uint> " << name << " : register(u0);\n";
+}
+
+void ShaderGen::DeclareComputeEntryPoint(std::stringstream& ss, u32 group_size_x, u32 group_size_y,
+                                         u32 group_size_z) const
+{
+  if (m_glsl)
+    ss << "layout(local_size_x = " << group_size_x << ", local_size_y = " << group_size_y
+       << ", local_size_z = " << group_size_z << ") in;\n#define GLOBAL_ID gl_GlobalInvocationID\nvoid main()\n";
+  else
+    ss << "[numthreads(" << group_size_x << ", " << group_size_y << ", " << group_size_z
+       << ")]\nvoid main(uint3 GLOBAL_ID : SV_DispatchThreadID)\n";
 }
 
 const char* ShaderGen::GetInterpolationQualifier(bool interface_block, bool centroid_interpolation,
@@ -695,7 +720,8 @@ void ShaderGen::DeclareFragmentEntryPoint(
       ss << "layout(pixel_interlock_ordered) in;\n";
       ss << "#define ROV_LOAD(name, coords) imageLoad(name, ivec2(coords))\n";
       ss << "#define ROV_STORE(name, coords, value) imageStore(name, ivec2(coords), value)\n";
-      ss << "#define ROV_STORE_SCALAR(name, coords, value) imageStore(name, ivec2(coords), vec4(value, 0.0, 0.0, 0.0))\n";
+      ss << "#define ROV_STORE_SCALAR(name, coords, value) imageStore(name, ivec2(coords), vec4(value, 0.0, 0.0, "
+            "0.0))\n";
       ss << "#define BEGIN_ROV_REGION beginInvocationInterlockARB()\n";
       ss << "#define END_ROV_REGION endInvocationInterlockARB()\n";
     }

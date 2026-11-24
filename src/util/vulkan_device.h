@@ -94,10 +94,10 @@ public:
                                                         Error* error = nullptr) override;
 
   std::unique_ptr<GPUDownloadTexture> CreateDownloadTexture(u32 width, u32 height, GPUTextureFormat format,
-                                                            Error* error = nullptr) override;
+                                                            bool shader_write, Error* error = nullptr) override;
   std::unique_ptr<GPUDownloadTexture> CreateDownloadTexture(u32 width, u32 height, GPUTextureFormat format,
                                                             void* memory, size_t memory_size, u32 memory_stride,
-                                                            Error* error = nullptr) override;
+                                                            bool shader_write, Error* error = nullptr) override;
 
   bool SupportsTextureFormat(GPUTextureFormat format) const override;
   void CopyTextureRegion(GPUTexture* dst, u32 dst_x, u32 dst_y, u32 dst_layer, u32 dst_level, GPUTexture* src,
@@ -136,6 +136,7 @@ public:
   void SetPipeline(GPUPipeline* pipeline) override;
   void SetTextureSampler(u32 slot, GPUTexture* texture, GPUSampler* sampler) override;
   void SetTextureBuffer(GPUTextureBuffer* buffer) override;
+  void SetComputeOutputBuffer(GPUDownloadTexture* buffer) override;
   void SetViewport(const GSVector4i rc) override;
   void SetScissor(const GSVector4i rc) override;
   void Draw(u32 vertex_count, u32 base_vertex) override;
@@ -256,19 +257,24 @@ protected:
 private:
   enum DIRTY_FLAG : u32
   {
-    DIRTY_FLAG_INITIAL = (1 << 0),
+    DIRTY_FLAG_PIPELINE = (1 << 0),
     DIRTY_FLAG_PIPELINE_LAYOUT = (1 << 1),
     DIRTY_FLAG_DYNAMIC_OFFSETS = (1 << 2),
     DIRTY_FLAG_TEXTURES_OR_SAMPLERS = (1 << 3),
     DIRTY_FLAG_TEXTURE_BUFFER = (1 << 4),
     DIRTY_FLAG_RENDER_TARGETS = (1 << 5),
+    DIRTY_FLAG_COMPUTE_OUTPUT_BUFFER = (1 << 6),
+    DIRTY_FLAG_VERTEX_INDEX_BUFFERS = (1 << 7),
+    DIRTY_FLAG_VIEWPORT = (1 << 8),
+    DIRTY_FLAG_SCISSOR = (1 << 9),
 
     PIPELINE_LAYOUT_DEPENDENT_STATE = DIRTY_FLAG_PIPELINE_LAYOUT | DIRTY_FLAG_DYNAMIC_OFFSETS |
                                       DIRTY_FLAG_TEXTURES_OR_SAMPLERS | DIRTY_FLAG_TEXTURE_BUFFER |
-                                      DIRTY_FLAG_RENDER_TARGETS,
+                                      DIRTY_FLAG_RENDER_TARGETS | DIRTY_FLAG_COMPUTE_OUTPUT_BUFFER,
 
-    ALL_DIRTY_STATE = DIRTY_FLAG_INITIAL | DIRTY_FLAG_PIPELINE_LAYOUT | DIRTY_FLAG_DYNAMIC_OFFSETS |
-                      DIRTY_FLAG_TEXTURES_OR_SAMPLERS | DIRTY_FLAG_RENDER_TARGETS | DIRTY_FLAG_TEXTURE_BUFFER,
+    GRAPHICS_ONLY_STATE = DIRTY_FLAG_VERTEX_INDEX_BUFFERS | DIRTY_FLAG_VIEWPORT | DIRTY_FLAG_SCISSOR,
+
+    ALL_DIRTY_STATE = DIRTY_FLAG_PIPELINE | PIPELINE_LAYOUT_DEPENDENT_STATE | GRAPHICS_ONLY_STATE,
   };
 
   struct RenderPassCacheKey
@@ -354,7 +360,6 @@ private:
   s32 IsRenderTargetBoundIndex(const GPUTexture* tex) const;
 
   /// Applies any changed state.
-  void SetInitialPipelineState();
   void PreDrawCheck();
   void PreDispatchCheck();
   void PushUniformBuffer(bool is_compute, const void* data, u32 data_size);
@@ -419,6 +424,7 @@ private:
 
   std::array<VulkanTexture*, MAX_TEXTURE_SAMPLERS> m_current_textures = {};
   std::array<VkSampler, MAX_TEXTURE_SAMPLERS> m_current_samplers = {};
+  VulkanDownloadTexture* m_compute_output_buffer = nullptr;
   VulkanTextureBuffer* m_current_texture_buffer = nullptr;
   GSVector4i m_current_viewport = GSVector4i::cxpr(0, 0, 1, 1);
   GSVector4i m_current_scissor = GSVector4i::cxpr(0, 0, 1, 1);
@@ -445,6 +451,7 @@ private:
   VkDescriptorSetLayout m_single_texture_buffer_ds_layout = VK_NULL_HANDLE;
   VkDescriptorSetLayout m_multi_texture_ds_layout = VK_NULL_HANDLE;
   VkDescriptorSetLayout m_feedback_loop_ds_layout = VK_NULL_HANDLE;
+  VkDescriptorSetLayout m_compute_buffer_ds_layout = VK_NULL_HANDLE;
   VkDescriptorSetLayout m_image_ds_layout = VK_NULL_HANDLE;
   std::array<VkPipelineLayout, static_cast<size_t>(GPUPipeline::Layout::MaxCount)> m_pipeline_layouts = {};
   std::unique_ptr<VulkanTexture> m_null_image_texture;

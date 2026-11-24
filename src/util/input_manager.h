@@ -7,6 +7,7 @@
 #include <mutex>
 #include <optional>
 #include <span>
+#include <string>
 #include <string_view>
 #include <tuple>
 #include <utility>
@@ -17,6 +18,7 @@
 #include "common/settings_interface.h"
 #include "common/types.h"
 
+#include "core/controller.h"
 #include "core/input_types.h"
 #include "window_info.h"
 
@@ -207,6 +209,9 @@ inline constexpr u32 MAX_SOFTWARE_CURSORS = MAX_POINTER_DEVICES + 2;
 /// Number of macro buttons per controller.
 inline constexpr u32 NUM_MACRO_BUTTONS_PER_CONTROLLER = 8;
 
+/// Can be used as a sentinel value.
+inline constexpr InputBindingKey INVALID_BINDING_KEY = {.bits = 0xFFFFFFFFFFFFFFFFULL};
+
 /// Converts an input class to a string.
 const char* InputSourceToString(InputSourceType clazz);
 
@@ -326,6 +331,28 @@ void CompleteBindingCapture();
 /// Stops the capture. It can be called from the capture's callback. Core thread only.
 void StopBindingCapture();
 
+struct MacroSequenceAction;
+
+/// Receives changes to pad binds on the core thread while recording a macro. The action's frames are counted from the
+/// start of the recording, in frames of the running game, or 60hz if there isn't one. Tiny analog changes are dropped.
+using MacroRecordingCallback = MoveOnlyFunction<void(const MacroSequenceAction& action)>;
+
+/// Starts recording a macro. All input events except pointers are swallowed before the normal bindings see them, and
+/// those matching the pad's binds are passed to the callback as bind values. Chord bindings are ignored. Replaces any
+/// recording in progress. Can be called from any thread.
+///
+/// The bindings of the pad's binds are read from the settings interface now, and copied, because the recording happens
+/// on the core thread, which can't safely read a settings interface owned by the caller (the editing layer in Qt, or
+/// the base layer, which needs the settings lock). The interface is not used after this returns.
+void StartMacroRecording(const SettingsInterface& si, std::string_view section, const Controller::ControllerInfo& cinfo,
+                         MacroRecordingCallback callback);
+
+/// Adds an input from a UI event, like a keyboard key, to the recording. Core thread only.
+void AddMacroRecordingEvent(InputBindingKey key, float value, u64 timestamp);
+
+/// Stops recording a macro. Can be called from any thread.
+void StopMacroRecording();
+
 /// Internal method used by pads to dispatch LED updates to input sources.
 void SetPadLEDState(u32 pad_index, float intensity);
 
@@ -339,6 +366,9 @@ void PauseVibration();
 
 /// Disables all vibration and LED effects. Call when stopping emulation.
 void ClearEffects();
+
+/// Forgets that the system was paused due to a controller disconnection. Call when resuming or stopping emulation.
+void ClearPausingController();
 
 /// Returns the number of currently-connected pointer devices.
 u32 GetPointerCount();
@@ -367,6 +397,32 @@ GamepadButtonType GetLastGamepadButtonType();
 
 /// Sets the state of the specified macro button.
 void SetMacroButtonState(u32 pad, u32 index, bool state);
+
+/// One action of a macro sequence: either sets a bind to a value, or waits for a number of frames.
+struct MacroSequenceAction
+{
+  static constexpr u32 WAIT_BIND_INDEX = 0xFFFFFFFFu;
+
+  u32 bind_index; ///< Controller bind index to set, or WAIT_BIND_INDEX to wait.
+  u32 frames;     ///< Number of frames to wait for.
+  float value;    ///< Value to set the bind to.
+};
+
+/// Parses a macro sequence string, e.g. "Cross 4 Cross:0 Square:0.5". Invalid tokens are skipped.
+std::vector<MacroSequenceAction> ParseMacroSequence(std::string_view str, const Controller::ControllerInfo& cinfo);
+
+/// Converts a list of macro actions back to a string.
+std::string FormatMacroSequence(std::span<const MacroSequenceAction> actions, const Controller::ControllerInfo& cinfo);
+
+/// Converts bind changes from a recording, with frames counted from its start, to a sequence starting at the first
+/// change. With release_held, binds which are still held at the end are released.
+std::vector<MacroSequenceAction> ConvertRecordedMacroActions(std::span<const MacroSequenceAction> recorded,
+                                                             bool release_held);
+
+/// Converts the pre-sequence macro settings (binds joined with '&', pressure, toggle frequency) to a sequence.
+/// The resulting sequence should be looped while the macro is active.
+std::vector<MacroSequenceAction> ConvertLegacyMacroToSequence(std::string_view binds, float pressure, u32 frequency,
+                                                              const Controller::ControllerInfo& cinfo);
 
 /// Returns true if the raw input source is being used.
 bool IsUsingRawInput();

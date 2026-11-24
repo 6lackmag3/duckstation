@@ -112,6 +112,8 @@ static constexpr const char FALLBACK_EXE_NAME[] = "PSX.EXE";
 static constexpr u32 MAX_SKIPPED_DUPLICATE_FRAME_COUNT = 2; // 20fps minimum
 static constexpr u32 MAX_SKIPPED_TIMEOUT_FRAME_COUNT = 1;   // 30fps minimum
 static constexpr u8 MEMORY_CARD_FAST_FORWARD_FRAMES = 30;
+static constexpr u8 LOADING_FAST_FORWARD_ENTER_FRAMES = 15; // Frames without a flip before fast forwarding.
+static constexpr u8 LOADING_FAST_FORWARD_IDLE_FRAMES = 120; // Frames without CD data before giving up.
 static constexpr u32 INVALID_GAME_ENTRY_PC = 0xFFFFFFFFu;
 
 namespace {
@@ -164,13 +166,12 @@ static void LogUnsafeSettingsToConsole(const SmallStringBase& messages);
 static bool Initialize(std::unique_ptr<CDImage> disc, DiscRegion disc_region, bool force_software_renderer,
                        std::optional<bool> start_fullscreen, Error* error);
 static bool LoadBIOS(bool* using_auto_select, Error* error);
+static std::string GetBIOSTitle();
 static bool SetBootMode(BootMode new_boot_mode, DiscRegion disc_region, bool* missing_bios, Error* error);
-static void InternalReset();
 static void ResetGameStarted();
 static void ClearRunningGame();
 static void DestroySystem();
 
-static void RecreateGPU(GPURenderer new_renderer);
 static bool StartMediaCapture(MediaCaptureMode mode, std::string path, u32 video_width, u32 video_height);
 static void StopMediaCapture(std::unique_ptr<MediaCapture> cap);
 
@@ -269,6 +270,9 @@ struct StateVars
 
   bool runahead_replay_pending = false;
   u8 memory_card_fast_forward_frames = 0;
+  bool loading_fast_forward = false;
+  u8 frames_since_flip = 0;
+  u8 frames_since_cd_data_read = 0;
 
   u32 skipped_frame_count = 0;
   u32 last_presented_internal_frame_number = 0;
@@ -467,6 +471,7 @@ std::string_view System::GetTaintDisplayName(Taint taint)
     TRANSLATE_DISAMBIG_NOOP("System", "Cheats", "Taint"),
     TRANSLATE_DISAMBIG_NOOP("System", "Game Patches", "Taint"),
     TRANSLATE_DISAMBIG_NOOP("System", "Memory Card Mismatch", "Taint"),
+    TRANSLATE_DISAMBIG_NOOP("System", "Expanded VRAM", "Taint"),
   }};
 
   return Host::TranslateToStringView("System", names[static_cast<size_t>(taint)], "Taint");
@@ -483,6 +488,7 @@ const char* System::GetTaintName(Taint taint)
     "Cheats",
     "Patches",
     "MemoryCardMismatch",
+    "ExpandedVRAM",
   }};
 
   return names[static_cast<size_t>(taint)];
@@ -1093,13 +1099,13 @@ DiscRegion System::GetRegionForPsf(const char* path)
   return psf.GetRegion();
 }
 
-void System::RecreateGPU(GPURenderer renderer)
+void System::RecreateGPU(GPURenderer renderer, std::optional<bool> enable_2mb_vram)
 {
   FreeMemoryStateStorage(false, true, false);
   StopMediaCapture();
 
   Error error;
-  if (!VideoThread::CreateGPUBackend(renderer, true, std::nullopt, &error))
+  if (!VideoThread::CreateGPUBackend(renderer, enable_2mb_vram, true, std::nullopt, &error))
   {
     ERROR_LOG("Failed to switch to {} renderer: {}", Settings::GetRendererName(renderer), error.GetDescription());
     Panic("Failed to switch renderer.");
@@ -1146,6 +1152,13 @@ void System::LoadSettings(bool display_osd_messages)
 
   // patch overrides take precedence over compat settings
   Cheats::ApplySettingOverrides();
+
+  // GPU dumps recorded with 2MB VRAM need it to replay.
+  if (s_state.gpu_dump_player && s_state.gpu_dump_player->Is2MBVRAM() &&
+      g_settings.gpu_vram_size == GPUVRAMSize::Default)
+  {
+    g_settings.gpu_vram_size = GPUVRAMSize::Expanded2MB;
+  }
 
   g_settings.FixIncompatibleSettings(si, display_osd_messages);
 }
@@ -1405,6 +1418,7 @@ void System::UpdateFolderPaths()
   }
 
   const std::string old_cheats = EmuFolders::Cheats;
+  const std::string old_patches = EmuFolders::Patches;
   const std::string old_gamesettings = EmuFolders::GameSettings;
   const std::string old_inputprofiles = EmuFolders::InputProfiles;
   const std::string old_memorycards = EmuFolders::MemoryCards;
@@ -1421,11 +1435,14 @@ void System::UpdateFolderPaths()
     if (old_gamesettings != EmuFolders::GameSettings && UpdateGameSettingsLayer(Core::GetSettingsLock()))
     {
       if (!IsReplayingGPUDump())
-        Cheats::ReloadCheats(old_cheats != EmuFolders::Cheats, true, false, true, false);
+      {
+        Cheats::ReloadCheats(old_cheats != EmuFolders::Cheats || old_patches != EmuFolders::Patches, true, false, true,
+                             false);
+      }
 
       ApplySettings(false);
     }
-    else if (old_cheats != EmuFolders::Cheats)
+    else if (old_cheats != EmuFolders::Cheats || old_patches != EmuFolders::Patches)
     {
       if (!IsReplayingGPUDump())
         Cheats::ReloadCheats(true, false, false, true, false);
@@ -1639,7 +1656,33 @@ void System::ResetSystem()
 
   SaveUndoLoadState();
   ClearMemorySaveStates(false, false);
-  InternalReset();
+
+  // reset and clear taints
+  SetTaintsFromSettings();
+
+  TimingEvents::Reset();
+  ResetGameStarted();
+  CPU::Reset();
+  CPU::CodeCache::Reset();
+  if (g_settings.gpu_pgxp_enable)
+    CPU::PGXP::Reset();
+
+  Bus::Reset();
+  PIO::Reset();
+  DMA::Reset();
+  InterruptController::Reset();
+  Timers::Reset();
+  GPU::Reset(true);
+  CDROM::Reset();
+  Pad::Reset();
+  SPU::Reset();
+  MDEC::Reset();
+  SIO::Reset();
+  PCDrv::Reset();
+  Achievements::OnSystemReset();
+
+  s_state.frame_number = 1;
+  s_state.internal_frame_number = 0;
 
   // Reset boot mode/reload BIOS if needed. Preserve exe/psf boot.
   const BootMode new_boot_mode = (s_state.boot_mode == BootMode::BootEXE || s_state.boot_mode == BootMode::BootPSF) ?
@@ -1690,6 +1733,7 @@ void System::PauseSystem(bool paused)
   {
     FullscreenUI::OnSystemResumed();
 
+    InputManager::ClearPausingController();
     InputManager::UpdateHostMouseMode();
 
     if (g_settings.inhibit_screensaver)
@@ -1938,9 +1982,13 @@ System::BootResult System::BootSystem(SystemBootParameters parameters, Error* er
   s_state.exe_override = std::move(exe_override);
 
   UpdateControllers();
+  ResetControllers();
   UpdateMemoryCards();
   UpdateMultitaps();
-  InternalReset();
+
+  // Components were reset to power-on state in Initialize(), controllers need to apply force analog on reset.
+  SetTaintsFromSettings();
+  ResetGameStarted();
 
   // Good to go.
   s_state.state = State::Running;
@@ -1975,6 +2023,7 @@ System::BootResult System::BootSystem(SystemBootParameters parameters, Error* er
 
   Host::OnSystemStarted(s_state.running_game_path, s_state.running_game_serial, s_state.running_game_title,
                         s_state.running_game_hash, s_state.exe_override);
+  DiscordPresence::Update(true);
 
   if (parameters.load_image_to_ram || g_settings.cdrom_load_image_to_ram)
     CDROM::PrecacheMedia();
@@ -2016,51 +2065,56 @@ bool System::Initialize(std::unique_ptr<CDImage> disc, DiscRegion disc_region, b
   s_state.next_frame_time = 0;
   s_state.turbo_enabled = false;
   s_state.fast_forward_enabled = false;
+  s_state.loading_fast_forward = false;
+  s_state.frames_since_flip = 0;
+  s_state.frames_since_cd_data_read = LOADING_FAST_FORWARD_IDLE_FRAMES;
 
   s_state.rewind_load_frequency = -1;
   s_state.rewind_load_counter = -1;
   s_state.rewind_save_frequency = -1;
   s_state.rewind_save_counter = -1;
 
-  TimingEvents::Initialize();
-
-  Bus::Initialize();
-  CPU::CodeCache::Initialize();
-  CPU::Initialize();
-  CDROM::Initialize();
-
-  if (!PIO::Initialize(error))
-    return false;
-
-  // CDROM before GPU, that way we don't modeswitch.
-  if (disc && !CDROM::InsertMedia(disc, disc_region, s_state.running_game_serial, s_state.running_game_title,
-                                  GetCurrentGameSaveTitle(), error))
-  {
-    return false;
-  }
-
-  GPU::Initialize();
-
   // Game info must be set prior to backend creation because of texture replacements.
   // We don't do it in UpdateRunningGame() when booting because it can fail in a number of locations.
   VideoThread::UpdateGameInfo(s_state.running_game_title, s_state.running_game_serial, s_state.running_game_path,
                               s_state.running_game_hash, false);
 
+  // The backend is created first, so that components can send commands to it when they reset.
   // This can fail due to the application being closed during startup.
-  if (!VideoThread::CreateGPUBackend(force_software_renderer ? GPURenderer::Software : g_settings.gpu_renderer, false,
-                                     start_fullscreen, error))
+  if (!VideoThread::CreateGPUBackend(force_software_renderer ? GPURenderer::Software : g_settings.gpu_renderer,
+                                     (g_settings.gpu_vram_size != GPUVRAMSize::Default), false, start_fullscreen,
+                                     error))
   {
     // Game info has to be manually cleared since the backend won't shutdown naturally.
     VideoThread::ClearGameInfo();
     return false;
   }
 
+  // Components reset themselves on initialization. Ordering matters, as GPU reset sets timer gates and DMA requests.
+  TimingEvents::Initialize();
+  Bus::Initialize();
+  CPU::CodeCache::Initialize();
+  CPU::Initialize();
+  InterruptController::Reset();
+  DMA::Initialize();
+  Timers::Initialize();
+
+  // CDROM before GPU, that way we don't modeswitch.
+  if (!CDROM::Initialize(std::move(disc), disc_region, s_state.running_game_serial, s_state.running_game_title,
+                         GetCurrentGameSaveTitle(), error))
+  {
+    return false;
+  }
+
+  if (!PIO::Initialize(error))
+    return false;
+
+  GPU::Initialize();
+
   if (g_settings.gpu_pgxp_enable)
     CPU::PGXP::Initialize();
 
-  DMA::Initialize();
   Pad::Initialize();
-  Timers::Initialize();
   SPU::Initialize();
   MDEC::Initialize();
   SIO::Initialize();
@@ -2089,6 +2143,7 @@ void System::DestroySystem()
   });
 
   InputManager::ClearEffects();
+  InputManager::ClearPausingController();
   InputManager::UpdateHostMouseMode();
 
   if (g_settings.inhibit_screensaver)
@@ -2231,8 +2286,6 @@ void System::FrameDone()
 
   DiscordPresence::Poll();
 
-  GDBServer::PollUntil(0);
-
   // Save states for rewind and runahead.
   if (s_state.rewind_save_counter >= 0)
   {
@@ -2280,6 +2333,28 @@ void System::FrameDone()
     s_state.memory_card_fast_forward_frames--;
     if (s_state.memory_card_fast_forward_frames == 0)
       UpdateSpeedLimiterState();
+  }
+
+  // fast forward while loading: no flips for a while, but the CD is still delivering data
+  s_state.frames_since_flip += (s_state.frames_since_flip != 0xFF);
+  s_state.frames_since_cd_data_read += (s_state.frames_since_cd_data_read != 0xFF);
+  if (!s_state.loading_fast_forward)
+  {
+    if (g_settings.fast_forward_loading && s_state.frames_since_flip >= LOADING_FAST_FORWARD_ENTER_FRAMES &&
+        s_state.frames_since_cd_data_read < s_state.frames_since_flip &&
+        s_state.frames_since_cd_data_read < LOADING_FAST_FORWARD_IDLE_FRAMES) [[unlikely]]
+    {
+      DEV_LOG("Loading fast forward started at frame {} after {} frames without flip.", s_state.frame_number,
+              s_state.frames_since_flip);
+      s_state.loading_fast_forward = true;
+      UpdateSpeedLimiterState();
+    }
+  }
+  else if (!g_settings.fast_forward_loading || s_state.frames_since_cd_data_read >= LOADING_FAST_FORWARD_IDLE_FRAMES)
+  {
+    DEV_LOG("Loading fast forward ended by CD idle at frame {}.", s_state.frame_number);
+    s_state.loading_fast_forward = false;
+    UpdateSpeedLimiterState();
   }
 
   // Frame step after runahead, otherwise the pause takes precedence and the replay never happens.
@@ -2453,20 +2528,24 @@ void System::Throttle(Timer::Value current_time, Timer::Value sleep_until)
     return;
   }
 
-  // If we are running the GDB server and have clients, then use it to sleep instead.
+  // If we are running the GDB server and have clients, process events while we wait instead of only sleeping.
   // That way in a query->response->query->response chain, we don't process only one message per frame.
+  // Host event loops generally have millisecond precision, so stop waiting slightly early and sleep the remainder.
   if (GDBServer::HasAnyClients())
   {
-    GDBServer::PollUntil(sleep_until);
+    const Timer::Value event_wait_until = sleep_until - Timer::ConvertMillisecondsToValue(1.0);
+    while (System::IsRunning() && Timer::GetCurrentValue() < event_wait_until)
+      Host::PumpMessagesOnCoreThread(event_wait_until);
+
+    if (!System::IsRunning())
+      return;
   }
-  else
-  {
-    // Only need an exact sleep for pre-frame sleep, since the frame is scheduled to finish just in time.
-    // Otherwise waking slightly late is harmless, the video thread handles the presentation timing.
-    // In the worst case, input would get polled up to 0.5ms later than originally expected which isn't
-    // going to hurt anything. If you have that little frame budget, disable optimal frame pacing.
-    Timer::SleepUntil(sleep_until, s_state.pre_frame_sleep);
-  }
+
+  // Only need an exact sleep for pre-frame sleep, since the frame is scheduled to finish just in time.
+  // Otherwise waking slightly late is harmless, the video thread handles the presentation timing.
+  // In the worst case, input would get polled up to 0.5ms later than originally expected which isn't
+  // going to hurt anything. If you have that little frame budget, disable optimal frame pacing.
+  Timer::SleepUntil(sleep_until, s_state.pre_frame_sleep);
 
 #if 0
   const Timer::Value time_after_sleep = Timer::GetCurrentValue();
@@ -2604,6 +2683,13 @@ void System::IncrementInternalFrameNumber()
   }
 
   s_state.internal_frame_number++;
+  s_state.frames_since_flip = 0;
+  if (s_state.loading_fast_forward) [[unlikely]]
+  {
+    DEV_LOG("Loading fast forward ended by flip at frame {}.", s_state.frame_number);
+    s_state.loading_fast_forward = false;
+    UpdateSpeedLimiterState();
+  }
 }
 
 bool System::DoState(StateWrapper& sw, bool update_display)
@@ -2801,10 +2887,7 @@ bool System::AllocateMemoryStates(size_t state_count, bool recycle_old_textures)
 
   // Allocate CPU buffers.
   // TODO: Maybe look at host memory limits here...
-  // Loaded states can change the RAM size, so use the active size instead of the setting.
-  const size_t size =
-    GetMaxMemorySaveStateSize(Settings::GetCPURAMSizeForBytes(g_bus.ram_size).value_or(Settings::DEFAULT_CPU_RAM_SIZE),
-                              CPU::PGXP::ShouldSavePGXPState(), g_settings.gpu_texture_cache);
+  const size_t size = GetMaxSaveStateSize(true);
   for (MemorySaveState& mss : s_state.memory_save_states)
   {
     mss.state_size = 0;
@@ -3001,40 +3084,25 @@ bool System::LoadBIOS(bool* using_auto_select, Error* error)
     WARNING_LOG("Using an unknown BIOS: {}", BIOS::ImageInfo::GetHashString(s_state.bios_hash));
   }
 
+  // Running the BIOS without any media, report its version as the title. Serial stays empty, so it's not a "game".
+  if (s_state.running_game_path.empty())
+    s_state.running_game_title = GetBIOSTitle();
+
   std::memcpy(g_bus.bios, bios_image->data.data(), Bus::BIOS_SIZE);
   return true;
 }
 
-void System::InternalReset()
+std::string System::GetBIOSTitle()
 {
-  if (IsShutdown())
-    return;
-
-  // reset and clear taints
-  SetTaintsFromSettings();
-
-  TimingEvents::Reset();
-  ResetGameStarted();
-  CPU::Reset();
-  CPU::CodeCache::Reset();
-  if (g_settings.gpu_pgxp_enable)
-    CPU::PGXP::Reset();
-
-  Bus::Reset();
-  PIO::Reset();
-  DMA::Reset();
-  InterruptController::Reset();
-  Timers::Reset();
-  GPU::Reset(true);
-  CDROM::Reset();
-  Pad::Reset();
-  SPU::Reset();
-  MDEC::Reset();
-  SIO::Reset();
-  PCDrv::Reset();
-  Achievements::OnSystemReset();
-  s_state.frame_number = 1;
-  s_state.internal_frame_number = 0;
+  const BIOS::ImageInfo* const info = s_state.bios_image_info;
+  if (!info)
+    return TRANSLATE_STR("System", "Unknown BIOS");
+  else if (!info->version)
+    return info->description;
+  else if (info->region_code == 0)
+    return fmt::format("BIOS v{}", info->version);
+  else
+    return fmt::format("BIOS v{} {}", info->version, info->region_code);
 }
 
 bool System::SetBootMode(BootMode new_boot_mode, DiscRegion disc_region, bool* missing_bios, Error* error)
@@ -3094,16 +3162,39 @@ bool System::SetBootMode(BootMode new_boot_mode, DiscRegion disc_region, bool* m
   return true;
 }
 
-size_t System::GetMaxSaveStateSize(CPURAMSize ram_size, bool enable_texture_cache)
+size_t System::GetMaxSaveStateSize(bool memory_state)
 {
-  // Allow roughly 3MB of emulator overhead plus serialized RAM.
-  return ((3 * 1024 * 1024) + Settings::GetCPURAMSizeBytes(ram_size) +
-          (enable_texture_cache ? GPUTextureCache::MAX_SAVE_STATE_DATA_SIZE : 0));
-}
+  // Loaded states can change the RAM/VRAM size and insert memory cards, so use the active hardware while running.
+  const bool valid = IsValid();
+  const u32 ram_size = valid ? g_bus.ram_size : Settings::GetCPURAMSizeBytes(g_settings.cpu_ram_size);
+  u32 num_memory_cards = 0;
+  for (u32 i = 0; i < NUM_CONTROLLER_AND_CARD_PORTS; i++)
+  {
+    num_memory_cards += BoolToUInt32(valid ? (Pad::GetMemoryCard(i) != nullptr) :
+                                             (g_settings.memory_card_types[i] != MemoryCardType::None));
+  }
 
-size_t System::GetMaxMemorySaveStateSize(CPURAMSize ram_size, bool pgxp, bool enable_texture_cache)
-{
-  return GetMaxSaveStateSize(ram_size, enable_texture_cache) + (pgxp ? CPU::PGXP::GetStateSize(ram_size) : 0);
+  // 128KB covers registers (~18KB), FIFOs, CD sector buffers and XA audio. Achievement progress depends on the set.
+  // A CPU->VRAM transfer or polyline can be in progress at any time, each is limited to 1MB.
+  size_t size = (128 * 1024) + (g_settings.achievements_enabled ? (512 * 1024) : 0) + ram_size + SPU::RAM_SIZE +
+                (num_memory_cards * MemoryCard::STATE_SIZE) + VRAM_1MB_SIZE;
+
+  if (memory_state)
+  {
+    // VRAM and texture cache are stored by the GPU backend, and PIO is not saved.
+    if (CPU::PGXP::ShouldSavePGXPState())
+      size +=
+        CPU::PGXP::GetStateSize(Settings::GetCPURAMSizeForBytes(ram_size).value_or(Settings::DEFAULT_CPU_RAM_SIZE));
+  }
+  else
+  {
+    // Texture cache state is owned by the video thread, so reserve a fixed amount. It won't be saved if it's larger.
+    const bool vram_2mb = valid ? GPU::Is2MBVRAMEnabled() : (g_settings.gpu_vram_size != GPUVRAMSize::Default);
+    size += (vram_2mb ? VRAM_2MB_SIZE : VRAM_1MB_SIZE) + PIO::GetMaxStateSize() +
+            (g_settings.gpu_texture_cache ? GPUTextureCache::MAX_SAVE_STATE_DATA_SIZE : 0);
+  }
+
+  return size;
 }
 
 std::string System::GetBootPathFromSaveState(const char* path)
@@ -3231,6 +3322,7 @@ bool System::LoadStateFromBuffer(const SaveStateBuffer& buffer, Error* error, bo
   Achievements::DisableHardcoreMode(true, true);
 
   const u32 old_ram_size = g_bus.ram_size;
+  const u32 old_vram_height = GPU::GetVRAMHeight();
   StateWrapper sw(buffer.state_data.cspan(0, buffer.state_size), StateWrapper::Mode::Read, buffer.version);
   if (!DoState(sw, update_display))
   {
@@ -3238,8 +3330,8 @@ bool System::LoadStateFromBuffer(const SaveStateBuffer& buffer, Error* error, bo
     return false;
   }
 
-  // Undo and memory state buffers are sized for the previous RAM size, so they can't be reused.
-  if (g_bus.ram_size != old_ram_size) [[unlikely]]
+  // Undo and memory state buffers are sized for the previous RAM/VRAM size, so they can't be reused.
+  if (g_bus.ram_size != old_ram_size || GPU::GetVRAMHeight() != old_vram_height) [[unlikely]]
   {
     // Undo state is released by the caller when it's the one being loaded.
     if (s_state.undo_load_state.has_value() && &buffer != &s_state.undo_load_state.value())
@@ -3248,6 +3340,12 @@ bool System::LoadStateFromBuffer(const SaveStateBuffer& buffer, Error* error, bo
       Host::OnSystemUndoStateAvailabilityChanged(false, 0);
     }
 
+    ClearMemorySaveStates(true, false);
+  }
+  else if (!s_state.memory_save_states.empty() &&
+           s_state.memory_save_states.front().state_data.size() < GetMaxSaveStateSize(true)) [[unlikely]]
+  {
+    // States can insert memory cards.
     ClearMemorySaveStates(true, false);
   }
 
@@ -3670,13 +3768,9 @@ bool System::SaveStateToBuffer(SaveStateBuffer* buffer, Error* error, u32 screen
   }
 
   // write data
-  if (buffer->state_data.empty())
-  {
-    // Loaded states can change the RAM size, so use the active size instead of the setting.
-    buffer->state_data.resize(
-      GetMaxSaveStateSize(Settings::GetCPURAMSizeForBytes(g_bus.ram_size).value_or(Settings::DEFAULT_CPU_RAM_SIZE),
-                          g_settings.gpu_texture_cache));
-  }
+  // Buffers can be reused (undo state), and the maximum size can change with memory cards/PIO.
+  if (const size_t max_size = GetMaxSaveStateSize(false); buffer->state_data.size() < max_size)
+    buffer->state_data.resize(max_size);
 
   return SaveStateDataToBuffer(buffer->state_data, &buffer->state_size, error);
 }
@@ -3931,11 +4025,12 @@ void System::UpdateSpeedLimiterState()
   DebugAssert(IsValid());
 
   const float prev_speed = s_state.target_speed;
-  s_state.target_speed = (IsFastForwardingBoot() || s_state.memory_card_fast_forward_frames > 0) ?
-                           0.0f :
-                           (s_state.turbo_enabled ? g_settings.turbo_speed :
-                                                    (s_state.fast_forward_enabled ? g_settings.fast_forward_speed :
-                                                                                    g_settings.emulation_speed));
+  s_state.target_speed =
+    (IsFastForwardingBoot() || s_state.memory_card_fast_forward_frames > 0 || s_state.loading_fast_forward) ?
+      0.0f :
+      (s_state.turbo_enabled ?
+         g_settings.turbo_speed :
+         (s_state.fast_forward_enabled ? g_settings.fast_forward_speed : g_settings.emulation_speed));
   s_state.throttler_enabled = (s_state.target_speed != 0.0f);
   s_state.optimal_frame_pacing = (s_state.throttler_enabled && g_settings.display_optimal_frame_pacing);
   // Duplicate frames still have to be presented with subframes, otherwise the last subframe is held.
@@ -3985,14 +4080,22 @@ void System::UpdateSpeedLimiterState()
   VERBOSE_LOG("Target speed: {}%", s_state.target_speed * 100.0f);
   VERBOSE_LOG("Preset timing: {}", s_state.optimal_frame_pacing ? "consistent" : "immediate");
 
-  // Update audio output.
+  // Update audio output. Loading fast forward doesn't write audio, so what's buffered plays out and fades.
+  // Runahead restores the mute after replaying.
   CoreAudioStream& stream = SPU::GetOutputStream();
+  const bool was_muted = SPU::IsAudioOutputMuted();
+  if (s_state.runahead_replay_frames == 0)
+    SPU::SetAudioOutputMuted(s_state.loading_fast_forward);
   stream.SetOutputVolume(GetAudioOutputVolume());
   stream.SetNominalRate(GetAudioNominalRate());
 
-  // Only empty stretch buffers when we're decreasing speed.
-  if (s_state.target_speed != prev_speed && (prev_speed > s_state.target_speed || prev_speed == 0.0f))
+  // Only empty stretch buffers when we're decreasing speed. Nothing is written while muted, so there's no input from
+  // the other speed to drop, and resetting would lose the tempo state.
+  if (s_state.target_speed != prev_speed && (prev_speed > s_state.target_speed || prev_speed == 0.0f) && !was_muted &&
+      !s_state.loading_fast_forward)
+  {
     stream.EmptyStretchBuffers();
+  }
 
   UpdateThrottlePeriod();
   ResetThrottler();
@@ -4278,6 +4381,11 @@ void System::OnMemoryCardAccessed()
 
   if (std::exchange(s_state.memory_card_fast_forward_frames, MEMORY_CARD_FAST_FORWARD_FRAMES) == 0)
     UpdateSpeedLimiterState();
+}
+
+void System::OnCDROMDataSectorRead()
+{
+  s_state.frames_since_cd_data_read = 0;
 }
 
 void System::SwapMemoryCards()
@@ -4576,21 +4684,36 @@ void System::UpdateRunningGame(const std::string& path, CDImage* image, bool boo
             s_state.running_game_serial = std::move(id);
 
           // Don't display device names for unknown physical discs.
-          if (s_state.running_game_title.empty() && !CDImage::IsDeviceName(path.c_str()))
-            s_state.running_game_title = Path::GetFileTitle(path);
+          if (s_state.running_game_title.empty())
+          {
+            if (CDImage::IsDeviceName(path.c_str()))
+              s_state.running_game_title = TRANSLATE_STR("System", "Physical Disc");
+            else
+              s_state.running_game_title = Path::GetFileTitle(path);
+          }
         }
       }
       else
       {
-        // Audio CDs can get the path from the filename, assuming it's not a physical disc.
-        if (!CDImage::IsDeviceName(path.c_str()))
-          s_state.running_game_title = Path::GetFileTitle(path);
+        // Audio CDs can get the title from the filename, unless it's a physical disc.
+        if (s_state.running_game_title.empty())
+        {
+          if (CDImage::IsDeviceName(path.c_str()))
+            s_state.running_game_title = TRANSLATE_STR("System", "Physical Disc");
+          else
+            s_state.running_game_title = Path::GetFileTitle(path);
+        }
       }
     }
   }
+  else if (!booting)
+  {
+    // Media removed, back to the BIOS. When booting, the title is set in LoadBIOS() instead.
+    s_state.running_game_title = GetBIOSTitle();
+  }
 
   // Re-arm the entry point check if the disc was changed before the game started, e.g. in the shell.
-  // When booting, this happens in InternalReset() instead, once the boot mode is known.
+  // When booting, this happens in BootSystem() instead, once the boot mode is known.
   if (!booting && !s_state.game_started)
     ResetGameStarted();
 
@@ -4617,7 +4740,9 @@ void System::UpdateRunningGame(const std::string& path, CDImage* image, bool boo
   if (s_state.running_game_serial != prev_serial)
     UpdateSessionTime(prev_serial);
 
-  DiscordPresence::Update(booting);
+  // BIOS title isn't known yet when booting, updated in BootSystem() instead.
+  if (!booting)
+    DiscordPresence::Update(false);
 
   if (!s_state.running_game_title.empty())
   {
@@ -4913,6 +5038,7 @@ void System::CheckForSettingsChanges(const Settings& old_settings)
         (g_settings.cpu_recompiler_memory_exceptions != old_settings.cpu_recompiler_memory_exceptions ||
          g_settings.cpu_recompiler_block_linking != old_settings.cpu_recompiler_block_linking ||
          g_settings.cpu_recompiler_icache != old_settings.cpu_recompiler_icache ||
+         g_settings.cpu_idle_fast_forward != old_settings.cpu_idle_fast_forward ||
          g_settings.bios_tty_logging != old_settings.bios_tty_logging))
     {
       Host::AddIconOSDMessage(OSDMessageType::Info, "CPUFlushAllBlocks", ICON_FA_MICROCHIP,
@@ -4936,8 +5062,11 @@ void System::CheckForSettingsChanges(const Settings& old_settings)
       InterruptExecution();
     }
 
-    if (g_settings.cpu_force_full_ram_mapping != old_settings.cpu_force_full_ram_mapping)
+    if (Settings::IsCPURAMSizeForced(g_settings.cpu_ram_size) !=
+        Settings::IsCPURAMSizeForced(old_settings.cpu_ram_size))
+    {
       Bus::UpdateMappedRAMSize();
+    }
 
     SPU::GetOutputStream().SetOutputVolume(GetAudioOutputVolume());
 
@@ -5055,7 +5184,8 @@ void System::CheckForSettingsChanges(const Settings& old_settings)
       }
     }
     else if (const bool device_settings_changed = g_settings.AreGPUDeviceSettingsChanged(old_settings);
-             device_settings_changed || g_settings.display_show_messages != old_settings.display_show_messages ||
+             device_settings_changed || g_settings.gpu_use_thread != old_settings.gpu_use_thread ||
+             g_settings.display_show_messages != old_settings.display_show_messages ||
              g_settings.display_animate_messages != old_settings.display_animate_messages ||
              g_settings.display_blur_message_backgrounds != old_settings.display_blur_message_backgrounds ||
              g_settings.display_show_fps != old_settings.display_show_fps ||
@@ -5084,12 +5214,13 @@ void System::CheckForSettingsChanges(const Settings& old_settings)
              g_settings.achievements_notification_scale != old_settings.achievements_notification_scale ||
              g_settings.achievements_indicator_scale != old_settings.achievements_indicator_scale)
     {
+      const bool thread_changed = (g_settings.gpu_use_thread != old_settings.gpu_use_thread);
       if (device_settings_changed)
       {
         // device changes are super icky, we need to purge and recreate any rewind states
         FreeMemoryStateStorage(false, true, false);
         StopMediaCapture();
-        VideoThread::UpdateSettings(true, true, g_settings.gpu_use_thread != old_settings.gpu_use_thread);
+        VideoThread::UpdateSettings(true, true, thread_changed);
 
         if (g_settings.rewind_enable == old_settings.rewind_enable &&
             g_settings.rewind_save_frequency == old_settings.rewind_save_frequency &&
@@ -5110,7 +5241,7 @@ void System::CheckForSettingsChanges(const Settings& old_settings)
       else
       {
         // don't need to represent here, because the OSD isn't visible while paused anyway
-        VideoThread::UpdateSettings(true, false, false);
+        VideoThread::UpdateSettings(true, false, thread_changed);
       }
     }
 
@@ -5208,6 +5339,13 @@ void System::CheckForSettingsChanges(const Settings& old_settings)
       if (g_settings.enable_gdb_server)
         GDBServer::Initialize(g_settings.gdb_server_port);
     }
+
+    // Memory cards and achievements change the maximum memory state size.
+    if (!s_state.memory_save_states.empty() &&
+        s_state.memory_save_states.front().state_data.size() < GetMaxSaveStateSize(true))
+    {
+      ClearMemorySaveStates(true, true);
+    }
   }
   else
   {
@@ -5215,8 +5353,10 @@ void System::CheckForSettingsChanges(const Settings& old_settings)
     if (VideoThread::IsFullscreenUIRequested() || thread_changed)
     {
       // handle device setting updates as well
-      if (g_settings.gpu_renderer != old_settings.gpu_renderer || g_settings.AreGPUDeviceSettingsChanged(old_settings))
-        VideoThread::UpdateSettings(false, true, thread_changed);
+      const bool device_changed =
+        (g_settings.gpu_renderer != old_settings.gpu_renderer || g_settings.AreGPUDeviceSettingsChanged(old_settings));
+      if (device_changed || thread_changed)
+        VideoThread::UpdateSettings(false, device_changed, thread_changed);
 
       if (g_settings.display_vsync != old_settings.display_vsync ||
           g_settings.display_disable_mailbox_presentation != old_settings.display_disable_mailbox_presentation)
@@ -5285,6 +5425,8 @@ void System::SetTaintsFromSettings()
     SetTaint(Taint::ForceFrameTimings);
   if (g_settings.cpu_ram_size != Settings::DEFAULT_CPU_RAM_SIZE)
     SetTaint(Taint::ExpandedRAM);
+  if (g_settings.gpu_vram_size != GPUVRAMSize::Default)
+    SetTaint(Taint::ExpandedVRAM);
   if (Cheats::GetActivePatchCount() > 0)
     SetTaint(Taint::Patches);
   if (Cheats::GetActiveCheatCount() > 0)
@@ -5344,6 +5486,8 @@ void System::WarnAboutUnsafeSettings()
       append(TRANSLATE_SV("System", "Overclock disabled."));
     if (g_settings.cpu_ram_size != Settings::DEFAULT_CPU_RAM_SIZE)
       append(TRANSLATE_SV("System", "RAM size set to default."));
+    if (g_settings.gpu_vram_size != GPUVRAMSize::Default)
+      append(TRANSLATE_SV("System", "2MB VRAM disabled."));
     if (g_settings.gpu_resolution_scale != 1)
       append(TRANSLATE_SV("System", "Resolution scale set to 1x."));
     if (g_settings.gpu_multisamples != 1)
@@ -5440,7 +5584,15 @@ void System::WarnAboutUnsafeSettings()
       }
     }
     if (g_settings.cpu_ram_size != Settings::DEFAULT_CPU_RAM_SIZE)
-      append(TRANSLATE_SV("System", "Expanded RAM is enabled, this may be incompatible with some games."));
+    {
+      append_format(TRANSLATE_FS("System", "RAM size is set to {}, this may be incompatible with some games."),
+                    Settings::GetCPURAMSizeDisplayName(g_settings.cpu_ram_size));
+    }
+    if (g_settings.gpu_vram_size != Settings::DEFAULT_GPU_VRAM_SIZE)
+    {
+      append_format(TRANSLATE_FS("System", "VRAM size is set to {}, this may be incompatible with some games."),
+                    Settings::GetGPUVRAMSizeDisplayName(g_settings.gpu_vram_size));
+    }
     if (g_settings.cpu_execution_mode == CPUExecutionMode::CachedInterpreter)
       append(TRANSLATE_SV("System", "Cached interpreter is being used, this may be incompatible with some games."));
 
@@ -5503,16 +5655,30 @@ void System::LogUnsafeSettingsToConsole(const SmallStringBase& messages)
   WARNING_LOG(console_messages);
 }
 
-void System::CalculateRewindMemoryUsage(u32 num_saves, u32 resolution_scale, u32 multisamples,
-                                        bool use_software_renderer, CPURAMSize ram_size, bool gpu_texture_cache,
+void System::CalculateRewindMemoryUsage(u32 num_saves, size_t state_size, GPURenderer renderer, u32 resolution_scale,
+                                        u32 multisamples, bool use_software_renderer_for_memory_states,
+                                        bool use_software_renderer_for_readbacks, bool vram_2mb, bool gpu_texture_cache,
                                         u64* ram_usage, u64* vram_usage)
 {
   const u32 real_resolution_scale = std::max<u32>(resolution_scale, 1u);
-  *ram_usage = GetMaxMemorySaveStateSize(ram_size, false, gpu_texture_cache) * static_cast<u64>(num_saves);
-  *vram_usage = use_software_renderer ? 0 :
-                                        ((static_cast<u64>(VRAM_WIDTH * real_resolution_scale) *
-                                          static_cast<u64>(VRAM_HEIGHT * real_resolution_scale) * 4) *
-                                         static_cast<u64>(multisamples) * static_cast<u64>(num_saves));
+  const u32 vram_height = vram_2mb ? VRAM_2MB_HEIGHT : VRAM_1MB_HEIGHT;
+
+  // GPU backends keep a CPU-side copy of VRAM when drawing with the software renderer, and for the texture cache.
+  // The texture cache is not available with the software renderer, and GPU textures are only used by hardware.
+  const bool software_renderer = (renderer == GPURenderer::Software);
+  const bool draw_with_software_renderer =
+    software_renderer || use_software_renderer_for_memory_states || use_software_renderer_for_readbacks;
+  const bool texture_cache = !software_renderer && gpu_texture_cache;
+  const size_t gpu_state_size =
+    ((draw_with_software_renderer || texture_cache) ? (vram_2mb ? VRAM_2MB_SIZE : VRAM_1MB_SIZE) : 0) +
+    (draw_with_software_renderer ? sizeof(g_gpu_clut) : 0) +
+    (texture_cache ? GPUTextureCache::MAX_SAVE_STATE_DATA_SIZE : 0);
+  *ram_usage = static_cast<u64>(state_size + gpu_state_size) * static_cast<u64>(num_saves);
+  *vram_usage = (software_renderer || use_software_renderer_for_memory_states) ?
+                  0 :
+                  ((static_cast<u64>(VRAM_WIDTH * real_resolution_scale) *
+                    static_cast<u64>(vram_height * real_resolution_scale) * 4) *
+                   static_cast<u64>(multisamples) * static_cast<u64>(num_saves));
 }
 
 void System::UpdateMemorySaveStateSettings()
@@ -5536,9 +5702,11 @@ void System::UpdateMemorySaveStateSettings()
     num_slots = g_settings.rewind_save_slots;
 
     u64 ram_usage, vram_usage;
-    CalculateRewindMemoryUsage(g_settings.rewind_save_slots, g_settings.gpu_resolution_scale,
-                               g_settings.gpu_multisamples, g_settings.gpu_use_software_renderer_for_memory_states,
-                               g_settings.cpu_ram_size, g_settings.gpu_texture_cache, &ram_usage, &vram_usage);
+    CalculateRewindMemoryUsage(g_settings.rewind_save_slots, GetMaxSaveStateSize(true), g_settings.gpu_renderer,
+                               g_settings.gpu_resolution_scale, g_settings.gpu_multisamples,
+                               g_settings.gpu_use_software_renderer_for_memory_states,
+                               g_settings.gpu_use_software_renderer_for_readbacks, GPU::Is2MBVRAMEnabled(),
+                               g_settings.gpu_texture_cache, &ram_usage, &vram_usage);
     INFO_LOG("Rewind is enabled, saving every {} frames, with {} slots and {}MB RAM and {}MB VRAM usage",
              std::max(s_state.rewind_save_frequency, 1), g_settings.rewind_save_slots, ram_usage / 1048576,
              vram_usage / 1048576);
@@ -5645,7 +5813,7 @@ void System::DoRewind()
   VideoThread::PresentCurrentFrame();
 
   Host::PumpMessagesOnCoreThread();
-  Core::IdleUpdate(s_state.next_frame_time);
+  Core::IdleUpdate();
 
   // get back into it straight away if we're no longer rewinding
   if (!IsRewinding())
@@ -5717,7 +5885,7 @@ bool System::DoRunahead()
 #endif
 
   // we're all caught up. this frame gets saved in DoMemoryStates().
-  SPU::SetAudioOutputMuted(false);
+  SPU::SetAudioOutputMuted(s_state.loading_fast_forward);
 
 #ifdef PROFILE_MEMORY_SAVE_STATES
   DEV_LOG("runahead ending at frame {}, took {:.2f} ms", s_state.frame_number, replay_timer.GetTimeMilliseconds());
@@ -6400,7 +6568,11 @@ std::string System::GetMemoryCardPathForSlot(u32 slot, MemoryCardType type)
 
     case MemoryCardType::PerGameTitle:
     {
-      if (s_state.running_game_title.empty())
+      // Title is the BIOS version when there's no media, or a placeholder for unknown physical discs, which shouldn't
+      // get their own card.
+      if (s_state.running_game_title.empty() ||
+          (!s_state.running_game_entry && !s_state.running_game_custom_title &&
+           (s_state.running_game_path.empty() || CDImage::IsDeviceName(s_state.running_game_path.c_str()))))
       {
         Host::AddIconOSDMessage(OSDMessageType::Info, std::move(message_key), ICON_PF_MEMORY_CARD,
                                 get_message_title(slot), get_shared_card_message());
@@ -6570,7 +6742,7 @@ void System::RequestDisplaySize(float scale /*= 0.0f*/)
   GSVector2 requested_size;
   if (g_settings.gpu_show_vram)
   {
-    requested_size = GSVector2::cxpr(static_cast<s32>(VRAM_WIDTH), static_cast<s32>(VRAM_HEIGHT));
+    requested_size = GSVector2(GSVector2i(VRAM_WIDTH, static_cast<s32>(GPU::GetVRAMHeight())));
   }
   else
   {
@@ -6678,6 +6850,15 @@ bool System::ChangeGPUDump(std::string new_path)
   s_state.gpu_dump_player = std::move(new_dump);
   s_state.region = s_state.gpu_dump_player->GetRegion();
   UpdateRunningGame(s_state.gpu_dump_player->GetPath(), nullptr, false);
+
+  // The new dump may need a different VRAM size, which is applied on reset.
+  if (s_state.gpu_dump_player->Is2MBVRAM() != GPU::Is2MBVRAMEnabled())
+  {
+    WARNING_LOG("Forcing 2MB VRAM to {} due to GPU dump",
+                s_state.gpu_dump_player->Is2MBVRAM() ? "enabled" : "disabled");
+    g_settings.gpu_vram_size = s_state.gpu_dump_player->Is2MBVRAM() ? GPUVRAMSize::Expanded2MB : GPUVRAMSize::Default;
+    GPU::Reset(true);
+  }
 
   // current player object has been changed out, toss call stack
   InterruptExecution();

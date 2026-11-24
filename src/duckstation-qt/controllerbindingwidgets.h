@@ -7,7 +7,8 @@
 #include "core/settings.h"
 
 #include <QtWidgets/QDialog>
-#include <QtWidgets/QSplitter>
+#include <QtWidgets/QListWidget>
+#include <QtWidgets/QStackedWidget>
 #include <QtWidgets/QWidget>
 #include <functional>
 #include <vector>
@@ -16,6 +17,7 @@
 #include "ui_controllermacroeditwidget.h"
 
 class InputBindingWidget;
+class SVGWidget;
 class ControllerSettingsWindow;
 class ControllerCustomSettingsWidget;
 class ControllerMacroWidget;
@@ -37,6 +39,9 @@ public:
   ALWAYS_INLINE u32 getPortNumber() const { return m_port_number; }
   ALWAYS_INLINE const QIcon& getIcon() { return m_icon; }
 
+protected:
+  bool eventFilter(QObject* watched, QEvent* event) override;
+
 private:
   void populateControllerTypes();
   void populateWidgets();
@@ -44,6 +49,7 @@ private:
   void bindBindingWidgets(QWidget* parent);
   void updateHeaderToolButtons();
   void updateBindingDeviceStatus();
+  void updateImageHighlight();
   void doDeviceAutomaticBinding(const QString& device);
 
   void onTypeChanged();
@@ -67,11 +73,14 @@ private:
   QWidget* m_bindings_widget = nullptr;
   ControllerCustomSettingsWidget* m_settings_widget = nullptr;
   ControllerMacroWidget* m_macros_widget = nullptr;
+  SVGWidget* m_image_widget = nullptr;
+  InputBindingWidget* m_hovered_binding = nullptr;
+  InputBindingWidget* m_focused_binding = nullptr;
 };
 
 //////////////////////////////////////////////////////////////////////////
 
-class ControllerMacroWidget : public QSplitter
+class ControllerMacroWidget : public QWidget
 {
   Q_OBJECT
 
@@ -81,8 +90,12 @@ public:
 
   void updateListItem(u32 index);
 
+protected:
+  void showEvent(QShowEvent* event) override;
+
 private:
   void createWidgets(ControllerBindingWidget* bwidget);
+  void updateListHeight();
 
   QListWidget* m_macroList;
   QStackedWidget* m_container;
@@ -99,17 +112,29 @@ public:
   ControllerMacroEditWidget(ControllerMacroWidget* parent, ControllerBindingWidget* bwidget, u32 index);
   ~ControllerMacroEditWidget();
 
-  QString getSummary() const;
+  /// Returns the number of binds, and the names of the binds for a tooltip.
+  QString getSummary(QString* tooltip) const;
+
+protected:
+  bool eventFilter(QObject* watched, QEvent* event) override;
+  void hideEvent(QHideEvent* event) override;
 
 private:
-  void modFrequency(s32 delta);
-  void updateFrequency();
-  void updateFrequencyText();
-
-  void onPressureChanged();
   void onDeadzoneChanged();
-  void onSetFrequencyClicked();
-  void updateBinds();
+  void onQuickSetupClicked();
+  void onRecordClicked();
+  void onAddActionClicked(bool wait);
+  void onRemoveClicked();
+  void onMoveClicked(s32 delta);
+  void onClearClicked();
+
+  void startRecording();
+  void stopRecording(bool save);
+  bool loadSequence();
+  void populateSequence(s32 selected_row);
+  void updateSequenceButtons();
+  void updateSequenceSummary();
+  void saveSequence();
 
   Ui::ControllerMacroEditWidget m_ui;
 
@@ -117,8 +142,12 @@ private:
   ControllerBindingWidget* m_bwidget;
   u32 m_index;
 
-  std::vector<const Controller::ControllerBindingInfo*> m_binds;
-  u32 m_frequency = 0;
+  std::vector<InputManager::MacroSequenceAction> m_actions;
+
+  /// Bind changes while recording, frames are counted from the start of the recording.
+  std::vector<InputManager::MacroSequenceAction> m_recorded_actions;
+
+  bool m_recording = false;
 };
 
 //////////////////////////////////////////////////////////////////////////

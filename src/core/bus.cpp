@@ -392,6 +392,7 @@ void Bus::Initialize()
 {
   SetRAMSize(g_settings.cpu_ram_size);
   MapFastmemViews();
+  Reset();
 }
 
 void Bus::SetRAMSize(CPURAMSize size)
@@ -837,7 +838,7 @@ static constexpr std::array<std::tuple<PhysicalMemoryAddress, PhysicalMemoryAddr
     {Bus::EXP1_BASE, Bus::EXP1_BASE + Bus::EXP1_SIZE, false},
     {CPU::SCRATCHPAD_ADDR, CPU::SCRATCHPAD_ADDR + CPU::SCRATCHPAD_SIZE, true},
     {Bus::BIOS_BASE, Bus::BIOS_BASE + Bus::BIOS_SIZE, false},
-    {0, VRAM_SIZE, true},
+    {0, VRAM_2MB_SIZE, true},
     {0, SPU::RAM_SIZE, true},
   }};
 
@@ -850,6 +851,8 @@ PhysicalMemoryAddress Bus::GetMemoryRegionEnd(MemoryRegion region)
 {
   if (region == MemoryRegion::RAM)
     return g_bus.ram_mask + 1;
+  else if (region == MemoryRegion::VRAM)
+    return VRAM_WIDTH * GPU::GetVRAMHeight() * sizeof(u16);
 
   return std::get<1>(s_code_region_ranges[static_cast<u32>(region)]);
 }
@@ -2228,7 +2231,7 @@ void Bus::UpdateMappedRAMSize()
 
   // Retail BIOSes configure an 8MB window, so 16MB is never mapped without patching the BIOS. The register is left
   // untouched, so that disabling the option restores whatever mapping the game configured.
-  if (g_settings.cpu_force_full_ram_mapping && g_bus.ram_size != RAM_DEFAULT_SIZE)
+  if (Settings::IsCPURAMSizeForced(g_settings.cpu_ram_size) && g_bus.ram_size != RAM_DEFAULT_SIZE)
     mapped_size = std::max(mapped_size, g_bus.ram_size);
 
   if (mapped_size == prev_mapped_size)

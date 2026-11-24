@@ -8,6 +8,8 @@
 #include "types.h"
 
 namespace GameList {
+enum class EntryType : u8;
+enum class IconSource : u8;
 struct Entry;
 }
 
@@ -78,6 +80,7 @@ void CopyTextToClipboard(std::string title, std::string_view text);
 inline constexpr const char* DEFAULT_BACKGROUND_NAME = "Waves";
 inline constexpr const char* NONE_BACKGROUND_NAME = "None";
 ImVec4 GetTransparentBackgroundColor(const ImVec4& no_background_color = UIStyle.BackgroundColor);
+ImVec4 GetPageBackgroundColor();
 ChoiceDialogOptions GetBackgroundOptions(const TinyString& current_value);
 void UpdateBackground();
 
@@ -97,6 +100,20 @@ bool ShouldOpenToGameList();
 FileSelectorFilters GetDiscImageFilters();
 FileSelectorFilters GetImageFilters();
 
+enum class GameListView : u8
+{
+  Grid,
+  Carousel,
+  List,
+
+  MaxCount,
+};
+inline constexpr GameListView DEFAULT_GAME_LIST_VIEW = GameListView::Grid;
+
+const char* GetGameListViewName(GameListView view);
+const char* GetGameListViewDisplayName(GameListView view);
+std::optional<GameListView> ParseGameListViewName(std::string_view name);
+
 void ClearGameListState();
 void SwitchToGameList();
 void ReloadGameListSettings();
@@ -104,7 +121,10 @@ void DrawGameListWindow();
 
 void DoStartPath(std::string path, std::string state = std::string(), std::optional<bool> fast_boot = std::nullopt);
 
-GPUTexture* GetCoverForCurrentGame(const std::string& game_path);
+void DrawGameListIcon(const GameList::Entry* entry, std::string_view title, ImDrawList* dl, const ImRect& rect,
+                      u32 color, std::optional<GameList::IconSource> icon_source_override = std::nullopt);
+void DrawGeneratedArtwork(ImDrawList* dl, const ImRect& rect, std::string_view title, GameList::EntryType type,
+                          bool icon_style, u32 color);
 void SetCoverCacheEntry(std::string path, std::string cover_path);
 void RemoveCoverCacheEntry(const std::string& path);
 
@@ -120,8 +140,6 @@ bool SwitchToGameSettingsForPath(const std::string& path, SettingsPage page = Se
 void StartInstallBIOS();
 void DrawSettingsWindow();
 SettingsPage GetCurrentSettingsPage();
-bool IsInputBindingDialogOpen();
-bool IsInputBindingDialogInteractable();
 
 //////////////////////////////////////////////////////////////////////////
 // Achievements

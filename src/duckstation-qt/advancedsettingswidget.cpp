@@ -3,6 +3,7 @@
 
 #include "advancedsettingswidget.h"
 #include "logwindow.h"
+#include "qtutils.h"
 #include "settingswindow.h"
 #include "settingwidgetbinder.h"
 
@@ -10,6 +11,7 @@
 
 #include "util/http_cache.h"
 #include "util/object_archive.h"
+#include "util/translation.h"
 
 #include "common/error.h"
 
@@ -64,14 +66,14 @@ AdvancedSettingsWidget::AdvancedSettingsWidget(SettingsWindow* dialog, QWidget* 
                                                "RichPresenceMonitor", false);
   SettingWidgetBinder::BindWidgetToBoolSetting(sif, m_ui.showFrameNumber, Settings::DISPLAY_SECTION_NAME,
                                                "ShowFrameNumber", false);
-
-  SettingWidgetBinder::BindWidgetToFolderSetting(
-    sif, m_ui.cacheDirectory, m_ui.cacheDirectoryBrowse, tr("Select Cache Directory"), m_ui.cacheDirectoryOpen,
-    m_ui.cacheDirectoryReset, EmuFolders::CONFIG_SECTION_NAME, "Cache", Path::Combine(EmuFolders::DataRoot, "cache"));
-  SettingWidgetBinder::BindWidgetToFolderSetting(sif, m_ui.coversDirectory, m_ui.coversDirectoryBrowse,
-                                                 tr("Select Covers Directory"), m_ui.coversDirectoryOpen,
-                                                 m_ui.coversDirectoryReset, EmuFolders::CONFIG_SECTION_NAME, "Covers",
-                                                 Path::Combine(EmuFolders::DataRoot, "covers"));
+  SettingWidgetBinder::BindWidgetToIntSetting(sif, m_ui.cdromReadaheadSectors, Settings::CDROM_SECTION_NAME,
+                                              "ReadaheadSectors", Settings::DEFAULT_CDROM_READAHEAD_SECTORS);
+  QtUtils::FixSpinBoxTextMargins(m_ui.cdromReadaheadSectors);
+  SettingWidgetBinder::BindWidgetToIntSetting(sif, m_ui.cdromHostReadSpeed, Settings::CDROM_SECTION_NAME,
+                                              "HostReadSpeed", 8);
+  QtUtils::FixSpinBoxTextMargins(m_ui.cdromHostReadSpeed);
+  SettingWidgetBinder::BindWidgetToBoolSetting(sif, m_ui.cdromIgnoreHostSubcode, Settings::CDROM_SECTION_NAME,
+                                               "IgnoreHostSubcode", false);
 
   connect(m_ui.refreshWebCache, &QAbstractButton::clicked, this, &AdvancedSettingsWidget::refreshWebCacheSize);
   connect(m_ui.clearWebCache, &QAbstractButton::clicked, this, &AdvancedSettingsWidget::onClearWebCacheClicked);
@@ -99,12 +101,18 @@ AdvancedSettingsWidget::AdvancedSettingsWidget(SettingsWindow* dialog, QWidget* 
     tr("Always displays the current RetroAchievements rich presence string in the indicator area."));
   dialog->registerWidgetHelp(m_ui.showFrameNumber, tr("Show Frame Number"), tr("Unchecked"),
                              tr("Shows the number of the current frame in the top-right corner of the display."));
-
-  dialog->registerWidgetHelp(m_ui.cacheDirectory, tr("Cache Directory"), tr("Default"),
-                             tr("Specifies the directory where compiled shaders and game list data will be stored."));
-  dialog->registerWidgetHelp(m_ui.coversDirectory, tr("Covers Directory"), tr("Default"),
-                             tr("Specifies the directory where game cover images that are used in the game grid and "
-                                "Big Picture UI will be stored."));
+  dialog->registerWidgetHelp(
+    m_ui.cdromReadaheadSectors, tr("Readahead Sectors"),
+    tr("%n sectors", nullptr, Settings::DEFAULT_CDROM_READAHEAD_SECTORS),
+    tr("Reduces hitches in emulation by reading/decompressing CD data asynchronously on a worker thread."));
+  dialog->registerWidgetHelp(
+    m_ui.cdromHostReadSpeed, tr("Physical Disc Drive Speed"), tr("8x"),
+    tr("Sets the speed of the host drive when using physical discs. Higher speeds can reduce stutter, but make the "
+       "drive louder. Set to \"Don't Change\" to leave the drive at its own speed. Not all drives support this."));
+  dialog->registerWidgetHelp(
+    m_ui.cdromIgnoreHostSubcode, tr("Ignore Physical Disc Drive Subcode"), tr("Unchecked"),
+    tr("Ignores the subchannel provided by the drive when using physical discs, instead always generating subchannel "
+       "data. Won't work with libcrypt games, but can improve read reliability on some drives."));
 
   // RAIntegration is not available on non-win32/x64.
 #ifdef RC_CLIENT_SUPPORTS_RAINTEGRATION
@@ -147,14 +155,13 @@ void AdvancedSettingsWidget::refreshWebCacheSize()
 {
   const ObjectArchive& cache = HTTPCache::GetCacheArchive();
 
-  static constexpr auto to_mb = [](s64 size) { return static_cast<u32>((size + 1048575) / 1048576); };
   const u64 cache_size = cache.GetTotalSize();
   const u64 object_size = cache.GetTotalObjectSize();
   const size_t num_objects = cache.GetSize();
 
-  m_ui.webCacheSize->setText(tr("Current Cache Size: %1 MB (%2 MB in %3 objects)")
-                               .arg(to_mb(cache_size))
-                               .arg(to_mb(object_size))
+  m_ui.webCacheSize->setText(tr("Current Cache Size: %1 (%2 in %3 objects)")
+                               .arg(QtUtils::StringViewToQString(Host::FormatByteSize(cache_size)))
+                               .arg(QtUtils::StringViewToQString(Host::FormatByteSize(object_size)))
                                .arg(num_objects));
 }
 

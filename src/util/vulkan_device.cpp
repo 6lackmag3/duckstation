@@ -848,7 +848,7 @@ bool VulkanDevice::CreateCommandBuffers()
     }
 
     u32 num_pools = 0;
-    VkDescriptorPoolSize pool_sizes[3];
+    VkDescriptorPoolSize pool_sizes[4];
     if (!m_optional_extensions.vk_khr_push_descriptor)
     {
       pool_sizes[num_pools++] = {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
@@ -856,6 +856,7 @@ bool VulkanDevice::CreateCommandBuffers()
     }
     pool_sizes[num_pools++] = {VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, MAX_INPUT_ATTACHMENT_DESCRIPTORS_PER_FRAME};
     pool_sizes[num_pools++] = {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, MAX_INPUT_ATTACHMENT_DESCRIPTORS_PER_FRAME};
+    pool_sizes[num_pools++] = {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, MAX_DESCRIPTOR_SETS_PER_FRAME};
 
     VkDescriptorPoolCreateInfo pool_create_info = {
       VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO, nullptr, 0, MAX_DESCRIPTOR_SETS_PER_FRAME, num_pools, pool_sizes};
@@ -2754,14 +2755,19 @@ bool VulkanDevice::CreatePipelineLayouts()
     Vulkan::SetObjectName(m_device, pl, "GPU-HW Batch Pipeline Layout");
   }
 
+  dslb.AddBinding(0, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_COMPUTE_BIT);
+  if ((m_compute_buffer_ds_layout = dslb.Create(m_device)) == VK_NULL_HANDLE)
+    return false;
+
+  for (const auto layout : {GPUPipeline::Layout::ComputeImageOutput, GPUPipeline::Layout::ComputeBufferOutput})
   {
-    VkPipelineLayout& pl = m_pipeline_layouts[static_cast<u8>(GPUPipeline::Layout::ComputeMultiTextureAndUBO)];
+    VkPipelineLayout& pl = m_pipeline_layouts[static_cast<u8>(layout)];
     plb.AddDescriptorSet(m_ubo_ds_layout);
     plb.AddDescriptorSet(m_multi_texture_ds_layout);
-    plb.AddDescriptorSet(m_image_ds_layout);
+    plb.AddDescriptorSet(layout == GPUPipeline::Layout::ComputeBufferOutput ? m_compute_buffer_ds_layout :
+                                                                              m_image_ds_layout);
     if ((pl = plb.Create(m_device)) == VK_NULL_HANDLE)
       return false;
-    Vulkan::SetObjectName(m_device, pl, "Compute Multi Texture + UBO Pipeline Layout");
   }
 
   return true;
@@ -2785,6 +2791,7 @@ void VulkanDevice::DestroyPipelineLayouts()
       l = VK_NULL_HANDLE;
     }
   };
+  destroy_dsl(m_compute_buffer_ds_layout);
   destroy_dsl(m_image_ds_layout);
   destroy_dsl(m_feedback_loop_ds_layout);
   destroy_dsl(m_multi_texture_ds_layout);
@@ -3227,10 +3234,6 @@ void VulkanDevice::BeginRenderPass()
   }
 
   s_stats.num_render_passes++;
-
-  // If this is a new command buffer, bind the pipeline and such.
-  if (m_dirty_flags & DIRTY_FLAG_INITIAL)
-    SetInitialPipelineState();
 }
 
 void VulkanDevice::BeginSwapChainRenderPass(VulkanSwapChain* swap_chain, u32 clear_color)
@@ -3328,27 +3331,14 @@ void VulkanDevice::EndRenderPass()
 
 void VulkanDevice::SetPipeline(GPUPipeline* pipeline)
 {
-  // First draw? Bind everything.
-  if (m_dirty_flags & DIRTY_FLAG_INITIAL)
-  {
-    m_current_pipeline = static_cast<VulkanPipeline*>(pipeline);
-    if (!m_current_pipeline)
-      return;
-
-    SetInitialPipelineState();
+  if (m_current_pipeline == pipeline)
     return;
-  }
-  else if (m_current_pipeline == pipeline)
-  {
-    return;
-  }
 
   m_current_pipeline = static_cast<VulkanPipeline*>(pipeline);
+  if (!m_current_pipeline)
+    return;
 
-  vkCmdBindPipeline(m_current_command_buffer,
-                    IsComputeLayout(m_current_pipeline->GetLayout()) ? VK_PIPELINE_BIND_POINT_COMPUTE :
-                                                                       VK_PIPELINE_BIND_POINT_GRAPHICS,
-                    m_current_pipeline->GetPipeline());
+  m_dirty_flags |= DIRTY_FLAG_PIPELINE;
 
   if (m_current_pipeline_layout != m_current_pipeline->GetLayout())
   {
@@ -3386,35 +3376,6 @@ s32 VulkanDevice::IsRenderTargetBoundIndex(const GPUTexture* tex) const
   return -1;
 }
 
-void VulkanDevice::SetInitialPipelineState()
-{
-  DebugAssert(m_current_pipeline);
-  m_dirty_flags &= ~DIRTY_FLAG_INITIAL;
-
-  m_current_pipeline_layout = m_current_pipeline->GetLayout();
-  const bool is_compute = IsComputeLayout(m_current_pipeline_layout);
-  vkCmdBindPipeline(m_current_command_buffer,
-                    is_compute ? VK_PIPELINE_BIND_POINT_COMPUTE : VK_PIPELINE_BIND_POINT_GRAPHICS,
-                    m_current_pipeline->GetPipeline());
-
-  const VkDeviceSize offset = 0;
-  vkCmdBindVertexBuffers(m_current_command_buffer, 0, 1, m_vertex_buffer.GetBufferPtr(), &offset);
-  vkCmdBindIndexBuffer(m_current_command_buffer, m_index_buffer.GetBuffer(), 0, VK_INDEX_TYPE_UINT16);
-
-  const VkViewport vp = {static_cast<float>(m_current_viewport.left),
-                         static_cast<float>(m_current_viewport.top),
-                         static_cast<float>(m_current_viewport.width()),
-                         static_cast<float>(m_current_viewport.height()),
-                         0.0f,
-                         1.0f};
-  vkCmdSetViewport(m_current_command_buffer, 0, 1, &vp);
-
-  const GSVector4i clamped_rc = m_current_scissor.max_s32(GSVector4i::zero());
-  const VkRect2D vrc = {{clamped_rc.x, clamped_rc.y},
-                        {static_cast<u32>(clamped_rc.width()), static_cast<u32>(clamped_rc.height())}};
-  vkCmdSetScissor(m_current_command_buffer, 0, 1, &vrc);
-}
-
 void VulkanDevice::SetTextureSampler(u32 slot, GPUTexture* texture, GPUSampler* sampler)
 {
   VulkanTexture* T = static_cast<VulkanTexture*>(texture);
@@ -3437,6 +3398,16 @@ void VulkanDevice::SetTextureSampler(u32 slot, GPUTexture* texture, GPUSampler* 
       T->TransitionToLayout(m_current_command_buffer, VulkanTexture::Layout::ShaderReadOnly);
     }
   }
+}
+
+void VulkanDevice::SetComputeOutputBuffer(GPUDownloadTexture* buffer)
+{
+  DebugAssert(!buffer || buffer->IsShaderWritable());
+  if (m_compute_output_buffer == buffer)
+    return;
+
+  m_compute_output_buffer = static_cast<VulkanDownloadTexture*>(buffer);
+  m_dirty_flags |= DIRTY_FLAG_COMPUTE_OUTPUT_BUFFER;
 }
 
 void VulkanDevice::SetTextureBuffer(GPUTextureBuffer* buffer)
@@ -3503,17 +3474,7 @@ void VulkanDevice::SetViewport(const GSVector4i rc)
     return;
 
   m_current_viewport = rc;
-
-  if (m_dirty_flags & DIRTY_FLAG_INITIAL)
-    return;
-
-  const VkViewport vp = {static_cast<float>(rc.x),
-                         static_cast<float>(rc.y),
-                         static_cast<float>(rc.width()),
-                         static_cast<float>(rc.height()),
-                         0.0f,
-                         1.0f};
-  vkCmdSetViewport(m_current_command_buffer, 0, 1, &vp);
+  m_dirty_flags |= DIRTY_FLAG_VIEWPORT;
 }
 
 void VulkanDevice::SetScissor(const GSVector4i rc)
@@ -3522,14 +3483,7 @@ void VulkanDevice::SetScissor(const GSVector4i rc)
     return;
 
   m_current_scissor = rc;
-
-  if (m_dirty_flags & DIRTY_FLAG_INITIAL)
-    return;
-
-  const GSVector4i clamped_rc = rc.max_s32(GSVector4i::zero());
-  const VkRect2D vrc = {{clamped_rc.x, clamped_rc.y},
-                        {static_cast<u32>(clamped_rc.width()), static_cast<u32>(clamped_rc.height())}};
-  vkCmdSetScissor(m_current_command_buffer, 0, 1, &vrc);
+  m_dirty_flags |= DIRTY_FLAG_SCISSOR;
 }
 
 void VulkanDevice::PreDrawCheck()
@@ -3537,14 +3491,45 @@ void VulkanDevice::PreDrawCheck()
   if (!InRenderPass())
     BeginRenderPass();
 
-  DebugAssert(!(m_dirty_flags & DIRTY_FLAG_INITIAL));
   const u32 update_mask = (m_current_render_pass_flags ? ~0u : ~DIRTY_FLAG_RENDER_TARGETS);
   const u32 dirty = m_dirty_flags & update_mask;
   m_dirty_flags = m_dirty_flags & ~update_mask;
 
   if (dirty != 0)
   {
-    if (!UpdateDescriptorSets(dirty))
+    if (dirty & DIRTY_FLAG_PIPELINE)
+    {
+      DebugAssert(m_current_pipeline && !IsComputeLayout(m_current_pipeline_layout));
+      vkCmdBindPipeline(m_current_command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_current_pipeline->GetPipeline());
+    }
+
+    if (dirty & DIRTY_FLAG_VERTEX_INDEX_BUFFERS)
+    {
+      const VkDeviceSize offset = 0;
+      vkCmdBindVertexBuffers(m_current_command_buffer, 0, 1, m_vertex_buffer.GetBufferPtr(), &offset);
+      vkCmdBindIndexBuffer(m_current_command_buffer, m_index_buffer.GetBuffer(), 0, VK_INDEX_TYPE_UINT16);
+    }
+
+    if (dirty & DIRTY_FLAG_VIEWPORT)
+    {
+      const VkViewport vp = {static_cast<float>(m_current_viewport.left),
+                             static_cast<float>(m_current_viewport.top),
+                             static_cast<float>(m_current_viewport.width()),
+                             static_cast<float>(m_current_viewport.height()),
+                             0.0f,
+                             1.0f};
+      vkCmdSetViewport(m_current_command_buffer, 0, 1, &vp);
+    }
+
+    if (dirty & DIRTY_FLAG_SCISSOR)
+    {
+      const GSVector4i clamped_rc = m_current_scissor.max_s32(GSVector4i::zero());
+      const VkRect2D vrc = {{clamped_rc.x, clamped_rc.y},
+                            {static_cast<u32>(clamped_rc.width()), static_cast<u32>(clamped_rc.height())}};
+      vkCmdSetScissor(m_current_command_buffer, 0, 1, &vrc);
+    }
+
+    if ((dirty & PIPELINE_LAYOUT_DEPENDENT_STATE) && !UpdateDescriptorSets(dirty))
     {
       SubmitCommandBufferAndRestartRenderPass("out of descriptor sets");
       PreDrawCheck();
@@ -3555,12 +3540,20 @@ void VulkanDevice::PreDrawCheck()
 
 void VulkanDevice::PreDispatchCheck()
 {
+  if (InRenderPass())
+    EndRenderPass();
+
   // All textures should be in shader read only optimal already, but just in case..
   const u32 num_textures = GetActiveTexturesForLayout(m_current_pipeline_layout);
   for (u32 i = 0; i < num_textures; i++)
   {
     if (m_current_textures[i])
+    {
+      if (m_current_textures[i]->GetState() == GPUTexture::State::Cleared)
+        m_current_textures[i]->CommitClear(m_current_command_buffer);
       m_current_textures[i]->TransitionToLayout(m_current_command_buffer, VulkanTexture::Layout::ShaderReadOnly);
+      m_current_textures[i]->SetUseFenceCounter(GetCurrentFenceCounter());
+    }
   }
 
   // Binding as image, but we still need to clear it.
@@ -3574,18 +3567,20 @@ void VulkanDevice::PreDispatchCheck()
     rt->SetUseFenceCounter(GetCurrentFenceCounter());
   }
 
-  // If this is a new command buffer, bind the pipeline and such.
-  if (m_dirty_flags & DIRTY_FLAG_INITIAL)
-    SetInitialPipelineState();
-
-  DebugAssert(!(m_dirty_flags & DIRTY_FLAG_INITIAL));
-  const u32 update_mask = (m_current_render_pass_flags ? ~0u : ~DIRTY_FLAG_RENDER_TARGETS);
+  const u32 update_mask =
+    (m_current_render_pass_flags ? ~0u : ~DIRTY_FLAG_RENDER_TARGETS) & ~static_cast<u32>(GRAPHICS_ONLY_STATE);
   const u32 dirty = m_dirty_flags & update_mask;
   m_dirty_flags = m_dirty_flags & ~update_mask;
 
   if (dirty != 0)
   {
-    if (!UpdateDescriptorSets(dirty))
+    if (dirty & DIRTY_FLAG_PIPELINE)
+    {
+      DebugAssert(m_current_pipeline && IsComputeLayout(m_current_pipeline_layout));
+      vkCmdBindPipeline(m_current_command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, m_current_pipeline->GetPipeline());
+    }
+
+    if ((dirty & PIPELINE_LAYOUT_DEPENDENT_STATE) && !UpdateDescriptorSets(dirty))
     {
       SubmitCommandBuffer(false, "out of descriptor sets");
       PreDispatchCheck();
@@ -3600,9 +3595,10 @@ bool VulkanDevice::UpdateDescriptorSetsForLayout(u32 dirty)
   [[maybe_unused]] bool new_dynamic_offsets = false;
 
   constexpr bool is_compute = IsComputeLayout(layout);
-  constexpr bool has_ubo = (layout == GPUPipeline::Layout::SingleTextureAndUBO ||
-                            layout == GPUPipeline::Layout::MultiTextureAndUBOAndPushConstants ||
-                            layout == GPUPipeline::Layout::ComputeMultiTextureAndUBO);
+  constexpr bool has_ubo =
+    (layout == GPUPipeline::Layout::SingleTextureAndUBO ||
+     layout == GPUPipeline::Layout::MultiTextureAndUBOAndPushConstants ||
+     (layout == GPUPipeline::Layout::ComputeImageOutput || layout == GPUPipeline::Layout::ComputeBufferOutput));
   constexpr VkPipelineBindPoint vk_bind_point =
     (is_compute ? VK_PIPELINE_BIND_POINT_COMPUTE : VK_PIPELINE_BIND_POINT_GRAPHICS);
   const VkPipelineLayout vk_pipeline_layout = m_pipeline_layouts[static_cast<size_t>(layout)];
@@ -3633,7 +3629,8 @@ bool VulkanDevice::UpdateDescriptorSetsForLayout(u32 dirty)
   }
   else if constexpr (layout == GPUPipeline::Layout::MultiTextureAndPushConstants ||
                      layout == GPUPipeline::Layout::MultiTextureAndUBOAndPushConstants ||
-                     layout == GPUPipeline::Layout::ComputeMultiTextureAndUBO)
+                     (layout == GPUPipeline::Layout::ComputeImageOutput ||
+                      layout == GPUPipeline::Layout::ComputeBufferOutput))
   {
     Vulkan::DescriptorSetUpdateBuilder dsub;
 
@@ -3674,7 +3671,7 @@ bool VulkanDevice::UpdateDescriptorSetsForLayout(u32 dirty)
   }
 
   // Only the compute layout has a set for render targets. ROV is only used with HW batches, handled below.
-  if constexpr (is_compute)
+  if constexpr (layout == GPUPipeline::Layout::ComputeImageOutput)
   {
     if (m_num_current_render_targets > 0 && (dirty & (DIRTY_FLAG_RENDER_TARGETS | DIRTY_FLAG_PIPELINE_LAYOUT)) &&
         (m_current_render_pass_flags & GPUPipeline::BindRenderTargetsAsImages))
@@ -3704,6 +3701,24 @@ bool VulkanDevice::UpdateDescriptorSetsForLayout(u32 dirty)
         ds[num_ds++] = ids;
       else
         vkCmdBindDescriptorSets(m_current_command_buffer, vk_bind_point, vk_pipeline_layout, 2, 1, &ids, 0, nullptr);
+    }
+  }
+
+  if constexpr (layout == GPUPipeline::Layout::ComputeBufferOutput)
+  {
+    if (dirty & (DIRTY_FLAG_COMPUTE_OUTPUT_BUFFER | DIRTY_FLAG_PIPELINE_LAYOUT))
+    {
+      DebugAssert(m_compute_output_buffer);
+      VkDescriptorSet bds = AllocateDescriptorSet(m_compute_buffer_ds_layout);
+      if (bds == VK_NULL_HANDLE)
+        return false;
+
+      Vulkan::DescriptorSetUpdateBuilder dsub;
+      dsub.AddBufferDescriptorWrite(bds, 0, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, m_compute_output_buffer->GetBuffer(),
+                                    static_cast<u32>(m_compute_output_buffer->GetBufferOffset()),
+                                    m_compute_output_buffer->GetMapPitch() * m_compute_output_buffer->GetHeight());
+      dsub.Update(m_device, false);
+      vkCmdBindDescriptorSets(m_current_command_buffer, vk_bind_point, vk_pipeline_layout, 2, 1, &bds, 0, nullptr);
     }
   }
 
@@ -3829,8 +3844,11 @@ bool VulkanDevice::UpdateDescriptorSets(u32 dirty)
     case GPUPipeline::Layout::HWImageBatch:
       return UpdateDescriptorSetsForHWBatch<GPUPipeline::Layout::HWImageBatch>(dirty);
 
-    case GPUPipeline::Layout::ComputeMultiTextureAndUBO:
-      return UpdateDescriptorSetsForLayout<GPUPipeline::Layout::ComputeMultiTextureAndUBO>(dirty);
+    case GPUPipeline::Layout::ComputeImageOutput:
+      return UpdateDescriptorSetsForLayout<GPUPipeline::Layout::ComputeImageOutput>(dirty);
+
+    case GPUPipeline::Layout::ComputeBufferOutput:
+      return UpdateDescriptorSetsForLayout<GPUPipeline::Layout::ComputeBufferOutput>(dirty);
 
     default:
       UnreachableCode();
@@ -3987,8 +4005,9 @@ void VulkanDevice::Dispatch(u32 threads_x, u32 threads_y, u32 threads_z, u32 gro
   PreDispatchCheck();
   s_stats.num_draws++;
 
-  const u32 groups_x = threads_x / group_size_x;
-  const u32 groups_y = threads_y / group_size_y;
-  const u32 groups_z = threads_z / group_size_z;
+  const auto [groups_x, groups_y, groups_z] =
+    GetDispatchCount(threads_x, threads_y, threads_z, group_size_x, group_size_y, group_size_z);
   vkCmdDispatch(m_current_command_buffer, groups_x, groups_y, groups_z);
+  if (m_current_pipeline_layout == GPUPipeline::Layout::ComputeBufferOutput)
+    m_compute_output_buffer->RecordShaderWrite();
 }

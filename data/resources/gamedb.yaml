@@ -3790,8 +3790,6 @@ SCUS-94906:
     versionTested: "0.1-887-g1eecd50"
   controllers:
     - DigitalController
-  traits:
-    - ForceFullBoot # Stops crashing after FMV.
   metadata:
     publisher: "Psygnosis"
     developer: "Psygnosis"
@@ -7738,6 +7736,8 @@ SCES-01564:
   controllers:
     - AnalogController
     - AnalogJoystick
+  traits:
+    - ForcePGXPCPUMode # Screen-space subdivision uses MVMVA and CPU arithmetic.
   libcrypt: true
   metadata:
     publisher: "Sony"
@@ -7756,6 +7756,8 @@ SCES-01564:
 SCED-02133:
   name: "Ape Escape (Demo)"
   saveName: "Ape Escape (Europe) (Demo)"
+  traits:
+    - ForcePGXPCPUMode # Screen-space subdivision uses MVMVA and CPU arithmetic.
   metadata:
     genre: "** DEMO **"
 SCES-02028:
@@ -7764,6 +7766,8 @@ SCES-02028:
   controllers:
     - AnalogController
     - AnalogJoystick
+  traits:
+    - ForcePGXPCPUMode # Screen-space subdivision uses MVMVA and CPU arithmetic.
   libcrypt: true
   metadata:
     publisher: "Sony"
@@ -7785,6 +7789,8 @@ SCES-02029:
   controllers:
     - AnalogController
     - AnalogJoystick
+  traits:
+    - ForcePGXPCPUMode # Screen-space subdivision uses MVMVA and CPU arithmetic.
   libcrypt: true
   metadata:
     publisher: "Sony"
@@ -7806,6 +7812,8 @@ SCES-02030:
   controllers:
     - AnalogController
     - AnalogJoystick
+  traits:
+    - ForcePGXPCPUMode # Screen-space subdivision uses MVMVA and CPU arithmetic.
   libcrypt: true
   metadata:
     publisher: "Sony"
@@ -7830,6 +7838,8 @@ SCUS-94423:
   controllers:
     - AnalogController
     - AnalogJoystick
+  traits:
+    - ForcePGXPCPUMode # Screen-space subdivision uses MVMVA and CPU arithmetic.
   metadata:
     publisher: "Sony"
     developer: "Sony"
@@ -7847,11 +7857,15 @@ SCUS-94423:
 SCUS-94470:
   name: "Ape Escape (Demo 1) (EDC)"
   saveName: "Ape Escape (USA) (Demo 1) (EDC)"
+  traits:
+    - ForcePGXPCPUMode # Screen-space subdivision uses MVMVA and CPU arithmetic.
   metadata:
     genre: "** DEMO **"
 SCUS-94489:
   name: "Ape Escape (Demo 2)"
   saveName: "Ape Escape (USA) (Demo 2)"
+  traits:
+    - ForcePGXPCPUMode # Screen-space subdivision uses MVMVA and CPU arithmetic.
   metadata:
     genre: "** DEMO **"
   compatibility:
@@ -7863,6 +7877,8 @@ SCES-02031:
   controllers:
     - AnalogController
     - AnalogJoystick
+  traits:
+    - ForcePGXPCPUMode # Screen-space subdivision uses MVMVA and CPU arithmetic.
   libcrypt: true
   metadata:
     publisher: "Sony"
@@ -32443,8 +32459,9 @@ SCPS-10003:
     versionTested: "0.1-7272-g143acca03"
   controllers:
     - DigitalController
+  traits:
+    - ForcePGXPCPUMode # Fixes wobble in walls.
   settings:
-    dmaMaxSliceTicks: 100 # Stops DMA from blazing past the deferred CDROM async interrupt.
     displayActiveEndOffset: -1 # Fixes garbage on edge of screen in cutscenes.
   codes:
     - HASH-111C340E270B10A8
@@ -97737,8 +97754,6 @@ SLES-00451:
     versionTested: "0.1-1645-g42d49426"
   controllers:
     - DigitalController
-  traits:
-    - ForceFullBoot # Stops crashing after FMV.
   metadata:
     publisher: "Psygnosis"
     developer: "Psygnosis"
@@ -97762,8 +97777,6 @@ SLED-00516:
   saveName: "Lomax (Europe) (En,Fr,De,Es,It) (Demo)"
   controllers:
     - DigitalController
-  traits:
-    - ForceFullBoot # Stops crashing after FMV.
   metadata:
     genre: "** DEMO **"
 SLPS-00987:
@@ -97775,8 +97788,6 @@ SLPS-00987:
     versionTested: "0.1-1645-g42d49426"
   controllers:
     - DigitalController
-  traits:
-    - ForceFullBoot # Stops crashing after FMV.
   metadata:
     publisher: "Tomy"
     developer: "Psygnosis"
@@ -120849,7 +120860,6 @@ SCES-00582:
     - DigitalController
   traits:
     - ForceRecompilerICache # Crappy CD code on boot is timing sensitive.
-    - ForceFullBoot # Full boot improves reliability.
     - ResetSPUOnGameStart # Doesn't initialize SPU, shell reverb loops.
   metadata:
     publisher: "Activision"
@@ -120873,7 +120883,6 @@ SCES-00684:
     - DigitalController
   traits:
     - ForceRecompilerICache # Crappy CD code on boot is timing sensitive.
-    - ForceFullBoot # Full boot improves reliability.
     - ResetSPUOnGameStart # Doesn't initialize SPU, shell reverb loops.
   metadata:
     publisher: "Activision"
@@ -120898,7 +120907,6 @@ SIPS-60027:
     - DigitalController
   traits:
     - ForceRecompilerICache # Crappy CD code on boot is timing sensitive.
-    - ForceFullBoot # Full boot improves reliability.
     - ResetSPUOnGameStart # Doesn't initialize SPU, shell reverb loops.
   metadata:
     publisher: "Sony"
@@ -120922,7 +120930,6 @@ PCPX-96101:
     genre: "** DEMO **"
   traits:
     - ForceRecompilerICache # Crappy CD code on boot is timing sensitive.
-    - ForceFullBoot # Full boot improves reliability.
 SLUS-00582:
   name: "Nightmare Creatures"
   saveName: "Nightmare Creatures (USA)"
@@ -120934,7 +120941,6 @@ SLUS-00582:
     - DigitalController
   traits:
     - ForceRecompilerICache # Crappy CD code on boot is timing sensitive.
-    - ForceFullBoot # Full boot improves reliability.
     - ResetSPUOnGameStart # Doesn't initialize SPU, shell reverb loops.
   metadata:
     publisher: "Activision"
@@ -120957,7 +120963,6 @@ SLUS-90011:
     genre: "** DEMO **"
   traits:
     - ForceRecompilerICache # Crappy CD code on boot is timing sensitive.
-    - ForceFullBoot # Full boot improves reliability.
 SLES-02751:
   name: "Nightmare Creatures II"
   saveName: "Nightmare Creatures II (Europe) (En,Fr,De)"
@@ -125086,6 +125091,8 @@ SLPS-01144:
   controllers:
     - AnalogController
     - DigitalController
+  traits:
+    - ForceRecompilerICache # Fixes GPU DMA bus error and Load Game hang after the title screen.
   metadata:
     publisher: "Whoopee Camp"
     developer: "Whoopee Camp"
@@ -149688,6 +149695,8 @@ SCPS-45411:
   name: "Saru! Get You!"
   controllers:
     - AnalogController
+  traits:
+    - ForcePGXPCPUMode # Screen-space subdivision uses MVMVA and CPU arithmetic.
   metadata:
     publisher: "Sony"
     developer: "Sony"
@@ -149708,6 +149717,8 @@ SCPS-10091:
   saveName: "Saru! Get You! (Japan)"
   controllers:
     - AnalogController
+  traits:
+    - ForcePGXPCPUMode # Screen-space subdivision uses MVMVA and CPU arithmetic.
   metadata:
     publisher: "Sony"
     developer: "Sony"
@@ -149728,6 +149739,8 @@ PAPX-90079:
   controllers:
     - AnalogController
     - DigitalController
+  traits:
+    - ForcePGXPCPUMode # Screen-space subdivision uses MVMVA and CPU arithmetic.
   codes:
     - PAPX-90079
     - SCPS-10084
@@ -149751,6 +149764,8 @@ SCPS-91196:
   saveName: "Saru! Get You! (Japan) (Rev 1)"
   controllers:
     - AnalogController
+  traits:
+    - ForcePGXPCPUMode # Screen-space subdivision uses MVMVA and CPU arithmetic.
   metadata:
     publisher: "Sony"
     developer: "Sony"
@@ -149769,6 +149784,8 @@ SCPS-91331:
   name: "Saru! Get You! [PSOne Books]"
   controllers:
     - AnalogController
+  traits:
+    - ForcePGXPCPUMode # Screen-space subdivision uses MVMVA and CPU arithmetic.
   metadata:
     publisher: "Sony"
     developer: "Sony"
@@ -176397,7 +176414,7 @@ SCES-01237:
     - DisableAutoAnalogMode # Analog sticks do nothing.
     - ForcePGXPCPUMode # Some vertices are fudged by the game.
   settings:
-    gpuPGXPTolerance: 3 # Fixes spiky polygons when characters go offscreen.
+    gpuPGXPDepthThreshold: 512 # Stage and characters are separate layers, close in depth in close-ups.
   metadata:
     publisher: "Sony"
     developer: "Namco"
@@ -176421,7 +176438,7 @@ SCED-01146:
     - DisableAutoAnalogMode # Analog sticks do nothing.
     - ForcePGXPCPUMode # Some vertices are fudged by the game.
   settings:
-    gpuPGXPTolerance: 3 # Fixes spiky polygons when characters go offscreen.
+    gpuPGXPDepthThreshold: 512 # Stage and characters are separate layers, close in depth in close-ups.
 SCED-01384:
   name: "Tekken 3 (Demo)"
   saveName: "Tekken 3 (France) (Demo)"
@@ -176431,7 +176448,7 @@ SCED-01384:
     - DisableAutoAnalogMode # Analog sticks do nothing.
     - ForcePGXPCPUMode # Some vertices are fudged by the game.
   settings:
-    gpuPGXPTolerance: 3 # Fixes spiky polygons when characters go offscreen.
+    gpuPGXPDepthThreshold: 512 # Stage and characters are separate layers, close in depth in close-ups.
 SLPS-91202:
   name: "Tekken 3"
   localizedName: "鉄拳３"
@@ -176444,7 +176461,7 @@ SLPS-91202:
     - DisableAutoAnalogMode # Analog sticks do nothing.
     - ForcePGXPCPUMode # Some vertices are fudged by the game.
   settings:
-    gpuPGXPTolerance: 3 # Fixes spiky polygons when characters go offscreen.
+    gpuPGXPDepthThreshold: 512 # Stage and characters are separate layers, close in depth in close-ups.
   metadata:
     publisher: "Namco"
     developer: "Namco"
@@ -176474,7 +176491,7 @@ SCPS-45213:
     - DisableAutoAnalogMode # Analog sticks do nothing.
     - ForcePGXPCPUMode # Some vertices are fudged by the game.
   settings:
-    gpuPGXPTolerance: 3 # Fixes spiky polygons when characters go offscreen.
+    gpuPGXPDepthThreshold: 512 # Stage and characters are separate layers, close in depth in close-ups.
   codes:
     - SCPS-45213
     - SCPS-45215
@@ -176507,7 +176524,7 @@ SLUS-00402:
     - DisableAutoAnalogMode # Analog sticks do nothing.
     - ForcePGXPCPUMode # Some vertices are fudged by the game.
   settings:
-    gpuPGXPTolerance: 3 # Fixes spiky polygons when characters go offscreen.
+    gpuPGXPDepthThreshold: 512 # Stage and characters are separate layers, close in depth in close-ups.
   metadata:
     publisher: "Namco"
     developer: "Namco"
@@ -176976,6 +176993,9 @@ SLPS-00712:
     - DigitalController
   traits:
     - ForceRecompilerICache
+    - ForceFullBoot # Required for below.
+  settings:
+    cpuOverclockPercent: 95 # Avoids CD buffer overruns during GPU timeout recovery on boot.
   metadata:
     publisher: "Imagineer"
     developer: "Ron"
@@ -183461,6 +183481,8 @@ SCUS-94236:
   controllers:
     - AnalogController
     - DigitalController
+  traits:
+    - ForceRecompilerICache # Fixes GPU DMA bus error and Load Game hang after the title screen.
   metadata:
     publisher: "Sony"
     developer: "Whoopee Camp"
@@ -183544,6 +183566,8 @@ SCES-01331:
   controllers:
     - AnalogController
     - DigitalController
+  traits:
+    - ForceRecompilerICache # Fixes GPU DMA bus error and Load Game hang after the title screen.
   metadata:
     publisher: "Sony"
     developer: "Whoopee Camp"
@@ -183568,6 +183592,8 @@ SCES-01330:
   controllers:
     - AnalogController
     - DigitalController
+  traits:
+    - ForceRecompilerICache # Fixes GPU DMA bus error and Load Game hang after the title screen.
   metadata:
     publisher: "Sony"
     developer: "Whoopee Camp"

@@ -15,6 +15,8 @@
 #include <mutex>
 #include <span>
 #include <string>
+#include <utility>
+#include <vector>
 
 class ProgressCallback;
 class SettingsInterface;
@@ -230,6 +232,40 @@ std::optional<DiscRegion> GetCustomRegionForPath(const std::string_view path);
 /// string for the None and Cover sources, covers are looked up separately with GetCoverImagePath().
 std::string GetGameIconPath(const GameList::Entry* entry, IconSource source);
 
+/// Artwork drawn for entries without a cover: a diagonal gradient in a colour picked from the title, with the title's
+/// monogram, and for covers the wrapped title and a badge for content that isn't a plain disc. Sizes are fractions of
+/// the artwork's width.
+namespace GeneratedArtwork {
+
+inline constexpr float COVER_CORNER_RADIUS = 0.06f;
+inline constexpr float ICON_CORNER_RADIUS = 0.15f;
+inline constexpr float MARGIN = 0.08f;
+inline constexpr float TITLE_SIZE = 1.0f / 9.0f;
+inline constexpr float MIN_TITLE_SIZE = 1.0f / 16.0f;
+inline constexpr float TITLE_SHRINK_FACTOR = 0.9f;
+inline constexpr float MAX_TITLE_HEIGHT = 0.5f;
+inline constexpr u32 MAX_TITLE_LINES = 4;
+inline constexpr float COVER_MONOGRAM_CENTER_Y = 0.4f;
+inline constexpr float COVER_MONOGRAM_SIZE = 0.7f;
+inline constexpr float COVER_MONOGRAM_MAX_WIDTH = 1.0f - MARGIN * 2.0f; // stays inside the tile
+inline constexpr u8 COVER_MONOGRAM_ALPHA = 36;
+inline constexpr float ICON_MONOGRAM_SIZE = 0.5f;
+inline constexpr float ICON_MONOGRAM_MAX_WIDTH = 0.8f;
+inline constexpr float BADGE_RADIUS = 0.1f;
+inline constexpr float BADGE_ICON_SIZE = 1.3f; // relative to the radius
+inline constexpr u8 BADGE_ALPHA = 89;
+
+/// Returns the one or two characters shown on generated artwork: the initials of the first two words of the title that
+/// aren't minor words, with a numeral in second place shown as digits ("Suikoden II" is "S2"). Empty if the title has
+/// no letters or digits.
+TinyString GetMonogram(std::string_view title);
+
+/// Returns the gradient colours (top-left, bottom-right) for a title, as RGBA8 with red in the low byte. Bracketed
+/// qualifiers such as "(Disc 1)" are ignored, so the discs of one game share a colour.
+std::pair<u32, u32> GetColors(std::string_view title);
+
+} // namespace GeneratedArtwork
+
 /// Extracts the icon of the first save on the game's memory card to the game icons directory, consulting the
 /// memory card timestamp cache. Returns the path to the extracted icon, or an empty string. Requires the lock.
 std::string ExtractMemoryCardIcon(std::string_view title, std::string_view serial, std::string_view path);
@@ -248,7 +284,7 @@ extern const char* const SETTING_KEY_SORT_REVERSED;
 extern const char* const SETTING_KEY_ICON_SOURCE;
 extern const char* const SETTING_KEY_MERGE_DISC_SETS;
 extern const char* const SETTING_KEY_GRID_VIEW;
-extern const char* const SETTING_KEY_FULLSCREENUI_GRID_VIEW;
+extern const char* const SETTING_KEY_FULLSCREENUI_VIEW;
 extern const char* const SETTING_KEY_COVER_TITLES;
 inline constexpr bool DEFAULT_LOCALIZED_TITLES = true;
 inline constexpr Column DEFAULT_SORT_COLUMN = Column::Title;
@@ -256,7 +292,6 @@ inline constexpr bool DEFAULT_SORT_REVERSED = false;
 inline constexpr IconSource DEFAULT_ICON_SOURCE = IconSource::MemoryCard;
 inline constexpr bool DEFAULT_MERGE_DISC_SETS = true;
 inline constexpr bool DEFAULT_GRID_VIEW = false;
-inline constexpr bool DEFAULT_FULLSCREENUI_GRID_VIEW = true;
 inline constexpr bool DEFAULT_COVER_TITLES = true;
 
 } // namespace GameList
