@@ -20,8 +20,6 @@ elseif(LINUX)
     set(DEPS_PATH "${CMAKE_SOURCE_DIR}/dep/prebuilt/linux${DEPS_CROSS_PREFIX}-armhf")
   elseif(CPU_ARCH_ARM64)
     set(DEPS_PATH "${CMAKE_SOURCE_DIR}/dep/prebuilt/linux${DEPS_CROSS_PREFIX}-arm64")
-  elseif(CPU_ARCH_LOONGARCH64)
-    set(DEPS_PATH "${CMAKE_SOURCE_DIR}/dep/prebuilt/linux${DEPS_CROSS_PREFIX}-loongarch64")
   else()
     message(FATAL_ERROR "Unsupported architecture")
   endif()
@@ -52,7 +50,7 @@ else()
 endif()
 
 # Enforce use of bundled dependencies to avoid conflicts with system libraries.
-find_package(zstd 1.5.7 REQUIRED
+find_package(zstd 1.6.0 REQUIRED
              NO_DEFAULT_PATH PATHS "${DEPS_PATH}/lib/cmake/zstd")
 find_package(WebP 1.6.0 REQUIRED
              NO_DEFAULT_PATH PATHS "${DEPS_PATH}/share/WebP/cmake")
@@ -86,11 +84,11 @@ find_package(SDL3 3.4.20 REQUIRED
 # All our builds include Qt, so this is not a problem.
 set(QT_NO_PRIVATE_MODULE_WARNING ON)
 if(LINUX)
-  find_package(Qt6 6.12.0 REQUIRED
+  find_package(Qt6 6.12.1 REQUIRED
                 NO_DEFAULT_PATH PATHS "${DEPS_PATH}/lib/cmake/Qt6"
                 COMPONENTS Core Gui GuiPrivate Widgets LinguistTools DBus)
 else()
-  find_package(Qt6 6.12.0 REQUIRED
+  find_package(Qt6 6.12.1 REQUIRED
                 NO_DEFAULT_PATH PATHS "${DEPS_PATH}/lib/cmake/Qt6"
                 COMPONENTS Core Gui GuiPrivate Widgets LinguistTools)
 endif()
