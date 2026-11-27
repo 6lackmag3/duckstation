@@ -11172,7 +11172,7 @@ You can manually update DuckStation by re-downloading the latest release. Do you
     <message>
         <location filename="../biossettingswidget.cpp" line="214"/>
         <source>Auto-Detect</source>
-        <translation>Авто-определение</translation>
+        <translation>Автоопределение</translation>
     </message>
     <message>
         <location filename="../biossettingswidget.cpp" line="184"/>
@@ -12366,7 +12366,7 @@ This warning will only be shown once.</source>
     <message>
         <location filename="../controllerbindingwidget.ui" line="151"/>
         <source>Automatic Mapping</source>
-        <translation>Автоматическое сопоставление</translation>
+        <translation>Автонастройка</translation>
     </message>
     <message>
         <location filename="../controllerbindingwidget.ui" line="173"/>
@@ -16461,7 +16461,6 @@ You cannot undo this action.</source>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="111"/>
         <source>Attempts to map the selected port to a chosen controller.</source>
-        <translatorcomment>Настройки контроллеров/Автоматическое сопоставление</translatorcomment>
         <translation>Попытки сопоставить выбранный порт с выбранным контроллером.</translation>
     </message>
     <message>
@@ -16485,8 +16484,7 @@ You cannot undo this action.</source>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="115"/>
         <source>Auto-Detect</source>
-        <translatorcomment>Вариант выбора настроек</translatorcomment>
-        <translation>Авто-определение</translation>
+        <translation>Автоопределение</translation>
     </message>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="116"/>
@@ -16496,8 +16494,7 @@ You cannot undo this action.</source>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="117"/>
         <source>Automatic Mapping</source>
-        <translatorcomment>Настройки контроллеров</translatorcomment>
-        <translation>Автоматическое сопоставление</translation>
+        <translation>Автонастройка</translation>
     </message>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="119"/>
@@ -16508,12 +16505,12 @@ You cannot undo this action.</source>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="120"/>
         <source>Automatic mapping completed for {}.</source>
-        <translation>Автоматическое сопоставление завершено для {}.</translation>
+        <translation>Автонастройка для {}.завершена.</translation>
     </message>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="121"/>
         <source>Automatic mapping failed, no devices are available.</source>
-        <translation>Не удалось выполнить автоматическое сопоставление: нет доступных устройств.</translation>
+        <translation>Не удалось выполнить автонастройку: нет доступных устройств.</translation>
     </message>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="122"/>
@@ -29712,7 +29709,7 @@ Error: {1}</source>
         <location filename="../controllerbindingwidgets.cpp" line="1680"/>
         <location filename="../controllerbindingwidgets.cpp" line="1692"/>
         <source>Automatic Mapping Failed</source>
-        <translation>Ошибка автоматического сопоставления</translation>
+        <translation>Ошибка автонастройки</translation>
     </message>
     <message>
         <location filename="../controllerbindingwidgets.cpp" line="1693"/>
@@ -31936,17 +31933,17 @@ Would you like to update the shortcut to point to the current location?</source>
     <message>
         <location filename="../selectdiscdialog.ui" line="36"/>
         <source>File Name</source>
-        <translation>Название файла</translation>
+        <translation>Имя файла</translation>
     </message>
     <message>
         <location filename="../selectdiscdialog.ui" line="41"/>
         <source>Last Played</source>
-        <translation>Последняя игра</translation>
+        <translation>Последний запуск</translation>
     </message>
     <message>
         <location filename="../selectdiscdialog.ui" line="64"/>
         <source>Select</source>
-        <translation>Выбрать</translation>
+        <translation>Выберите</translation>
     </message>
     <message>
         <location filename="../selectdiscdialog.ui" line="74"/>
@@ -31956,8 +31953,7 @@ Would you like to update the shortcut to point to the current location?</source>
     <message>
         <location filename="../selectdiscdialog.cpp" line="90"/>
         <source>Select Disc for %1</source>
-        <translatorcomment>*Выбрать *Выберите</translatorcomment>
-        <translation>Выбор диска для %1</translation>
+        <translation>Выберите диск для %1</translation>
     </message>
 </context>
 <context>
@@ -32095,7 +32091,7 @@ Do you want to create this directory?</source>
         <location filename="../../core/settings.cpp" line="1498"/>
         <source>Auto-Detect</source>
         <comment>ConsoleRegion</comment>
-        <translation>Авто-определение</translation>
+        <translation>Автоопределение</translation>
     </message>
     <message>
         <location filename="../../core/settings.cpp" line="1499"/>
@@ -32221,7 +32217,7 @@ Do you want to create this directory?</source>
         <location filename="../../core/settings.cpp" line="1685"/>
         <source>Recompiler (Fastest)</source>
         <comment>CPUExecutionMode</comment>
-        <translation>Перекомпилятор (самый быстрый)</translation>
+        <translation>Рекомпилятор (самый быстрый)</translation>
     </message>
     <message>
         <location filename="../../core/settings.cpp" line="1719"/>
@@ -32684,7 +32680,7 @@ Do you want to create this directory?</source>
         <location filename="../../core/settings.cpp" line="2424"/>
         <source>Auto-Detect</source>
         <comment>ForceVideoTiming</comment>
-        <translation>Авто-определение</translation>
+        <translation>Автоопределение</translation>
     </message>
     <message>
         <location filename="../../core/settings.cpp" line="2425"/>
@@ -33582,7 +33578,7 @@ Do you want to continue?</source>
         <location filename="../setupwizarddialog.ui" line="689"/>
         <location filename="../setupwizarddialog.ui" line="750"/>
         <source>Automatic Mapping</source>
-        <translation>Автоматическое сопоставление</translation>
+        <translation>Автонастройка</translation>
     </message>
     <message>
         <location filename="../setupwizarddialog.ui" line="705"/>
@@ -34705,7 +34701,7 @@ For legal reasons, you must obtain a BIOS from an actual PS1/PS2 unit that you o
     <message>
         <location filename="../logwindow.cpp" line="653"/>
         <source>Enable BIOS &amp;TTY Logging</source>
-        <translation>Включить лог &amp;TTY BIOS</translation>
+        <translation>Включить логировани &amp;TTY BIOS</translation>
     </message>
     <message>
         <location filename="../logwindow.cpp" line="657"/>
