@@ -179,13 +179,13 @@ Do you want to enable hardcore mode?</source>
     <message>
         <location filename="../achievementsettingswidget.ui" line="148"/>
         <source>Track Unpromoted Achievements</source>
-        <translation type="unfinished"></translation>
+        <translation>Неутверждённые достижения</translation>
     </message>
     <message>
         <location filename="../achievementsettingswidget.ui" line="297"/>
         <location filename="../achievementsettingswidget.cpp" line="116"/>
         <source>Enable Sound Effects</source>
-        <translation>Включить звуковые эффекты</translation>
+        <translation>Звуковые сигналы</translation>
     </message>
     <message>
         <location filename="../achievementsettingswidget.ui" line="114"/>
@@ -201,7 +201,7 @@ Do you want to enable hardcore mode?</source>
         <location filename="../achievementsettingswidget.ui" line="134"/>
         <location filename="../achievementsettingswidget.cpp" line="94"/>
         <source>Enable Spectator Mode</source>
-        <translation>Включить режим наблюдателя</translation>
+        <translation>Режим наблюдателя</translation>
     </message>
     <message>
         <source>Test Unofficial Achievements</source>
@@ -286,7 +286,7 @@ Do you want to enable hardcore mode?</source>
         <location filename="../achievementsettingswidget.ui" line="141"/>
         <location filename="../achievementsettingswidget.cpp" line="92"/>
         <source>Enable Encore Mode</source>
-        <translation>Включить режим &quot;Encore&quot;</translation>
+        <translation>Режим переигровки</translation>
     </message>
     <message>
         <source>Track Unofficial Achievements</source>
@@ -320,7 +320,7 @@ Do you want to enable hardcore mode?</source>
         <location filename="../achievementsettingswidget.ui" line="127"/>
         <location filename="../achievementsettingswidget.cpp" line="89"/>
         <source>Enable Hardcore Mode</source>
-        <translation>Включить режим &quot;Хардкор&quot;</translation>
+        <translation>Режим хардкора</translation>
     </message>
     <message>
         <location filename="../achievementsettingswidget.cpp" line="87"/>
@@ -339,12 +339,12 @@ Do you want to enable hardcore mode?</source>
     <message>
         <location filename="../achievementsettingswidget.cpp" line="97"/>
         <source>Test Unpromoted Achievements</source>
-        <translation type="unfinished"></translation>
+        <translation>Тестирование неутверждённых достижений</translation>
     </message>
     <message>
         <location filename="../achievementsettingswidget.cpp" line="98"/>
         <source>When enabled, DuckStation will track unpromoted achievements. Unlocks will be saved locally and not sent to RetroAchievements.</source>
-        <translation type="unfinished"></translation>
+        <translation>Если включено, DuckStation будет отслеживать неутверждённые достижения. Они сохраняются локально и не передаются в RetroAchievements.</translation>
     </message>
     <message>
         <location filename="../achievementsettingswidget.cpp" line="101"/>
@@ -379,7 +379,7 @@ Do you want to enable hardcore mode?</source>
     <message>
         <location filename="../achievementsettingswidget.cpp" line="90"/>
         <source>&quot;Challenge&quot; mode for achievements, including leaderboard tracking. Disables save state, cheats, and slowdown functions.</source>
-        <translation>Режим &quot;Испытаний&quot; для достижений, включая отслеживание списка лидеров. Отключает функции сохранения состояния, читов и замедления.</translation>
+        <translation>Соревновательный режим достижений с отслеживанием таблиц лидеров. Блокирует сохранение состояния, чит-коды и замедление геймплея.</translation>
     </message>
     <message>
         <location filename="../achievementsettingswidget.cpp" line="48"/>
@@ -593,7 +593,7 @@ Token generated %2</source>
         <translation>Загрузка состояния</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1321"/>
+        <location filename="../../core/android_strings.h" line="1351"/>
         <source>Rewinding</source>
         <translation>Перемотка назад</translation>
     </message>
@@ -800,7 +800,7 @@ We will keep trying to submit this request.</source>
         <location filename="../../core/achievements.cpp" line="2097"/>
         <location filename="../../core/fullscreenui_achievements.cpp" line="282"/>
         <source>Unpromoted</source>
-        <translation type="unfinished"></translation>
+        <translation>Неутверждённые</translation>
     </message>
     <message>
         <location filename="../../core/achievements.cpp" line="2383"/>
@@ -828,24 +828,24 @@ We will keep trying to submit this request.</source>
         <translation>Обновляется прогресс достижений...</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1322"/>
+        <location filename="../../core/android_strings.h" line="1352"/>
         <source>Offline Mode</source>
         <translation>Автономный режим</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1323"/>
+        <location filename="../../core/android_strings.h" line="1353"/>
         <source>We were unable to connect to RetroAchievements.
 This session will start in offline mode.</source>
         <translation>Не удалось подключиться к RetroAchievements.
 Этот сеанс начнётся в автономном режиме.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1324"/>
+        <location filename="../../core/android_strings.h" line="1354"/>
         <source>Synchronizing Unlocks</source>
         <translation>Синхронизация полученных достижений</translation>
     </message>
     <message numerus="yes">
-        <location filename="../../core/android_strings.h" line="1325"/>
+        <location filename="../../core/android_strings.h" line="1355"/>
         <source>Synchronizing %n offline unlocks with the server.</source>
         <comment>Synchronizing Unlocks</comment>
         <translation>
@@ -855,12 +855,12 @@ This session will start in offline mode.</source>
         </translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1326"/>
+        <location filename="../../core/android_strings.h" line="1356"/>
         <source>No offline achievement data is available for this game.</source>
         <translation>Для этой игры нет данных о достижениях для автономного режима.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1327"/>
+        <location filename="../../core/android_strings.h" line="1357"/>
         <source>Failed to parse offline achievement data.</source>
         <translation>Не удалось обработать данные о достижениях для автономного режима.</translation>
     </message>
@@ -1043,7 +1043,7 @@ This session will start in offline mode.</source>
         <location filename="../../core/fullscreenui_achievements.cpp" line="2414"/>
         <location filename="../../core/fullscreenui_achievements.cpp" line="2424"/>
         <source>Reset Unpromoted Unlocks</source>
-        <translation type="unfinished"></translation>
+        <translation>Сброс неутверждённых достижений</translation>
     </message>
     <message>
         <location filename="../../core/fullscreenui_achievements.cpp" line="2391"/>
@@ -1272,7 +1272,7 @@ This session will start in offline mode.</source>
     <message>
         <location filename="../../core/fullscreenui_achievements.cpp" line="2177"/>
         <source>You have unlocked {0} of {1} unpromoted achievements, earning {2} of {3} possible points.</source>
-        <translation type="unfinished"></translation>
+        <translation>Вы открыли {0} из {1} неутверждённых достижений, заработав {2} очков из {3} возможных.</translation>
     </message>
     <message>
         <location filename="../../core/fullscreenui_achievements.cpp" line="2218"/>
@@ -1412,41 +1412,41 @@ This session will start in offline mode.</source>
     <message>
         <location filename="../advancedsettingswidget.ui" line="149"/>
         <source>CD-ROM Emulation</source>
-        <translation type="unfinished"></translation>
+        <translation>Эмуляция CD-ROM</translation>
     </message>
     <message>
         <location filename="../advancedsettingswidget.ui" line="155"/>
         <source>Readahead Sectors:</source>
-        <translation type="unfinished"></translation>
+        <translation>Упреждающее чтение:</translation>
     </message>
     <message>
         <location filename="../advancedsettingswidget.ui" line="162"/>
         <source> sectors</source>
-        <translation type="unfinished"> сектора</translation>
+        <translation> сектора</translation>
     </message>
     <message>
         <location filename="../advancedsettingswidget.ui" line="172"/>
         <source>Physical Disc Drive Speed:</source>
-        <translation type="unfinished"></translation>
+        <translation>Скорость физического CD-привода:</translation>
     </message>
     <message>
         <location filename="../advancedsettingswidget.ui" line="179"/>
         <source>Don&apos;t Change</source>
-        <translation type="unfinished">Не изменять</translation>
+        <translation>Не изменять</translation>
     </message>
     <message>
         <location filename="../advancedsettingswidget.ui" line="182"/>
         <source>x</source>
-        <translation type="unfinished">x</translation>
+        <translation>x</translation>
     </message>
     <message>
         <location filename="../advancedsettingswidget.ui" line="192"/>
         <location filename="../advancedsettingswidget.cpp" line="113"/>
         <source>Ignore Physical Disc Drive Subcode</source>
-        <translation type="unfinished"></translation>
+        <translation>Игнорировать субкод физического привода</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1328"/>
+        <location filename="../../core/android_strings.h" line="1358"/>
         <source>Test Achievements Offline Mode</source>
         <translation>Тестировать автономный режим достижений</translation>
     </message>
@@ -1619,46 +1619,46 @@ This session will start in offline mode.</source>
     <message>
         <location filename="../advancedsettingswidget.cpp" line="105"/>
         <source>Readahead Sectors</source>
-        <translation type="unfinished">Упреждающее чтение</translation>
+        <translation>Упреждающее чтение</translation>
     </message>
     <message numerus="yes">
         <location filename="../advancedsettingswidget.cpp" line="106"/>
         <source>%n sectors</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n сектор</numerusform>
+            <numerusform>%n сектора</numerusform>
+            <numerusform>%n секторов</numerusform>
         </translation>
     </message>
     <message>
         <location filename="../advancedsettingswidget.cpp" line="107"/>
         <source>Reduces hitches in emulation by reading/decompressing CD data asynchronously on a worker thread.</source>
-        <translation type="unfinished"></translation>
+        <translation>Снижает задержки эмуляции за счёт асинхронного чтения и распаковки данных диска в отдельном потоке.</translation>
     </message>
     <message>
         <location filename="../advancedsettingswidget.cpp" line="109"/>
         <source>Physical Disc Drive Speed</source>
-        <translation type="unfinished"></translation>
+        <translation>Скорость физического CD-привода</translation>
     </message>
     <message>
         <location filename="../advancedsettingswidget.cpp" line="109"/>
         <source>8x</source>
-        <translation type="unfinished">8x</translation>
+        <translation>8x</translation>
     </message>
     <message>
         <location filename="../advancedsettingswidget.cpp" line="110"/>
         <source>Sets the speed of the host drive when using physical discs. Higher speeds can reduce stutter, but make the drive louder. Set to &quot;Don&apos;t Change&quot; to leave the drive at its own speed. Not all drives support this.</source>
-        <translation type="unfinished">Задаёт скорость привода устройства при использовании физических дисков. Более высокая скорость может уменьшить задержки, но делает привод громче. Установите значение «Не изменять», чтобы оставить стандартную скорость привода. Поддерживается не всеми устройствами.</translation>
+        <translation>Задаёт скорость привода при использовании физических дисков. Повышение скорости может уменьшить подтормаживания, но увеличивает шум привода. Выберите «Не изменять», чтобы оставить скорость по умолчанию. Поддерживается не всеми приводами.</translation>
     </message>
     <message>
         <location filename="../advancedsettingswidget.cpp" line="114"/>
         <source>Ignores the subchannel provided by the drive when using physical discs, instead always generating subchannel data. Won&apos;t work with libcrypt games, but can improve read reliability on some drives.</source>
-        <translation type="unfinished">Игноририровать субканал, предоставляемый приводом, при использовании физических дисков, вместо этого всегда генерирует данные подканала. Не будет работать с играми libcrypt, но может повысить надежность чтения на некоторых дисках.</translation>
+        <translation>При использовании физических дисков игнорирует субканальные данные, передаваемые приводом, всегда генерируя их самостоятельно. Не работает для игр с защитой LibCrypt, но может повысить надёжность чтения на некоторых приводах.</translation>
     </message>
     <message>
         <location filename="../advancedsettingswidget.cpp" line="162"/>
         <source>Current Cache Size: %1 (%2 in %3 objects)</source>
-        <translation type="unfinished"></translation>
+        <translation>Текущий размер кэша: %1 (%2 в %3 объектах)</translation>
     </message>
     <message>
         <source>Default</source>
@@ -1673,7 +1673,7 @@ This session will start in offline mode.</source>
         <translation type="vanished">Указывает каталог, в котором будут храниться изображения обложек игр, используемые в игровой сетке и интерфейсе Big Picture.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1329"/>
+        <location filename="../../core/android_strings.h" line="1359"/>
         <source>Forces all server calls to fail, useful for testing offline mode.</source>
         <translation>Принудительно завершает все обращения к серверу с ошибкой для тестирования автономного режима.</translation>
     </message>
@@ -2198,115 +2198,115 @@ This session will start in offline mode.</source>
 <context>
     <name>Android</name>
     <message>
-        <location filename="../../core/android_strings.h" line="1249"/>
+        <location filename="../../core/android_strings.h" line="1279"/>
         <source>Use Device Setting</source>
         <comment>settings_emulation_screen_orientation_entries[0]</comment>
         <translation>Как на устройстве</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1250"/>
+        <location filename="../../core/android_strings.h" line="1280"/>
         <source>Portrait</source>
         <comment>settings_emulation_screen_orientation_entries[1]</comment>
         <translation>Портретная</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1251"/>
+        <location filename="../../core/android_strings.h" line="1281"/>
         <source>Landscape</source>
         <comment>settings_emulation_screen_orientation_entries[2]</comment>
         <translation>Альбомная</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1252"/>
+        <location filename="../../core/android_strings.h" line="1282"/>
         <source>Sensor Based</source>
         <comment>settings_emulation_screen_orientation_entries[3]</comment>
         <translation>По датчику</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1256"/>
+        <location filename="../../core/android_strings.h" line="1286"/>
         <source>Follow System</source>
         <comment>settings_theme_entries[0]</comment>
         <translation>Системная</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1257"/>
+        <location filename="../../core/android_strings.h" line="1287"/>
         <source>Light</source>
         <comment>settings_theme_entries[1]</comment>
         <translation>Светлая</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1258"/>
+        <location filename="../../core/android_strings.h" line="1288"/>
         <source>Dark</source>
         <comment>settings_theme_entries[2]</comment>
         <translation>Тёмная</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1259"/>
+        <location filename="../../core/android_strings.h" line="1289"/>
         <source>Dark Ocean</source>
         <comment>settings_theme_entries[3]</comment>
         <translation>Dark Ocean</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1268"/>
+        <location filename="../../core/android_strings.h" line="1298"/>
         <source>Touchscreen Press</source>
         <comment>controller_other_binding_entries[0]</comment>
         <translation>Нажатие на экран</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1269"/>
+        <location filename="../../core/android_strings.h" line="1299"/>
         <source>Touchscreen Swipe Left</source>
         <comment>controller_other_binding_entries[1]</comment>
         <translation>Свайп по экрану влево</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1270"/>
+        <location filename="../../core/android_strings.h" line="1300"/>
         <source>Touchscreen Swipe Right</source>
         <comment>controller_other_binding_entries[2]</comment>
         <translation>Свайп по экрану вправо</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1271"/>
+        <location filename="../../core/android_strings.h" line="1301"/>
         <source>Touchscreen Swipe Up</source>
         <comment>controller_other_binding_entries[3]</comment>
         <translation>Свайп по экрану вверх</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1272"/>
+        <location filename="../../core/android_strings.h" line="1302"/>
         <source>Touchscreen Swipe Down</source>
         <comment>controller_other_binding_entries[4]</comment>
         <translation>Свайп по экрану вниз</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1273"/>
+        <location filename="../../core/android_strings.h" line="1303"/>
         <source>Accelerometer Turn Left (X)</source>
         <comment>controller_other_binding_entries[5]</comment>
         <translation>Акселерометр, поворот влево (X)</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1274"/>
+        <location filename="../../core/android_strings.h" line="1304"/>
         <source>Accelerometer Turn Right (X)</source>
         <comment>controller_other_binding_entries[6]</comment>
         <translation>Акселерометр, поворот вправо (X)</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1275"/>
+        <location filename="../../core/android_strings.h" line="1305"/>
         <source>Accelerometer Tilt Backwards (Y)</source>
         <comment>controller_other_binding_entries[7]</comment>
         <translation>Акселерометр, наклон назад (Y)</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1276"/>
+        <location filename="../../core/android_strings.h" line="1306"/>
         <source>Accelerometer Tilt Forwards (Y)</source>
         <comment>controller_other_binding_entries[8]</comment>
         <translation>Акселерометр, наклон вперед (Y)</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1277"/>
+        <location filename="../../core/android_strings.h" line="1307"/>
         <source>Accelerometer Rotate Left (Z)</source>
         <comment>controller_other_binding_entries[9]</comment>
         <translation>Акселерометр, вращение влево (Z)</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1278"/>
+        <location filename="../../core/android_strings.h" line="1308"/>
         <source>Accelerometer Rotate Right (Z)</source>
         <comment>controller_other_binding_entries[10]</comment>
         <translation>Акселерометр, вращение вправо (Z)</translation>
@@ -2441,13 +2441,13 @@ This session will start in offline mode.</source>
         <location filename="../../core/android_strings.h" line="58"/>
         <source>Apply Game Settings</source>
         <comment>settings_apply_game_settings</comment>
-        <translation>Применять настройки игры</translation>
+        <translation>Применять настройки игр</translation>
     </message>
     <message>
         <location filename="../../core/android_strings.h" line="59"/>
         <source>Enables loading of per-game configuration. If this option is disabled, only the global configuration will be used.</source>
         <comment>settings_summary_apply_game_settings</comment>
-        <translation>Включает загрузку конфигурации для каждой игры. При отключении используются только глобальные настройки.</translation>
+        <translation>Включает загрузку конфигураций для каждой игры. Если выключено, используются только глобальные настройки.</translation>
     </message>
     <message>
         <location filename="../../core/android_strings.h" line="60"/>
@@ -3219,7 +3219,7 @@ Current Binding: %s</source>
         <location filename="../../core/android_strings.h" line="363"/>
         <source>Attempts to automatically bind all buttons/axes to a connected controller.</source>
         <comment>controller_settings_summary_automatic_mapping</comment>
-        <translation>Попытаться автоматически назначить все кнопки/оси для подключенного контроллера.</translation>
+        <translation>Попытаться автоматически назначить все кнопки/оси для подключенного геймпада.</translation>
     </message>
     <message>
         <location filename="../../core/android_strings.h" line="364"/>
@@ -3327,19 +3327,19 @@ Current Binding: %s</source>
         <location filename="../../core/android_strings.h" line="414"/>
         <source>Selects the player which touchscreen input will simulate.</source>
         <comment>settings_summary_touchscreen_controller_port</comment>
-        <translation>Выбор игрока, которым управляет экранный контроллер.</translation>
+        <translation>Выбор игрока, для которого используется экранный контроллер.</translation>
     </message>
     <message>
         <location filename="../../core/android_strings.h" line="415"/>
         <source>Load State</source>
         <comment>emulation_menu_load_state</comment>
-        <translation>Загрузить сохранение</translation>
+        <translation>Загрузить состояние</translation>
     </message>
     <message>
         <location filename="../../core/android_strings.h" line="416"/>
         <source>Save State</source>
         <comment>emulation_menu_save_state</comment>
-        <translation>Создать сохранение</translation>
+        <translation>Сохранить состояние</translation>
     </message>
     <message>
         <location filename="../../core/android_strings.h" line="418"/>
@@ -3369,7 +3369,7 @@ Current Binding: %s</source>
         <location filename="../../core/android_strings.h" line="425"/>
         <source>Save Screenshot</source>
         <comment>emulation_menu_save_screenshot</comment>
-        <translation>Сделать скриншот</translation>
+        <translation>Снимок экрана</translation>
     </message>
     <message>
         <location filename="../../core/android_strings.h" line="426"/>
@@ -3528,323 +3528,315 @@ Current Binding: %s</source>
         <translation>Триггер не задан</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="464"/>
         <source>No buttons set</source>
         <comment>edit_macro_buttons_no_bindings</comment>
-        <translation>Кнопки не заданы</translation>
+        <translation type="vanished">Кнопки не заданы</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="465"/>
         <source>Macro will not repeat.</source>
         <comment>edit_macro_button_no_repeat</comment>
-        <translation>Макрос не будет повторяться.</translation>
+        <translation type="vanished">Макрос не будет повторяться.</translation>
     </message>
     <message numerus="yes">
-        <location filename="../../core/android_strings.h" line="467"/>
         <source>Macro will toggle every %d frames.</source>
         <comment>edit_macro_button_repeat</comment>
         <extracomment>Android plural quantities: one=&quot;Macro will toggle every %d frame.&quot;; other=&quot;Macro will toggle every %d frames.&quot;</extracomment>
-        <translation>
+        <translation type="vanished">
             <numerusform>Макрос включается каждый %d кадр.</numerusform>
             <numerusform>Макрос включается каждые %d кадра.</numerusform>
             <numerusform>Макрос включается каждые %d кадров.</numerusform>
         </translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="468"/>
         <source>Choose Bindings</source>
         <comment>edit_macro_button_choose_bindings</comment>
-        <translation>Выберите действия</translation>
+        <translation type="vanished">Выберите действия</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="469"/>
         <source>%1$s triggers %2$s</source>
         <comment>edit_macro_button_summary_no_repeat</comment>
-        <translation>%1$s активирует %2$s</translation>
+        <translation type="vanished">%1$s активирует %2$s</translation>
     </message>
     <message numerus="yes">
-        <location filename="../../core/android_strings.h" line="471"/>
         <source>%1$s triggers %2$s every %3$d frames.</source>
         <comment>edit_macro_button_summary_repeat</comment>
         <extracomment>Android plural quantities: one=&quot;%1$s triggers %2$s every %3$d frame.&quot;; other=&quot;%1$s triggers %2$s every %3$d frames.&quot;</extracomment>
-        <translation>
+        <translation type="vanished">
             <numerusform>%1$s активирует %2$s каждый %3$d кадр.</numerusform>
             <numerusform>%1$s активирует %2$s каждые %3$d кадра.</numerusform>
             <numerusform>%1$s активирует %2$s каждые %3$d кадров.</numerusform>
         </translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="472"/>
+        <location filename="../../core/android_strings.h" line="466"/>
         <source>Trigger</source>
         <comment>edit_macro_button_trigger</comment>
         <translation>Триггер</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="473"/>
         <source>Buttons</source>
         <comment>edit_macro_button_buttons</comment>
-        <translation>Кнопки</translation>
+        <translation type="vanished">Кнопки</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="474"/>
         <source>Frequency</source>
         <comment>edit_macro_button_frequency</comment>
-        <translation>Частота</translation>
+        <translation type="vanished">Частота</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="475"/>
+        <location filename="../../core/android_strings.h" line="501"/>
         <source>Macro %d</source>
         <comment>macro_binding_template</comment>
         <translation>Макрос %d</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="476"/>
+        <location filename="../../core/android_strings.h" line="502"/>
         <source>No vibrators found. Your controller or driver may not support vibration.</source>
         <comment>binding_no_vibrators_found</comment>
         <translation>Вибромоторы не найдены. Возможно, драйвер или контроллер не поддерживают вибрацию.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="477"/>
+        <location filename="../../core/android_strings.h" line="503"/>
         <source>Select Vibrator Binding</source>
         <comment>select_vibrator_binding</comment>
         <translation>Выберите привязку вибромотора</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="478"/>
+        <location filename="../../core/android_strings.h" line="504"/>
         <source>Vibration</source>
         <comment>controller_settings_category_vibration</comment>
         <translation>Вибрация</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="481"/>
+        <location filename="../../core/android_strings.h" line="507"/>
         <source>Vibration Update Frequency</source>
         <comment>settings_vibration_update_frequency</comment>
         <translation>Частота обновления вибрации</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="482"/>
+        <location filename="../../core/android_strings.h" line="508"/>
         <source>Throttles the frequency at which vibration updates are sent. May help with controller disconnection/lag issues.</source>
         <comment>settings_summary_vibration_update_frequency</comment>
         <translation>Ограничивает частоту отправки команд вибрации. Помогает устранить задержки ввода и отключения контроллера.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="483"/>
+        <location filename="../../core/android_strings.h" line="509"/>
         <source>Settings cleared.</source>
         <comment>game_properties_settings_cleared</comment>
         <translation>Настройки сброшены.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="484"/>
+        <location filename="../../core/android_strings.h" line="510"/>
         <source>Use Global Setting</source>
         <comment>game_properties_use_global_setting</comment>
         <translation>Глобальное значение</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="485"/>
+        <location filename="../../core/android_strings.h" line="511"/>
         <source>Default</source>
         <comment>game_setting_follow_default</comment>
         <translation>По умолчанию</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="486"/>
+        <location filename="../../core/android_strings.h" line="512"/>
         <source>Add/Remove Buttons</source>
         <comment>settings_touchscreen_controller_add_remove_buttons</comment>
         <translation>Добавить/скрыть кнопки</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="487"/>
+        <location filename="../../core/android_strings.h" line="513"/>
         <source>Move Buttons</source>
         <comment>settings_touchscreen_controller_move_buttons</comment>
-        <translation>Положеник кнопок</translation>
+        <translation>Положение кнопок</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="488"/>
+        <location filename="../../core/android_strings.h" line="514"/>
         <source>Overlay Opacity</source>
         <comment>settings_touchscreen_controller_opacity</comment>
         <translation>Видимость оверлея</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="489"/>
+        <location filename="../../core/android_strings.h" line="515"/>
         <source>Controls the transparency level of the touchscreen controller.</source>
         <comment>settings_summary_touchscreen_controller_opacity</comment>
         <translation>Настройка уровня прозрачности экранного контроллера.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="494"/>
+        <location filename="../../core/android_strings.h" line="520"/>
         <source>Tap To Hold</source>
         <comment>settings_touchscreen_controller_toggle_buttons</comment>
         <translation>Залипание кнопок</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="495"/>
+        <location filename="../../core/android_strings.h" line="521"/>
         <source>Swipe Horizontal Sensitivity</source>
         <comment>settings_touchscreen_controller_x_scale</comment>
-        <translation>Горизонтальная чувствительность свайпа</translation>
+        <translation>Чувствительность свайпов по горизонтали</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="496"/>
+        <location filename="../../core/android_strings.h" line="522"/>
         <source>Swipe Vertical Sensitivity</source>
         <comment>settings_touchscreen_controller_y_scale</comment>
-        <translation>Вертикальная чувствительность свайпа</translation>
+        <translation>Чувствительность свайпов по вертикали</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="497"/>
+        <location filename="../../core/android_strings.h" line="523"/>
         <source>Adjusts the ratio of touch movement to stick pressure. Lower values imply more stick pressure.</source>
         <comment>settings_touchscreen_controller_scale_summary</comment>
         <translation>Регулирует соотношение движения пальца к отклонению стика. Низкие значения требуют большей амплитуды жеста.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="498"/>
+        <location filename="../../core/android_strings.h" line="524"/>
         <source>Failed to take persistable permission.</source>
         <comment>game_list_settings_failed_to_take_persistable_permission</comment>
         <translation>Не удалось получить постоянное разрешение.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="499"/>
+        <location filename="../../core/android_strings.h" line="525"/>
         <source>Save Slot %d</source>
         <comment>save_slot_n</comment>
         <translation>Слот сохранения %d</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="500"/>
+        <location filename="../../core/android_strings.h" line="526"/>
         <source>No save present in this slot.</source>
         <comment>save_slot_not_present</comment>
-        <translation>Нет сохранений в слоте.</translation>
+        <translation>Нет сохранения в слоте.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="501"/>
+        <location filename="../../core/android_strings.h" line="527"/>
         <source>Resume Save</source>
         <comment>save_slot_resume_save</comment>
         <translation>Автосохранение</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="504"/>
+        <location filename="../../core/android_strings.h" line="530"/>
         <source>Save State Manager</source>
         <comment>save_state_manager_title</comment>
         <translation>Менеджер сохранений</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="576"/>
+        <location filename="../../core/android_strings.h" line="602"/>
         <source>Confirm Deletion</source>
         <comment>confirm_deletion</comment>
         <translation>Подтвердите удаление</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="577"/>
+        <location filename="../../core/android_strings.h" line="603"/>
         <source>Are you sure you wish to delete this save state? It cannot be recovered.</source>
         <comment>confirm_delete_save_state</comment>
         <translation>Вы уверены, что хотите удалить это сохранение? Восстановление невозможно.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="578"/>
+        <location filename="../../core/android_strings.h" line="604"/>
         <source>Failed to delete save state.</source>
         <comment>save_state_manager_failed_to_delete</comment>
         <translation>Не удалось удалить сохранение.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="579"/>
+        <location filename="../../core/android_strings.h" line="605"/>
         <source>Delete State</source>
         <comment>resume_game_delete</comment>
         <translation>Удалить сохранение</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="580"/>
+        <location filename="../../core/android_strings.h" line="606"/>
         <source>Refresh</source>
         <comment>menu_refresh</comment>
         <translation>Обновить</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="581"/>
+        <location filename="../../core/android_strings.h" line="607"/>
         <source>Failed to open/decode image.</source>
         <comment>choose_cover_image_failed_decode</comment>
         <translation>Не удалось открыть/декодировать изображение.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="582"/>
+        <location filename="../../core/android_strings.h" line="608"/>
         <source>Failed to save image.</source>
         <comment>choose_cover_image_failed_save</comment>
         <translation>Не удалось сохранить изображение.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="583"/>
+        <location filename="../../core/android_strings.h" line="609"/>
         <source>Title</source>
         <comment>game_properties_title</comment>
         <translation>Название</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="584"/>
+        <location filename="../../core/android_strings.h" line="610"/>
         <source>Serial</source>
         <comment>game_properties_serial</comment>
         <translation>Серийный номер</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="587"/>
+        <location filename="../../core/android_strings.h" line="613"/>
         <source>More Details</source>
         <comment>game_properties_more_details</comment>
         <translation>Подробнее</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="588"/>
+        <location filename="../../core/android_strings.h" line="614"/>
         <source>Languages</source>
         <comment>game_properties_languages</comment>
         <translation>Языки</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="589"/>
+        <location filename="../../core/android_strings.h" line="615"/>
         <source>Type</source>
         <comment>game_properties_type</comment>
         <translation>Тип</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="590"/>
+        <location filename="../../core/android_strings.h" line="616"/>
         <source>Region</source>
         <comment>game_properties_region</comment>
         <translation>Регион</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="591"/>
+        <location filename="../../core/android_strings.h" line="617"/>
         <source>Language</source>
         <comment>game_properties_language</comment>
         <translation>Язык</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="593"/>
+        <location filename="../../core/android_strings.h" line="619"/>
         <source>Path</source>
         <comment>game_properties_path</comment>
         <translation>Путь</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="596"/>
+        <location filename="../../core/android_strings.h" line="622"/>
         <source>Time Played</source>
         <comment>game_properties_time_played</comment>
         <translation>Время в игре</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="597"/>
+        <location filename="../../core/android_strings.h" line="623"/>
         <source>Last Played</source>
         <comment>game_properties_last_played</comment>
         <translation>Последний запуск</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="598"/>
+        <location filename="../../core/android_strings.h" line="624"/>
         <source>Never</source>
         <comment>game_properties_last_played_never</comment>
         <translation>Никогда</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="599"/>
+        <location filename="../../core/android_strings.h" line="625"/>
         <source>None</source>
         <comment>game_properties_time_played_none</comment>
         <translation>Нет</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="600"/>
+        <location filename="../../core/android_strings.h" line="626"/>
         <source>Copy Settings</source>
         <comment>game_settings_copy_settings</comment>
         <translation>Копировать настройки</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="601"/>
+        <location filename="../../core/android_strings.h" line="627"/>
         <source>Any settings currently set for this game will be
         overwritten. Are you sure you want to continue?</source>
         <comment>game_settings_confirm_copy_settings</comment>
@@ -3852,13 +3844,13 @@ Current Binding: %s</source>
         Продолжить?</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="602"/>
+        <location filename="../../core/android_strings.h" line="628"/>
         <source>Clear Settings</source>
         <comment>game_settings_clear_settings</comment>
         <translation>Очистить настройки</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="603"/>
+        <location filename="../../core/android_strings.h" line="629"/>
         <source>Any settings currently set for this game will be
         removed. Are you sure you want to continue?</source>
         <comment>game_settings_confirm_clear_settings</comment>
@@ -3866,151 +3858,151 @@ Current Binding: %s</source>
         Продолжить?</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="604"/>
+        <location filename="../../core/android_strings.h" line="630"/>
         <source>Controller settings reset.</source>
         <comment>controller_settings_reset_done</comment>
         <translation>Настройки контроллеров сброшены.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="605"/>
+        <location filename="../../core/android_strings.h" line="631"/>
         <source>Restore Defaults</source>
         <comment>settings_restore_defaults</comment>
         <translation>Сброс настроек</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="606"/>
+        <location filename="../../core/android_strings.h" line="632"/>
         <source>This will restore all application settings to their defaults. You will not be able to recover these changes.</source>
         <comment>settings_restore_defaults_message</comment>
         <translation>Все настройки приложения будут сброшены к значениям по умолчанию. Это действие нельзя отменить.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="607"/>
+        <location filename="../../core/android_strings.h" line="633"/>
         <source>This will restore all controller settings, including the touchscreen, to their defaults. Do you want to continue?</source>
         <comment>controller_settings_restore_defaults_message</comment>
         <translation>Все настройки контроллеров, включая сенсорный экран, будут сброшены к значениям по умолчанию. Продолжить?</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="608"/>
+        <location filename="../../core/android_strings.h" line="634"/>
         <source>Settings reset.</source>
         <comment>main_settings_reset_done</comment>
         <translation>Настройки сброшены.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="609"/>
+        <location filename="../../core/android_strings.h" line="635"/>
         <source>Run Setup Wizard</source>
         <comment>settings_run_setup_wizard</comment>
         <translation>Мастер настройки</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="611"/>
+        <location filename="../../core/android_strings.h" line="637"/>
         <source>Finish</source>
         <comment>setup_wizard_finish</comment>
         <translation>Готово</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="612"/>
+        <location filename="../../core/android_strings.h" line="638"/>
         <source>Next</source>
         <comment>setup_wizard_next</comment>
         <translation>Далее</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="613"/>
+        <location filename="../../core/android_strings.h" line="639"/>
         <source>Back</source>
         <comment>setup_wizard_back</comment>
         <translation>Назад</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="614"/>
+        <location filename="../../core/android_strings.h" line="640"/>
         <source>Welcome to DuckStation!</source>
         <comment>setup_wizard_welcome_title</comment>
         <translation>Приветствуем в DuckStation!</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="616"/>
+        <location filename="../../core/android_strings.h" line="642"/>
         <source>Please choose a theme and language, then tap Next to get started.</source>
         <comment>setup_wizard_welcome_second_paragraph</comment>
         <translation>Выберите тему и язык приложения и нажмите «Далее», чтобы начать.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="620"/>
+        <location filename="../../core/android_strings.h" line="646"/>
         <source>Connect a controller and use automatic mapping for either player. Detailed bindings can be changed later in Input Settings.</source>
         <comment>setup_wizard_input_setup_message</comment>
         <translation>Подключите геймпад и запустите автонастройку для любого игрока. Вы можете изменить отдельные привязки кнопок позже в настройках контроллеров.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="621"/>
+        <location filename="../../core/android_strings.h" line="647"/>
         <source>Mapped Device</source>
         <comment>setup_wizard_mapped_device</comment>
         <translation>Привязанное устройство</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="622"/>
+        <location filename="../../core/android_strings.h" line="648"/>
         <source>Pause Menu Hotkey</source>
         <comment>setup_wizard_pause_hotkey_title</comment>
         <translation>Горячая клавиша меню паузы</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="623"/>
+        <location filename="../../core/android_strings.h" line="649"/>
         <source>Graphics Setup</source>
         <comment>setup_wizard_graphics_title</comment>
         <translation>Настройка графики</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="624"/>
+        <location filename="../../core/android_strings.h" line="650"/>
         <source>These commonly used video options can be changed again after setup.</source>
         <comment>setup_wizard_graphics_message</comment>
         <translation>Эти основные параметры видео можно изменить после завершения настройки.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="634"/>
+        <location filename="../../core/android_strings.h" line="660"/>
         <source>View Selection</source>
         <comment>setup_wizard_view_title</comment>
         <translation>Вид списка игр</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="636"/>
+        <location filename="../../core/android_strings.h" line="662"/>
         <source>List View</source>
         <comment>setup_wizard_list_view</comment>
         <translation>Список</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="637"/>
+        <location filename="../../core/android_strings.h" line="663"/>
         <source>Grid View</source>
         <comment>setup_wizard_grid_view</comment>
         <translation>Сетка</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="638"/>
+        <location filename="../../core/android_strings.h" line="664"/>
         <source>Exit Setup?</source>
         <comment>setup_wizard_exit_title</comment>
         <translation>Выйти из настройки?</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="639"/>
+        <location filename="../../core/android_strings.h" line="665"/>
         <source>Setup is not complete. Are you sure you want to exit?</source>
         <comment>setup_wizard_exit_message</comment>
         <translation>Настройка не завершена. Вы уверены, что хотите выйти?</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="640"/>
+        <location filename="../../core/android_strings.h" line="666"/>
         <source>Setup Complete</source>
         <comment>setup_wizard_complete_title</comment>
         <translation>Настройка завершена</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="641"/>
+        <location filename="../../core/android_strings.h" line="667"/>
         <source>Press finish to open the game list and start scanning for games. If you need to, you can re-run this setup wizard again from within App Settings.</source>
         <comment>setup_wizard_complete_message</comment>
         <translation>Нажмите «Готово», чтобы перейти к списку игр и начать сканирование. При необходимости вы можете запустить мастер повторно из настроек приложения.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="642"/>
+        <location filename="../../core/android_strings.h" line="668"/>
         <source>Add New</source>
         <comment>controller_binding_add_new_multibinding</comment>
         <translation>Добавить новую</translation>
     </message>
     <message numerus="yes">
-        <location filename="../../core/android_strings.h" line="644"/>
+        <location filename="../../core/android_strings.h" line="670"/>
         <source>&lt;%d Bindings&gt;</source>
         <comment>controller_binding_multiple_bindings</comment>
         <extracomment>Android plural quantities: one=&quot;&lt;%d Binding&gt;&quot;; other=&quot;&lt;%d Bindings&gt;&quot;</extracomment>
@@ -4021,265 +4013,265 @@ Current Binding: %s</source>
         </translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="645"/>
+        <location filename="../../core/android_strings.h" line="671"/>
         <source>Edit %s Bindings</source>
         <comment>controller_binding_multibind_title</comment>
         <translation>Изменение привязок для %s</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="650"/>
+        <location filename="../../core/android_strings.h" line="676"/>
         <source>Auto-Hide Delay</source>
         <comment>settings_touchscreen_auto_hide_time</comment>
         <translation>Задержка автоскрытия</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="651"/>
+        <location filename="../../core/android_strings.h" line="677"/>
         <source>Hides touch controls after the specified time. A delay of zero will not hide the controls.</source>
         <comment>settings_summary_touchscreen_auto_hide_time</comment>
         <translation>Скрывает сенсорное управление через заданный период неактивности. При «0» элементы управления всегда остаются на экране.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="656"/>
+        <location filename="../../core/android_strings.h" line="682"/>
         <source>Advanced Settings</source>
         <comment>settings_advanced</comment>
         <translation>Расширенные настройки</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="729"/>
+        <location filename="../../core/android_strings.h" line="755"/>
         <source>Disable All</source>
         <comment>game_properties_disable_patch_codes</comment>
         <translation>Отключить все</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="745"/>
+        <location filename="../../core/android_strings.h" line="771"/>
         <source>Add</source>
         <comment>cheat_codes_add</comment>
         <translation>Добавить</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="746"/>
+        <location filename="../../core/android_strings.h" line="772"/>
         <source>Import</source>
         <comment>cheat_codes_import</comment>
         <translation>Импорт</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="747"/>
+        <location filename="../../core/android_strings.h" line="773"/>
         <source>Export</source>
         <comment>cheat_codes_export</comment>
         <translation>Экспорт</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="749"/>
+        <location filename="../../core/android_strings.h" line="775"/>
         <source>Remove All</source>
         <comment>cheat_codes_remove_all</comment>
         <translation>Удалить все</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1239"/>
+        <location filename="../../core/android_strings.h" line="1269"/>
         <source>Auto (Game Native)</source>
         <comment>settings_video_aspect_ratio_entries[0]</comment>
         <translation>Автоматически (как в игре)</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1240"/>
+        <location filename="../../core/android_strings.h" line="1270"/>
         <source>Stretch To Fill</source>
         <comment>settings_video_aspect_ratio_entries[1]</comment>
         <translation>На весь экран</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1241"/>
+        <location filename="../../core/android_strings.h" line="1271"/>
         <source>4:3</source>
         <comment>settings_video_aspect_ratio_entries[2]</comment>
         <translation>4:3</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1242"/>
+        <location filename="../../core/android_strings.h" line="1272"/>
         <source>16:9</source>
         <comment>settings_video_aspect_ratio_entries[3]</comment>
         <translation>16:9</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1243"/>
+        <location filename="../../core/android_strings.h" line="1273"/>
         <source>19:9</source>
         <comment>settings_video_aspect_ratio_entries[4]</comment>
         <translation>19:9</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1244"/>
+        <location filename="../../core/android_strings.h" line="1274"/>
         <source>20:9</source>
         <comment>settings_video_aspect_ratio_entries[5]</comment>
         <translation>20:9</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1245"/>
+        <location filename="../../core/android_strings.h" line="1275"/>
         <source>21:9</source>
         <comment>settings_video_aspect_ratio_entries[6]</comment>
         <translation>21:9</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1246"/>
+        <location filename="../../core/android_strings.h" line="1276"/>
         <source>16:10</source>
         <comment>settings_video_aspect_ratio_entries[7]</comment>
         <translation>16:10</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1247"/>
+        <location filename="../../core/android_strings.h" line="1277"/>
         <source>PAR 1:1</source>
         <comment>settings_video_aspect_ratio_entries[8]</comment>
         <translation>PAR 1:1</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1248"/>
+        <location filename="../../core/android_strings.h" line="1278"/>
         <source>Custom</source>
         <comment>settings_video_aspect_ratio_entries[9]</comment>
         <translation>Пользовательское</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1253"/>
+        <location filename="../../core/android_strings.h" line="1283"/>
         <source>Automatic</source>
         <comment>settings_achievement_scale_entries[0]</comment>
         <translation>Автоматически</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1254"/>
+        <location filename="../../core/android_strings.h" line="1284"/>
         <source>Use OSD Scale</source>
         <comment>settings_achievement_scale_entries[1]</comment>
         <translation>Масштаб индикации</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1255"/>
+        <location filename="../../core/android_strings.h" line="1285"/>
         <source>Custom</source>
         <comment>settings_achievement_scale_entries[2]</comment>
         <translation>Пользовательский</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1260"/>
+        <location filename="../../core/android_strings.h" line="1290"/>
         <source>AMOLED</source>
         <comment>settings_theme_entries[4]</comment>
         <translation>AMOLED</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1261"/>
+        <location filename="../../core/android_strings.h" line="1291"/>
         <source>Cobalt Sky</source>
         <comment>settings_theme_entries[5]</comment>
         <translation>Cobalt Sky</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1262"/>
+        <location filename="../../core/android_strings.h" line="1292"/>
         <source>Dark Ruby</source>
         <comment>settings_theme_entries[6]</comment>
         <translation>Dark Ruby</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1263"/>
+        <location filename="../../core/android_strings.h" line="1293"/>
         <source>Grey Matter</source>
         <comment>settings_theme_entries[7]</comment>
         <translation>Grey Matter</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1264"/>
+        <location filename="../../core/android_strings.h" line="1294"/>
         <source>Purple Rain</source>
         <comment>settings_theme_entries[8]</comment>
         <translation>Purple Rain</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1265"/>
+        <location filename="../../core/android_strings.h" line="1295"/>
         <source>Green Giant</source>
         <comment>settings_theme_entries[9]</comment>
         <translation>Green Giant</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1266"/>
+        <location filename="../../core/android_strings.h" line="1296"/>
         <source>Pinky Pals</source>
         <comment>settings_theme_entries[10]</comment>
         <translation>Pinky Pals</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1267"/>
+        <location filename="../../core/android_strings.h" line="1297"/>
         <source>Midnight Amber</source>
         <comment>settings_theme_entries[11]</comment>
         <translation>Midnight Amber</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1279"/>
+        <location filename="../../core/android_strings.h" line="1309"/>
         <source>None (Double Speed)</source>
         <comment>settings_cdrom_read_speedup_entries[0]</comment>
         <translation>Нет (двойная скорость)</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1280"/>
+        <location filename="../../core/android_strings.h" line="1310"/>
         <source>2x (Quad Speed)</source>
         <comment>settings_cdrom_read_speedup_entries[1]</comment>
         <translation>2x (скорость 4x)</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1281"/>
+        <location filename="../../core/android_strings.h" line="1311"/>
         <source>3x (6x Speed)</source>
         <comment>settings_cdrom_read_speedup_entries[2]</comment>
         <translation>3x (скорость 6x)</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1282"/>
+        <location filename="../../core/android_strings.h" line="1312"/>
         <source>4x (8x Speed)</source>
         <comment>settings_cdrom_read_speedup_entries[3]</comment>
         <translation>4x (скорость 8x)</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1283"/>
+        <location filename="../../core/android_strings.h" line="1313"/>
         <source>5x (10x Speed)</source>
         <comment>settings_cdrom_read_speedup_entries[4]</comment>
         <translation>5x (скорость 10x)</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1284"/>
+        <location filename="../../core/android_strings.h" line="1314"/>
         <source>6x (12x Speed)</source>
         <comment>settings_cdrom_read_speedup_entries[5]</comment>
         <translation>6x (скорость 12x)</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1285"/>
+        <location filename="../../core/android_strings.h" line="1315"/>
         <source>Maximum (Safer)</source>
         <comment>settings_cdrom_read_speedup_entries[6]</comment>
         <translation>Максимум (безопаснее)</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1286"/>
+        <location filename="../../core/android_strings.h" line="1316"/>
         <source>None (Normal Speed)</source>
         <comment>settings_cdrom_seek_speedup_entries[0]</comment>
         <translation>Нет (обычная скорость)</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1287"/>
+        <location filename="../../core/android_strings.h" line="1317"/>
         <source>2x</source>
         <comment>settings_cdrom_seek_speedup_entries[1]</comment>
         <translation>2x</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1288"/>
+        <location filename="../../core/android_strings.h" line="1318"/>
         <source>3x</source>
         <comment>settings_cdrom_seek_speedup_entries[2]</comment>
         <translation>3x</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1289"/>
+        <location filename="../../core/android_strings.h" line="1319"/>
         <source>4x</source>
         <comment>settings_cdrom_seek_speedup_entries[3]</comment>
         <translation>4x</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1290"/>
+        <location filename="../../core/android_strings.h" line="1320"/>
         <source>5x</source>
         <comment>settings_cdrom_seek_speedup_entries[4]</comment>
         <translation>5x</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1291"/>
+        <location filename="../../core/android_strings.h" line="1321"/>
         <source>6x</source>
         <comment>settings_cdrom_seek_speedup_entries[5]</comment>
         <translation>6x</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1292"/>
+        <location filename="../../core/android_strings.h" line="1322"/>
         <source>Maximum (Safer)</source>
         <comment>settings_cdrom_seek_speedup_entries[6]</comment>
         <translation>Максимум (безопаснее)</translation>
@@ -4426,7 +4418,7 @@ Current Binding: %s</source>
         <location filename="../../core/android_strings.h" line="69"/>
         <source>Logs messages to duckstation.log in the user directory.</source>
         <comment>settings_summary_log_to_file</comment>
-        <translation>Записывает сообщения в файл duckstation.log в папке с данными.</translation>
+        <translation>Сохраняет сообщения в файл duckstation.log в папке с данными.</translation>
     </message>
     <message>
         <location filename="../../core/android_strings.h" line="70"/>
@@ -5248,659 +5240,656 @@ Current Binding: %s</source>
         <translation>%1$s×</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="479"/>
+        <location filename="../../core/android_strings.h" line="505"/>
         <source>Enable Game Vibration</source>
         <comment>settings_touchscreen_enable_vibration</comment>
         <translation>Вибрация устройства</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="480"/>
+        <location filename="../../core/android_strings.h" line="506"/>
         <source>Forwards vibration from the game to your device&apos;s vibration motor, if present.</source>
         <comment>settings_summary_touchscreen_enable_vibration</comment>
         <translation>Перенаправляет вибрацию из игры на вибромотор устройства (при его наличии).</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="490"/>
+        <location filename="../../core/android_strings.h" line="516"/>
         <source>Button Style</source>
         <comment>settings_touchscreen_controller_theme</comment>
         <translation>Стиль кнопок</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="491"/>
+        <location filename="../../core/android_strings.h" line="517"/>
         <source>Selects whether the touchscreen controller buttons are drawn as outlines or filled.</source>
         <comment>settings_summary_touchscreen_controller_theme</comment>
         <translation>Выбор способа отрисовки кнопок экранного контроллера: контурный или сплошная заливка.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="492"/>
+        <location filename="../../core/android_strings.h" line="518"/>
         <source>Outline</source>
         <comment>touchscreen_controller_theme_outline</comment>
         <translation>Контур</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="493"/>
+        <location filename="../../core/android_strings.h" line="519"/>
         <source>Filled</source>
         <comment>touchscreen_controller_theme_filled</comment>
         <translation>Заливка</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="502"/>
+        <location filename="../../core/android_strings.h" line="528"/>
         <source>Global Save %d</source>
         <comment>save_slot_global_n</comment>
         <translation>Глобальное сохранение %d</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="503"/>
+        <location filename="../../core/android_strings.h" line="529"/>
         <source>Undo Load State</source>
         <comment>save_slot_undo_load_state</comment>
         <translation>Отменить загрузку сохранения</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="505"/>
+        <location filename="../../core/android_strings.h" line="531"/>
         <source>No save states found.</source>
         <comment>save_state_manager_empty</comment>
-        <translation>Быстрые сохранения не найдены.</translation>
+        <translation>Сохранения состояний не найдены.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="506"/>
+        <location filename="../../core/android_strings.h" line="532"/>
         <source>Memory Card Editor</source>
         <comment>title_activity_memory_card_editor</comment>
         <translation>Редактор карт памяти</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="507"/>
+        <location filename="../../core/android_strings.h" line="533"/>
         <source>Memory Card Editor</source>
         <comment>action_memory_card_editor</comment>
         <translation>Редактор карт памяти</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="508"/>
+        <location filename="../../core/android_strings.h" line="534"/>
         <source>Import Card</source>
         <comment>action_memory_card_editor_import_card</comment>
         <translation>Импортировать карту</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="509"/>
+        <location filename="../../core/android_strings.h" line="535"/>
         <source>Open Card</source>
         <comment>action_memory_card_editor_open_card</comment>
         <translation>Открыть карту</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="510"/>
+        <location filename="../../core/android_strings.h" line="536"/>
         <source>New Card</source>
         <comment>action_memory_card_editor_new_card</comment>
         <translation>Новая карта</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="511"/>
+        <location filename="../../core/android_strings.h" line="537"/>
         <source>Format Card</source>
         <comment>action_memory_card_editor_format_card</comment>
         <translation>Форматировать карту</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="512"/>
+        <location filename="../../core/android_strings.h" line="538"/>
         <source>Delete Card</source>
         <comment>action_memory_card_editor_delete_card</comment>
         <translation>Удалить карту</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="513"/>
+        <location filename="../../core/android_strings.h" line="539"/>
         <source>Close Card</source>
         <comment>action_memory_card_editor_close_card</comment>
         <translation>Закрыть карту</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="514"/>
+        <location filename="../../core/android_strings.h" line="540"/>
         <source>No memory cards are open.</source>
         <comment>memory_card_editor_no_cards_open</comment>
         <translation>Нет открытых карт памяти.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="515"/>
+        <location filename="../../core/android_strings.h" line="541"/>
         <source>This memory card is empty.</source>
         <comment>memory_card_editor_no_saves</comment>
         <translation>Карта памяти пуста.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="516"/>
+        <location filename="../../core/android_strings.h" line="542"/>
         <source>%d blocks free</source>
         <comment>memory_card_editor_free_blocks</comment>
         <translation>свободно блоков: %d</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="517"/>
+        <location filename="../../core/android_strings.h" line="543"/>
         <source>%d Blocks</source>
         <comment>memory_card_editor_blocks</comment>
         <translation>Блоков: %d</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="518"/>
+        <location filename="../../core/android_strings.h" line="544"/>
         <source>%.1f KB</source>
         <comment>memory_card_editor_file_size</comment>
         <translation>%.1f КБ</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="519"/>
+        <location filename="../../core/android_strings.h" line="545"/>
         <source>%s (Deleted)</source>
         <comment>memory_card_editor_deleted_title</comment>
         <translation>%s (удалено)</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="520"/>
+        <location filename="../../core/android_strings.h" line="546"/>
         <source>Copy Save</source>
         <comment>memory_card_editor_copy_save</comment>
         <translation>Копировать сохранение</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="521"/>
+        <location filename="../../core/android_strings.h" line="547"/>
         <source>Delete Save</source>
         <comment>memory_card_editor_delete_save</comment>
         <translation>Удалить сохранение</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="522"/>
+        <location filename="../../core/android_strings.h" line="548"/>
         <source>Undelete Save</source>
         <comment>memory_card_editor_undelete_save</comment>
         <translation>Восстановить сохранение</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="523"/>
+        <location filename="../../core/android_strings.h" line="549"/>
         <source>Permanently Delete Save</source>
         <comment>memory_card_editor_permanently_delete_save</comment>
         <translation>Удалить безвозвратно</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="524"/>
+        <location filename="../../core/android_strings.h" line="550"/>
         <source>No memory cards found.</source>
         <comment>memory_card_editor_no_cards_found</comment>
         <translation>Карты памяти не найдены.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="525"/>
+        <location filename="../../core/android_strings.h" line="551"/>
         <source>This card is already open.</source>
         <comment>memory_card_editor_card_already_open</comment>
         <translation>Карта уже открыта.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="526"/>
+        <location filename="../../core/android_strings.h" line="552"/>
         <source>Failed to open or read memory card.</source>
         <comment>memory_card_editor_failed_to_open_card</comment>
         <translation>Не удалось открыть или прочитать карту памяти.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="527"/>
+        <location filename="../../core/android_strings.h" line="553"/>
         <source>Must have at least two cards open to copy.</source>
         <comment>memory_card_editor_must_have_at_least_two_cards_to_copy</comment>
         <translation>Для копирования должно быть открыто минимум две карты.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="529"/>
+        <location filename="../../core/android_strings.h" line="555"/>
         <source>Select Card</source>
         <comment>memory_card_editor_select_card</comment>
         <translation>Выберите карту</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="530"/>
+        <location filename="../../core/android_strings.h" line="556"/>
         <source>Error</source>
         <comment>memory_card_editor_error</comment>
         <translation>Ошибка</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="531"/>
+        <location filename="../../core/android_strings.h" line="557"/>
         <source>This file requires %1$d blocks, but only %2$d blocks are free.</source>
         <comment>memory_card_editor_copy_insufficient_blocks</comment>
         <translation>Файлу требуется %1$d блока, но свободно только %2$d.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="532"/>
+        <location filename="../../core/android_strings.h" line="558"/>
         <source>File &apos;%s&apos; already exists on destination card.</source>
         <comment>memory_card_editor_copy_already_exists</comment>
         <translation>Файл «%s» уже существует на целевой карте.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="533"/>
+        <location filename="../../core/android_strings.h" line="559"/>
         <source>Failed to read file &apos;%s&apos; from source card.</source>
         <comment>memory_card_editor_copy_read_failed</comment>
         <translation>Не удалось прочитать файл «%s» с исходной карты.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="534"/>
+        <location filename="../../core/android_strings.h" line="560"/>
         <source>Failed to write file &apos;%s&apos; to destination card.</source>
         <comment>memory_card_editor_copy_write_failed</comment>
         <translation>Не удалось записать файл «%s» на целевую карту.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="535"/>
+        <location filename="../../core/android_strings.h" line="561"/>
         <source>Copied &apos;%1$s&apos; to &apos;%2$s&apos;.</source>
         <comment>memory_card_editor_copy_success</comment>
         <translation>Скопировано «%1$s» в «%2$s».</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="536"/>
+        <location filename="../../core/android_strings.h" line="562"/>
         <source>Are you sure you want to delete the save &apos;%s&apos;?</source>
         <comment>memory_card_editor_delete_confirm</comment>
         <translation>Вы уверены, что хотите удалить сохранение «%s»?</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="537"/>
+        <location filename="../../core/android_strings.h" line="563"/>
         <source>Deleted save &apos;%s&apos;.</source>
         <comment>memory_card_editor_delete_success</comment>
         <translation>Удалено сохранение «%s».</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="538"/>
+        <location filename="../../core/android_strings.h" line="564"/>
         <source>Failed to delete file &apos;%s&apos;.</source>
         <comment>memory_card_editor_delete_failed</comment>
         <translation>Не удалось удалить файл «%s».</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="539"/>
+        <location filename="../../core/android_strings.h" line="565"/>
         <source>Failed to import card. It may not be a supported format.</source>
         <comment>memory_card_editor_import_failed</comment>
         <translation>Не удалось импортировать карту. Возможно, формат не поддерживается.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="540"/>
+        <location filename="../../core/android_strings.h" line="566"/>
         <source>Memory card &apos;%s&apos; will be deleted, and cannot be recovered. Are you sure you want to delete this card?</source>
         <comment>memory_card_editor_delete_card_confirm_message</comment>
         <translation>Карта памяти «%s» будет удалена без возможности восстановления. Вы уверены, что хотите удалить эту карту?</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="541"/>
+        <location filename="../../core/android_strings.h" line="567"/>
         <source>Failed to delete &apos;%s&apos;.</source>
         <comment>memory_card_editor_delete_card_failed</comment>
         <translation>Не удалось удалить «%s».</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="542"/>
+        <location filename="../../core/android_strings.h" line="568"/>
         <source>Deleted card &apos;%s&apos;.</source>
         <comment>memory_card_editor_delete_card_success</comment>
         <translation>Удалена карта «%s».</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="543"/>
+        <location filename="../../core/android_strings.h" line="569"/>
         <source>Memory card &apos;%s&apos; will be formatted, clearing all saves. Are you sure you want to format this card?</source>
         <comment>memory_card_editor_format_card_confirm_message</comment>
         <translation>Карта памяти «%s» будет отформатирована с удалением всех сохранений. Вы уверены, что хотите выполнить форматирование?</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="544"/>
+        <location filename="../../core/android_strings.h" line="570"/>
         <source>Failed to format &apos;%s&apos;.</source>
         <comment>memory_card_editor_format_card_failed</comment>
         <translation>Не удалось отформатировать «%s».</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="545"/>
+        <location filename="../../core/android_strings.h" line="571"/>
         <source>Formatted card &apos;%s&apos;.</source>
         <comment>memory_card_editor_format_card_success</comment>
         <translation>Карта «%s» отформатирована.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="546"/>
+        <location filename="../../core/android_strings.h" line="572"/>
         <source>Importing &apos;%1$s&apos; will remove all saves in &apos;%2$s&apos;. Do you want to continue?</source>
         <comment>memory_card_editor_import_card_confirm_message</comment>
         <translation>Импорт «%1$s» удалит все сохранения на карте «%2$s». Продолжить?</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="547"/>
+        <location filename="../../core/android_strings.h" line="573"/>
         <source>Failed to read &apos;%s&apos;.</source>
         <comment>memory_card_editor_import_card_read_failed</comment>
         <translation>Не удалось прочитать «%s».</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="548"/>
+        <location filename="../../core/android_strings.h" line="574"/>
         <source>Imported card &apos;%s&apos;.</source>
         <comment>memory_card_editor_import_card_success</comment>
         <translation>Карта «%s» импортирована.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="549"/>
+        <location filename="../../core/android_strings.h" line="575"/>
         <source>Undeleted save &apos;%s&apos;.</source>
         <comment>memory_card_editor_undelete_success</comment>
         <translation>Восстановлено сохранение «%s».</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="550"/>
+        <location filename="../../core/android_strings.h" line="576"/>
         <source>Failed to undelete save &apos;%s&apos;. The save may already be partially overwritten.</source>
         <comment>memory_card_editor_undelete_failed</comment>
         <translation>Не удалось восстановить сохранение «%s». Возможно, оно уже частично перезаписано.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="551"/>
+        <location filename="../../core/android_strings.h" line="577"/>
         <source>Are you sure you want to permanently delete the save &apos;%s&apos;? You cannot recover the save afterwards.</source>
         <comment>memory_card_editor_permanently_delete_confirm</comment>
         <translation>Вы уверены, что хотите безвозвратно удалить сохранение «%s»? Восстановление невозможно.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="552"/>
+        <location filename="../../core/android_strings.h" line="578"/>
         <source>Memory Card Name</source>
         <comment>create_memory_card_title</comment>
         <translation>Имя карты памяти</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="553"/>
+        <location filename="../../core/android_strings.h" line="579"/>
         <source>You must enter a card name.</source>
         <comment>create_memory_card_no_name</comment>
         <translation>Введите имя карты.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="554"/>
+        <location filename="../../core/android_strings.h" line="580"/>
         <source>&apos;%s&apos; is not a valid card name.</source>
         <comment>create_memory_card_invalid_name</comment>
         <translation>«%s» не является допустимым именем карты.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="555"/>
+        <location filename="../../core/android_strings.h" line="581"/>
         <source>A memory card named &apos;%s&apos; already exists.</source>
         <comment>create_memory_card_exists</comment>
         <translation>Карта с именем «%s» уже существует.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="556"/>
+        <location filename="../../core/android_strings.h" line="582"/>
         <source>Failed to create memory card &apos;%s&apos;.</source>
         <comment>create_memory_card_failed</comment>
         <translation>Не удалось создать карту памяти «%s».</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="557"/>
+        <location filename="../../core/android_strings.h" line="583"/>
         <source>Memory card &apos;%s&apos; created.</source>
         <comment>create_memory_card_done</comment>
         <translation>Карта памяти «%s» создана.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="574"/>
+        <location filename="../../core/android_strings.h" line="600"/>
         <source>Edit Memory Cards</source>
         <comment>game_list_bottom_sheet_edit_memory_cards</comment>
         <translation>Редактор карт памяти</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="575"/>
+        <location filename="../../core/android_strings.h" line="601"/>
         <source>No memory cards found for this game.</source>
         <comment>game_list_bottom_sheet_no_memory_cards_found</comment>
         <translation>Не найдены карты памяти для игры.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="586"/>
+        <location filename="../../core/android_strings.h" line="612"/>
         <source>RA Hash</source>
         <comment>game_properties_achievements_hash</comment>
         <translation>Хэш RA</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="615"/>
+        <location filename="../../core/android_strings.h" line="641"/>
         <source>Just a few setup steps are necessary before you can run games.</source>
         <comment>setup_wizard_welcome_first_paragraph</comment>
         <translation>Выполните необходимые шаги по настройке перед запуском игр.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="619"/>
+        <location filename="../../core/android_strings.h" line="645"/>
         <source>Controller Setup</source>
         <comment>setup_wizard_input_setup</comment>
         <translation>Настройка контроллеров</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="626"/>
+        <location filename="../../core/android_strings.h" line="652"/>
         <source>No Game Folders Selected</source>
         <comment>setup_wizard_no_directories_title</comment>
         <translation>Папки с играми не выбраны</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="627"/>
+        <location filename="../../core/android_strings.h" line="653"/>
         <source>The game list will be empty until you add a folder. Continue anyway?</source>
         <comment>setup_wizard_no_directories_message</comment>
         <translation>Список игр будет пуст, пока вы не добавите папку. Всё равно продолжить?</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="628"/>
+        <location filename="../../core/android_strings.h" line="654"/>
         <source>Interface Selection</source>
         <comment>setup_wizard_interface_title</comment>
         <translation>Выбор интерфейса</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="629"/>
+        <location filename="../../core/android_strings.h" line="655"/>
         <source>Choose the interface DuckStation should show when it starts. Standard Mode is designed for touchscreens, while Big Picture Mode is a fullscreen interface designed for navigation with a controller.
 
 You can change this later with the &quot;Start in Big Picture Mode&quot; option in Interface Settings.</source>
         <comment>setup_wizard_interface_message</comment>
         <translation>Выберите интерфейс, отображаемый при запуске DuckStation. Стандартный режим разработан для сенсорных экранов. Big Picture - это полноэкранный интерфейс, оптимизированный для навигации с геймпада.
 
-Вы можете изменить свой выбор позже с помощью опции «Запуск в режиме Big Picture» в настройках интерфейса.</translation>
+Вы можете изменить выбор позже с помощью опции «Запуск в режиме Big Picture» в настройках интерфейса.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="630"/>
+        <location filename="../../core/android_strings.h" line="656"/>
         <source>Standard Mode</source>
         <comment>setup_wizard_standard_mode</comment>
         <translation>Стандартный режим</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="631"/>
+        <location filename="../../core/android_strings.h" line="657"/>
         <source>Big Picture Mode</source>
         <comment>setup_wizard_big_picture_mode</comment>
         <translation>Режим Big Picture</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="632"/>
+        <location filename="../../core/android_strings.h" line="658"/>
         <source>Big Picture Mode is not recommended for phones</source>
         <comment>setup_wizard_big_picture_warning_title</comment>
         <translation>Режим Big Picture не рекомендован для смартфонов</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="633"/>
+        <location filename="../../core/android_strings.h" line="659"/>
         <source>It is intended for TVs and handheld gaming devices used with a controller. It currently uses more battery than Standard Mode.</source>
         <comment>setup_wizard_big_picture_warning_message</comment>
-        <translation>Он предназначен для портативных консолей и телевизоров, управляемых с геймпада и в настоящее время имеет более высокий расход заряда, чем стандартный режим.</translation>
+        <translation>Он предназначен для телевизоров и портативных консолей с управлением с геймпада. В настоящее время этот режим быстрее расходует заряд батареи, чем стандартный.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="635"/>
+        <location filename="../../core/android_strings.h" line="661"/>
         <source>Choose how games should be displayed in the main list.</source>
         <comment>setup_wizard_view_message</comment>
-        <translation>Выберите режим отображения игр в главном списке.</translation>
+        <translation>Выберите режим отображения игр в основном списке.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="646"/>
+        <location filename="../../core/android_strings.h" line="672"/>
         <source>Alignment (Landscape)</source>
         <comment>settings_display_alignment_landscape</comment>
         <translation>Выравнивание (альбомное)</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="647"/>
+        <location filename="../../core/android_strings.h" line="673"/>
         <source>Selects where the screen will be rendered in landscape mode.</source>
         <comment>settings_summary_display_alignment_landscape</comment>
         <translation>Задаёт положение экрана в альбомном режиме.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="648"/>
+        <location filename="../../core/android_strings.h" line="674"/>
         <source>Alignment (Portrait)</source>
         <comment>settings_display_alignment_portrait</comment>
         <translation>Выравнивание (портретное)</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="649"/>
+        <location filename="../../core/android_strings.h" line="675"/>
         <source>Selects where the screen will be rendered in portrait mode.</source>
         <comment>settings_summary_display_alignment_portrait</comment>
         <translation>Задаёт положение экрана в портретном режиме.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="657"/>
+        <location filename="../../core/android_strings.h" line="683"/>
         <source>Use Debug GPU Device</source>
         <comment>settings_use_debug_device</comment>
         <translation>Отладка графического процессора</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="658"/>
+        <location filename="../../core/android_strings.h" line="684"/>
         <source>Enable debugging when supported by the host&apos;s renderer API. Only for developer use.</source>
         <comment>settings_summary_use_debug_device</comment>
         <translation>Включает отладку, если это поддерживается графическим API устройства. Только для разработчиков.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="661"/>
+        <location filename="../../core/android_strings.h" line="687"/>
         <source>Prefer OpenGL ES Context</source>
         <comment>settings_prefer_gles_context</comment>
         <translation>Приоритет контекста OpenGL ES</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="662"/>
+        <location filename="../../core/android_strings.h" line="688"/>
         <source>Uses OpenGL ES even when desktop OpenGL is supported. May improve performance on some SBC drivers.</source>
         <comment>settings_summary_prefer_gles_context</comment>
         <translation>Использует OpenGL ES даже при поддержке полноценного OpenGL. Может повысить производительность для некоторых драйверов одноплатных компьютеров.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="663"/>
+        <location filename="../../core/android_strings.h" line="689"/>
         <source>Disable Shader Caches</source>
         <comment>settings_disable_shader_cache</comment>
         <translation>Отключить кэширование шейдеров</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="664"/>
+        <location filename="../../core/android_strings.h" line="690"/>
         <source>Prevents the caching of shaders, forcing them to be recompiled every time.</source>
         <comment>settings_summary_disable_shader_cache</comment>
         <translation>Запрещает кэширование шейдеров, принудительно компилируя их каждый раз заново.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="665"/>
+        <location filename="../../core/android_strings.h" line="691"/>
         <source>Shader &apos;%s&apos; added.</source>
         <comment>postfx_shader_added</comment>
         <translation>Шейдер «%s» добавлен.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="666"/>
+        <location filename="../../core/android_strings.h" line="692"/>
         <source>Shaders cleared.</source>
         <comment>postfx_shaders_cleared</comment>
         <translation>Шейдеры очищены.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="667"/>
+        <location filename="../../core/android_strings.h" line="693"/>
         <source>Confirm Shader Clear</source>
         <comment>postfx_confirm_clear_title</comment>
         <translation>Подтвердите очистку шейдеров</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="668"/>
+        <location filename="../../core/android_strings.h" line="694"/>
         <source>This will remove all shaders from the chain. Their configuration cannot be recovered. Are you sure you want to clear all shaders?</source>
         <comment>postfx_confirm_clear_message</comment>
         <translation>Это действие удалит все шейдеры из цепочки, без возможности восстановления конфигурации. Вы уверены, что хотите очистить список шейдеров?</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="669"/>
+        <location filename="../../core/android_strings.h" line="695"/>
         <source>Stage %d removed.</source>
         <comment>postfx_shader_removed</comment>
         <translation>Шаг %d удалён.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="670"/>
+        <location filename="../../core/android_strings.h" line="696"/>
         <source>Enable Post Processing</source>
         <comment>postfx_setting_enable</comment>
         <translation>Включить постобработку</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="671"/>
+        <location filename="../../core/android_strings.h" line="697"/>
         <source>Applies the post-processing chain configured below.</source>
         <comment>postfx_setting_summary_enable</comment>
         <translation>Применяет настроенную ниже цепочку постобработки.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="697"/>
+        <location filename="../../core/android_strings.h" line="723"/>
         <source>Add Shader</source>
         <comment>postfx_setting_add_shader</comment>
         <translation>Добавить шейдер</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="698"/>
+        <location filename="../../core/android_strings.h" line="724"/>
         <source>Adds a new shader to the chain.</source>
         <comment>postfx_setting_summary_add_shader</comment>
         <translation>Добавляет новый шейдер в цепочку.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="699"/>
+        <location filename="../../core/android_strings.h" line="725"/>
         <source>Clear Shaders</source>
         <comment>postfx_setting_clear_shaders</comment>
         <translation>Очистить шейдеры</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="700"/>
+        <location filename="../../core/android_strings.h" line="726"/>
         <source>Removes all shaders from the chain.</source>
         <comment>postfx_setting_summary_clear_shaders</comment>
         <translation>Удаляет всю цепочку шейдеров.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="701"/>
+        <location filename="../../core/android_strings.h" line="727"/>
         <source>Stage %1$d: %2$s</source>
         <comment>postfx_stage_category</comment>
         <translation>Шаг %1$d: %2$s</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="702"/>
+        <location filename="../../core/android_strings.h" line="728"/>
         <source>Options</source>
         <comment>postfx_setting_options</comment>
         <translation>Параметры</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="703"/>
+        <location filename="../../core/android_strings.h" line="729"/>
         <source>Edits options for this shader.</source>
         <comment>postfx_setting_summary_options</comment>
         <translation>Редактирование параметров шейдера.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="704"/>
         <source>Move Up</source>
         <comment>postfx_setting_move_up</comment>
-        <translation>Переместить вверх</translation>
+        <translation type="vanished">Переместить вверх</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="705"/>
+        <location filename="../../core/android_strings.h" line="731"/>
         <source>Moves this shader up in the application order.</source>
         <comment>postfx_setting_summary_move_up</comment>
         <translation>Перемещает шейдер выше в порядке применения.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="706"/>
+        <location filename="../../core/android_strings.h" line="732"/>
         <source>Shader %1$d swapped with shader %2$d.</source>
         <comment>postfx_shader_swapped</comment>
         <translation>Шейдер %1$d перемещён на место шейдера %2$d.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="707"/>
+        <location filename="../../core/android_strings.h" line="733"/>
         <source>Removes this shader from the post-processing pipeline.</source>
         <comment>postfx_setting_summary_remove_shader</comment>
         <translation>Удаляет шейдер из цепочки постобработки.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="708"/>
         <source>Remove</source>
         <comment>postfx_setting_remove_shader</comment>
-        <translation>Удалить</translation>
+        <translation type="vanished">Удалить</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="709"/>
         <source>Move Down</source>
         <comment>postfx_setting_move_down</comment>
-        <translation>Переместить вниз</translation>
+        <translation type="vanished">Переместить вниз</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="710"/>
+        <location filename="../../core/android_strings.h" line="736"/>
         <source>Moves this shader down in the application order.</source>
         <comment>postfx_setting_summary_move_down</comment>
         <translation>Перемещает шейдер ниже в порядке применения.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="711"/>
+        <location filename="../../core/android_strings.h" line="737"/>
         <source>Select Shader</source>
         <comment>postfx_add_select_shader</comment>
         <translation>Выберите шейдер</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="712"/>
+        <location filename="../../core/android_strings.h" line="738"/>
         <source>No shaders found.</source>
         <comment>postfx_add_no_shaders_found</comment>
         <translation>Шейдеры не найдены.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="713"/>
+        <location filename="../../core/android_strings.h" line="739"/>
         <source>This shader does not have any configurable options.</source>
         <comment>postfx_no_options</comment>
         <translation>Нет настраиваемых параметров шейдера.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="714"/>
+        <location filename="../../core/android_strings.h" line="740"/>
         <source>Additional GLSL, ReShade, and Slang shaders can be added in
         [storage]/Android/data/com.github.stenzek.duckstation/files/shaders.
 Additional border overlays can be added in
@@ -5912,86 +5901,86 @@ Additional border overlays can be added in
         [storage]/Android/data/com.github.stenzek.duckstation/files/resources/overlays.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="717"/>
+        <location filename="../../core/android_strings.h" line="743"/>
         <source>Border Overlay</source>
         <comment>postfx_border_overlay_preset</comment>
         <translation>Оверлей рамки</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="718"/>
+        <location filename="../../core/android_strings.h" line="744"/>
         <source>Patches Unavailable</source>
         <comment>game_properties_patches_unavailable</comment>
         <translation>Патчи недоступны</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="719"/>
+        <location filename="../../core/android_strings.h" line="745"/>
         <source>No patches are available for this game.</source>
         <comment>game_properties_patches_unavailable_summary</comment>
         <translation>Нет доступных патчей для игры.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="720"/>
+        <location filename="../../core/android_strings.h" line="746"/>
         <source>Patch Codes Unavailable</source>
         <comment>game_properties_patch_codes_unavailable</comment>
         <translation>Чит-коды недоступны</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="721"/>
+        <location filename="../../core/android_strings.h" line="747"/>
         <source>No patch codes are available for this game.</source>
         <comment>game_properties_patch_codes_unavailable_summary</comment>
         <translation>Нет доступных чит-кодов для игры.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="722"/>
+        <location filename="../../core/android_strings.h" line="748"/>
         <source>Enable Codes</source>
         <comment>game_properties_enable_patch_codes</comment>
         <translation>Включить чит-коды</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="723"/>
+        <location filename="../../core/android_strings.h" line="749"/>
         <source>Enabling this option will enable any codes selected below to be applied.</source>
         <comment>game_properties_enable_patch_codes_summary</comment>
         <translation>Позволяет применять отмеченные ниже чит-коды.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="724"/>
+        <location filename="../../core/android_strings.h" line="750"/>
         <source>Load Database Codes</source>
         <comment>game_properties_load_database_codes</comment>
         <translation>Загружать чит-коды из базы</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="725"/>
+        <location filename="../../core/android_strings.h" line="751"/>
         <source>Import Codes</source>
         <comment>game_properties_import_patch_codes</comment>
         <translation>Добавить чит-коды</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="726"/>
+        <location filename="../../core/android_strings.h" line="752"/>
         <source>Patch codes can be imported directly from text,
         or from files in various formats. Please choose the type of codes to import.</source>
         <comment>game_properties_import_patch_codes_message</comment>
         <translation>Чит-коды можно импортировать напрямую из текста или из файлов различных форматов. Выберите способ импорта.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="727"/>
+        <location filename="../../core/android_strings.h" line="753"/>
         <source>Text</source>
         <comment>game_properties_import_patch_codes_text</comment>
         <translation>Текст</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="728"/>
+        <location filename="../../core/android_strings.h" line="754"/>
         <source>File</source>
         <comment>game_properties_import_patch_codes_file</comment>
         <translation>Файл</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="730"/>
+        <location filename="../../core/android_strings.h" line="756"/>
         <source>Import Failed</source>
         <comment>game_properties_import_failed</comment>
         <translation>Ошибка импорта</translation>
     </message>
     <message numerus="yes">
-        <location filename="../../core/android_strings.h" line="732"/>
+        <location filename="../../core/android_strings.h" line="758"/>
         <source>%d patch codes were added.</source>
         <comment>game_properties_import_count</comment>
         <extracomment>Android plural quantities: one=&quot;%d patch code was added.&quot;; other=&quot;%d patch codes were added.&quot;</extracomment>
@@ -6002,13 +5991,13 @@ Additional border overlays can be added in
         </translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="733"/>
+        <location filename="../../core/android_strings.h" line="759"/>
         <source>Confirm Removal</source>
         <comment>game_properties_remove_patch_codes</comment>
         <translation>Подтвердите удаление</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="734"/>
+        <location filename="../../core/android_strings.h" line="760"/>
         <source>You are removing all patch codes manually added for this game. This action cannot be reversed.
 
 Any database cheats will still be loaded and present unless you uncheck the &quot;Load Database Cheats&quot; option.
@@ -6022,55 +6011,55 @@ Are you sure you want to continue?</source>
 Продолжить?</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="735"/>
+        <location filename="../../core/android_strings.h" line="761"/>
         <source>Patch Codes Disabled</source>
         <comment>game_properties_should_enable_patch_codes</comment>
         <translation>Чит-коды отключены</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="736"/>
+        <location filename="../../core/android_strings.h" line="762"/>
         <source>Enabling this code will not have any effect until codes are enabled for this game. Do you want to do this now?</source>
         <comment>game_properties_should_enable_patch_codes_message</comment>
         <translation>Включение кода не имеет эффекта, пока не будут включены чит-коды для этой игры. Сделать это сейчас?</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="737"/>
+        <location filename="../../core/android_strings.h" line="763"/>
         <source>Disabled</source>
         <comment>game_properties_patch_code_disabled</comment>
         <translation>Отключено</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="738"/>
+        <location filename="../../core/android_strings.h" line="764"/>
         <source>Failed to update custom properties.</source>
         <comment>game_properties_custom_properties_update_failed</comment>
         <translation>Не удалось обновить изменение свойств.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="739"/>
+        <location filename="../../core/android_strings.h" line="765"/>
         <source>Edit Details</source>
         <comment>game_properties_edit_details</comment>
         <translation>Изменить сведения</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="740"/>
+        <location filename="../../core/android_strings.h" line="766"/>
         <source>Default (%1$s)</source>
         <comment>game_properties_default_value</comment>
         <translation>По умолчанию (%1$s)</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="741"/>
+        <location filename="../../core/android_strings.h" line="767"/>
         <source>Disable All Patches</source>
         <comment>patch_codes_disable_all_patches</comment>
         <translation>Отключить патчи</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="742"/>
+        <location filename="../../core/android_strings.h" line="768"/>
         <source>Disables every patch currently enabled for this game.</source>
         <comment>patch_codes_disable_all_patches_summary</comment>
         <translation>Выключает все активные патчи для игры.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="743"/>
+        <location filename="../../core/android_strings.h" line="769"/>
         <source>Author: %1$s</source>
         <comment>patch_codes_author</comment>
         <translation>Автор: %1$s</translation>
@@ -6081,679 +6070,679 @@ Are you sure you want to continue?</source>
         <translation type="vanished">Недоступно в режиме хардкора RetroAchievements.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="748"/>
+        <location filename="../../core/android_strings.h" line="774"/>
         <source>Search codes</source>
         <comment>cheat_codes_search</comment>
         <translation>Поиск чит-кодов</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="750"/>
+        <location filename="../../core/android_strings.h" line="776"/>
         <source>Sort By Name</source>
         <comment>cheat_codes_sort</comment>
         <translation>Сортировка по названию</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="751"/>
+        <location filename="../../core/android_strings.h" line="777"/>
         <source>Database code</source>
         <comment>cheat_codes_database</comment>
         <translation>Код из базы</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="752"/>
+        <location filename="../../core/android_strings.h" line="778"/>
         <source>Save Copy</source>
         <comment>cheat_codes_save_copy</comment>
         <translation>Сохранить копию</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="753"/>
+        <location filename="../../core/android_strings.h" line="779"/>
         <source>Name</source>
         <comment>cheat_codes_name</comment>
         <translation>Название</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="754"/>
+        <location filename="../../core/android_strings.h" line="780"/>
         <source>Group</source>
         <comment>cheat_codes_group</comment>
         <translation>Группа</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="755"/>
+        <location filename="../../core/android_strings.h" line="781"/>
         <source>Ungrouped</source>
         <comment>cheat_codes_ungrouped</comment>
         <translation>Без группы</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="756"/>
+        <location filename="../../core/android_strings.h" line="782"/>
         <source>Description</source>
         <comment>cheat_codes_description</comment>
         <translation>Описание</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="757"/>
+        <location filename="../../core/android_strings.h" line="783"/>
         <source>Instructions</source>
         <comment>cheat_codes_instructions</comment>
         <translation>Инструкции</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="758"/>
+        <location filename="../../core/android_strings.h" line="784"/>
         <source>Type</source>
         <comment>cheat_codes_type</comment>
         <translation>Тип</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="759"/>
+        <location filename="../../core/android_strings.h" line="785"/>
         <source>Activation</source>
         <comment>cheat_codes_activation</comment>
         <translation>Активация</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="760"/>
+        <location filename="../../core/android_strings.h" line="786"/>
         <source>Options Type</source>
         <comment>cheat_codes_options_type</comment>
         <translation>Тип опции</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="761"/>
+        <location filename="../../core/android_strings.h" line="787"/>
         <source>None</source>
         <comment>cheat_codes_options_none</comment>
         <translation>Нет</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="762"/>
+        <location filename="../../core/android_strings.h" line="788"/>
         <source>Choice</source>
         <comment>cheat_codes_options_choice</comment>
         <translation>Выбор</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="763"/>
+        <location filename="../../core/android_strings.h" line="789"/>
         <source>Range</source>
         <comment>cheat_codes_options_range</comment>
         <translation>Диапазон</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="764"/>
+        <location filename="../../core/android_strings.h" line="790"/>
         <source>Option name</source>
         <comment>cheat_codes_option_name</comment>
         <translation>Имя опции</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="765"/>
+        <location filename="../../core/android_strings.h" line="791"/>
         <source>Value</source>
         <comment>cheat_codes_option_value</comment>
         <translation>Значение</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="766"/>
+        <location filename="../../core/android_strings.h" line="792"/>
         <source>Add Option</source>
         <comment>cheat_codes_option_add</comment>
         <translation>Добавить опцию</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="767"/>
+        <location filename="../../core/android_strings.h" line="793"/>
         <source>Remove Option</source>
         <comment>cheat_codes_option_remove</comment>
         <translation>Удалить опцию</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="768"/>
+        <location filename="../../core/android_strings.h" line="794"/>
         <source>Minimum</source>
         <comment>cheat_codes_range_minimum</comment>
         <translation>Минимум</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="769"/>
+        <location filename="../../core/android_strings.h" line="795"/>
         <source>Maximum</source>
         <comment>cheat_codes_range_maximum</comment>
         <translation>Максимум</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="770"/>
+        <location filename="../../core/android_strings.h" line="796"/>
         <source>Save</source>
         <comment>cheat_codes_save</comment>
         <translation>Сохранить</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="771"/>
+        <location filename="../../core/android_strings.h" line="797"/>
         <source>Delete</source>
         <comment>cheat_codes_delete</comment>
         <translation>Удалить</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="772"/>
+        <location filename="../../core/android_strings.h" line="798"/>
         <source>Delete this user code?</source>
         <comment>cheat_codes_confirm_delete</comment>
         <translation>Удалить этот пользовательский код?</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="773"/>
+        <location filename="../../core/android_strings.h" line="799"/>
         <source>Name must not be blank.</source>
         <comment>cheat_codes_validation_name</comment>
         <translation>Название не должно быть пустым.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="774"/>
+        <location filename="../../core/android_strings.h" line="800"/>
         <source>Instructions must not be blank.</source>
         <comment>cheat_codes_validation_body</comment>
         <translation>Инструкции не должны быть пустыми.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="775"/>
+        <location filename="../../core/android_strings.h" line="801"/>
         <source>The full name contains an invalid section delimiter or line break.</source>
         <comment>cheat_codes_validation_section</comment>
         <translation>Полное имя содержит недопустимый разделитель разделов или разрыв строки.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="776"/>
+        <location filename="../../core/android_strings.h" line="802"/>
         <source>Another code already has this name.</source>
         <comment>cheat_codes_validation_collision</comment>
         <translation>Имя уже используется в другом коде.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="777"/>
+        <location filename="../../core/android_strings.h" line="803"/>
         <source>Choice options need unique nonblank names and unsigned 32-bit values.</source>
         <comment>cheat_codes_validation_choice</comment>
         <translation>Опции выбора должны иметь уникальные непустые имена и беззнаковые 32-битные значения.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="778"/>
+        <location filename="../../core/android_strings.h" line="804"/>
         <source>Choice mode requires at least one option.</source>
         <comment>cheat_codes_validation_choice_empty</comment>
         <translation>Режим выбора требует наличия хотя бы одной опции.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="779"/>
+        <location filename="../../core/android_strings.h" line="805"/>
         <source>Range must satisfy 0 ≤ minimum &lt; maximum ≤ 65535.</source>
         <comment>cheat_codes_validation_range</comment>
         <translation>Диапазон должен соответствовать условию: 0 ≤ минимум &lt; максимум ≤ 65535.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="780"/>
+        <location filename="../../core/android_strings.h" line="806"/>
         <source>Cheat file operation failed: %1$s</source>
         <comment>cheat_codes_io_failed</comment>
         <translation>Ошибка при операции с файлом чит-кодов: %1$s</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="781"/>
+        <location filename="../../core/android_strings.h" line="807"/>
         <source>Codes exported successfully.</source>
         <comment>cheat_codes_export_complete</comment>
         <translation>Коды успешно экспортированы.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="796"/>
+        <location filename="../../core/android_strings.h" line="822"/>
         <source>Enable Global Save States</source>
         <comment>settings_enable_global_save_states</comment>
         <translation>Глобальные сохранения состояний</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="797"/>
+        <location filename="../../core/android_strings.h" line="823"/>
         <source>Makes the legacy global save state slots available. These slots are independent of the current game.</source>
         <comment>settings_summary_enable_global_save_states</comment>
         <translation>Включает устаревшие слоты глобальных сохранений, не привязанные к текущей игре.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="800"/>
+        <location filename="../../core/android_strings.h" line="826"/>
         <source>Screenshot Size</source>
         <comment>settings_screenshot_mode</comment>
-        <translation>Разрешение скриншота</translation>
+        <translation>Разрешение скриншотов</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="801"/>
+        <location filename="../../core/android_strings.h" line="827"/>
         <source>Determines the size of screenshots created by DuckStation.</source>
         <comment>settings_summary_screenshot_mode</comment>
         <translation>Определяет разрешение снимков экрана, создаваемых DuckStation.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="803"/>
+        <location filename="../../core/android_strings.h" line="829"/>
         <source>Determines the format that screenshots will be saved/compressed with.</source>
         <comment>settings_summary_screenshot_format</comment>
         <translation>Определяет формат для сохранения снимков экрана.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="804"/>
+        <location filename="../../core/android_strings.h" line="830"/>
         <source>Screenshot Quality</source>
         <comment>settings_screenshot_quality</comment>
-        <translation>Качество скриншота</translation>
+        <translation>Качество скриншотов</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="805"/>
+        <location filename="../../core/android_strings.h" line="831"/>
         <source>Selects the quality at which screenshots will be compressed.</source>
         <comment>settings_summary_screenshot_quality</comment>
         <translation>Выбор степени сжатия снимков экрана.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="806"/>
+        <location filename="../../core/android_strings.h" line="832"/>
         <source>Screenshot File Name Format</source>
         <comment>settings_screenshot_file_name_format</comment>
-        <translation>Шаблон имени скриншота</translation>
+        <translation>Шаблон имён скриншотов</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="807"/>
+        <location filename="../../core/android_strings.h" line="833"/>
         <source>Determines the format of the screenshot file names.</source>
         <comment>settings_summary_screenshot_file_name_format</comment>
-        <translation>Определяет структуру имён файлов скриншотов.</translation>
+        <translation>Определяет структуру имён снимков экрана.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="809"/>
+        <location filename="../../core/android_strings.h" line="835"/>
         <source>Enables manual fine cropping of the display area while preserving the aspect ratio. Useful for removing black borders.</source>
         <comment>settings_summary_fine_crop_mode</comment>
         <translation>Включает ручное кадрирование изображения, с сохранением соотношения сторон. Полезно для удаления чёрных рамок.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="824"/>
+        <location filename="../../core/android_strings.h" line="850"/>
         <source>Minimal Output Latency</source>
         <comment>settings_output_latency_minimal</comment>
         <translation>Минимальная задержка вывода</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="825"/>
+        <location filename="../../core/android_strings.h" line="851"/>
         <source>When enabled, the minimum supported output latency will be used for the host API.</source>
         <comment>settings_summary_output_latency_minimal</comment>
-        <translation>При включении использует минимальную задержку, поддерживаемую аудиоинтерфейсом системы.</translation>
+        <translation>Если включено, используется минимальная задержка, которую поддерживает аудиоинтерфейс системы.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="826"/>
+        <location filename="../../core/android_strings.h" line="852"/>
         <source>Sequence Length</source>
         <comment>settings_stretch_sequence_length_ms</comment>
-        <translation>Длина фрагмента</translation>
+        <translation>Длина фрагментов</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="827"/>
+        <location filename="../../core/android_strings.h" line="853"/>
         <source>Sets the length of each audio stretch sequence in milliseconds.</source>
         <comment>settings_summary_stretch_sequence_length_ms</comment>
         <translation>Задаёт длительность каждой последовательности при растяжении аудио (в миллисекундах).</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="828"/>
+        <location filename="../../core/android_strings.h" line="854"/>
         <source>Seek Window</source>
         <comment>settings_stretch_seek_window_ms</comment>
         <translation>Окно поиска</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="829"/>
+        <location filename="../../core/android_strings.h" line="855"/>
         <source>Sets the search window used when stretching audio, in milliseconds.</source>
         <comment>settings_summary_stretch_seek_window_ms</comment>
         <translation>Задаёт размер окна поиска при растяжении аудио (в миллисекундах).</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="830"/>
+        <location filename="../../core/android_strings.h" line="856"/>
         <source>Overlap</source>
         <comment>settings_stretch_overlap_ms</comment>
         <translation>Перекрытие</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="831"/>
+        <location filename="../../core/android_strings.h" line="857"/>
         <source>Sets how much neighboring audio stretch sequences overlap, in milliseconds.</source>
         <comment>settings_summary_stretch_overlap_ms</comment>
         <translation>Задаёт размер наложения соседних аудиофрагментов (в миллисекундах).</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="832"/>
+        <location filename="../../core/android_strings.h" line="858"/>
         <source>Use Quick Seek</source>
         <comment>settings_stretch_use_quick_seek</comment>
         <translation>Быстрый поиск</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="833"/>
+        <location filename="../../core/android_strings.h" line="859"/>
         <source>Uses a quicker seek method when stretching audio. May reduce quality.</source>
         <comment>settings_summary_stretch_use_quick_seek</comment>
         <translation>Использует ускоренный метод поиска при растяжении аудио. Возможно снижение качества.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="834"/>
+        <location filename="../../core/android_strings.h" line="860"/>
         <source>Use Anti-Aliasing Filter</source>
         <comment>settings_stretch_use_aa_filter</comment>
         <translation>Фильтр сглаживания</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="835"/>
+        <location filename="../../core/android_strings.h" line="861"/>
         <source>Uses an anti-aliasing filter when stretching audio.</source>
         <comment>settings_summary_stretch_use_aa_filter</comment>
         <translation>Применяет фильтр подавления искажений при растяжении аудио.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="849"/>
+        <location filename="../../core/android_strings.h" line="875"/>
         <source>Analog Toggle</source>
         <comment>touchscreen_controller_analog</comment>
         <translation>Кнопка аналогового режима</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="850"/>
+        <location filename="../../core/android_strings.h" line="876"/>
         <source>L1</source>
         <comment>touchscreen_controller_l1</comment>
         <translation>L1</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="851"/>
+        <location filename="../../core/android_strings.h" line="877"/>
         <source>L2</source>
         <comment>touchscreen_controller_l2</comment>
         <translation>L2</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="852"/>
+        <location filename="../../core/android_strings.h" line="878"/>
         <source>R1</source>
         <comment>touchscreen_controller_r1</comment>
         <translation>R1</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="853"/>
+        <location filename="../../core/android_strings.h" line="879"/>
         <source>R2</source>
         <comment>touchscreen_controller_r2</comment>
         <translation>R2</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="854"/>
+        <location filename="../../core/android_strings.h" line="880"/>
         <source>Triangle</source>
         <comment>touchscreen_controller_triangle</comment>
         <translation>Треугольник</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="855"/>
+        <location filename="../../core/android_strings.h" line="881"/>
         <source>Circle</source>
         <comment>touchscreen_controller_circle</comment>
         <translation>Круг</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="856"/>
+        <location filename="../../core/android_strings.h" line="882"/>
         <source>Cross</source>
         <comment>touchscreen_controller_cross</comment>
         <translation>Крест</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="857"/>
+        <location filename="../../core/android_strings.h" line="883"/>
         <source>Square</source>
         <comment>touchscreen_controller_square</comment>
         <translation>Квадрат</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="858"/>
+        <location filename="../../core/android_strings.h" line="884"/>
         <source>Select</source>
         <comment>touchscreen_controller_select</comment>
         <translation>Select</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="860"/>
+        <location filename="../../core/android_strings.h" line="886"/>
         <source>Back</source>
         <comment>touchscreen_controller_back</comment>
         <translation>Назад</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="861"/>
+        <location filename="../../core/android_strings.h" line="887"/>
         <source>A</source>
         <comment>touchscreen_controller_a</comment>
         <translation>A</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="862"/>
+        <location filename="../../core/android_strings.h" line="888"/>
         <source>B</source>
         <comment>touchscreen_controller_b</comment>
         <translation>B</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="971"/>
+        <location filename="../../core/android_strings.h" line="1001"/>
         <source>Transfer Data</source>
         <comment>transfer_data_title</comment>
         <translation>Перенос данных</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="972"/>
+        <location filename="../../core/android_strings.h" line="1002"/>
         <source>Back up or move your data</source>
         <comment>transfer_data_help_title</comment>
         <translation>Резервируйте или перенесите ваши данные</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="973"/>
+        <location filename="../../core/android_strings.h" line="1003"/>
         <source>Exporting copies your saves, settings and other files to a folder or ZIP file. Importing adds the files from one to this device, which lets you move them between devices.</source>
         <comment>transfer_data_help_summary</comment>
         <translation>При экспорте ваши сохранения, настройки и другие файлы будут скопированы в папку или ZIP-архив. Импорт добавляет файлы из папки или ZIP, позволяя переносить данные между устройствами.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="974"/>
+        <location filename="../../core/android_strings.h" line="1004"/>
         <source>Transfer Unavailable</source>
         <comment>transfer_data_unavailable_title</comment>
         <translation>Перенос недоступен</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="975"/>
+        <location filename="../../core/android_strings.h" line="1005"/>
         <source>Data cannot be transferred while a game is running.</source>
         <comment>transfer_data_session_active</comment>
         <translation>Данные не могут быть перенесены пока запущена игра.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="976"/>
+        <location filename="../../core/android_strings.h" line="1006"/>
         <source>Import</source>
         <comment>transfer_data_import_category</comment>
         <translation>Импорт</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="977"/>
+        <location filename="../../core/android_strings.h" line="1007"/>
         <source>Export</source>
         <comment>transfer_data_export_category</comment>
         <translation>Экспорт</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="978"/>
+        <location filename="../../core/android_strings.h" line="1008"/>
         <source>Import From Folder</source>
         <comment>transfer_data_import_folder</comment>
         <translation>Импорт из папки</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="979"/>
+        <location filename="../../core/android_strings.h" line="1009"/>
         <source>Copies files from a folder which was exported earlier.</source>
         <comment>transfer_data_import_folder_summary</comment>
         <translation>Копирует файлы из экспортированной ранее папки.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="980"/>
+        <location filename="../../core/android_strings.h" line="1010"/>
         <source>Import From ZIP File</source>
         <comment>transfer_data_import_zip</comment>
         <translation>Импорт из ZIP</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="981"/>
+        <location filename="../../core/android_strings.h" line="1011"/>
         <source>Copies files from a ZIP file which was exported earlier.</source>
         <comment>transfer_data_import_zip_summary</comment>
         <translation>Копирует файлы из экспортированного ранее ZIP-архива.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="982"/>
+        <location filename="../../core/android_strings.h" line="1012"/>
         <source>Export To Folder</source>
         <comment>transfer_data_export_folder</comment>
         <translation>Экспорт в папку</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="983"/>
+        <location filename="../../core/android_strings.h" line="1013"/>
         <source>Copies your files into a folder you choose.</source>
         <comment>transfer_data_export_folder_summary</comment>
         <translation>Создаёт копию ваших файлов в указанной папке.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="984"/>
+        <location filename="../../core/android_strings.h" line="1014"/>
         <source>Export To ZIP File</source>
         <comment>transfer_data_export_zip</comment>
         <translation>Экспорт в ZIP</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="985"/>
+        <location filename="../../core/android_strings.h" line="1015"/>
         <source>Saves your files to a single ZIP file.</source>
         <comment>transfer_data_export_zip_summary</comment>
         <translation>Сохраняет ваши файлы в единый ZIP-архив.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="986"/>
+        <location filename="../../core/android_strings.h" line="1016"/>
         <source>Patches</source>
         <comment>transfer_data_category_patches</comment>
         <translation>Патчи</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="987"/>
+        <location filename="../../core/android_strings.h" line="1017"/>
         <source>Select Files</source>
         <comment>transfer_data_select_files</comment>
         <translation>Выберите файлы</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="988"/>
+        <location filename="../../core/android_strings.h" line="1018"/>
         <source>%1$s (%2$d files, %3$s)</source>
         <comment>transfer_data_category_summary</comment>
         <translation>%1$s (%2$d файлов, %3$s)</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="989"/>
+        <location filename="../../core/android_strings.h" line="1019"/>
         <source>Import</source>
         <comment>transfer_data_import</comment>
         <translation>Импорт</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="990"/>
+        <location filename="../../core/android_strings.h" line="1020"/>
         <source>Export</source>
         <comment>transfer_data_export</comment>
         <translation>Экспорт</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="991"/>
+        <location filename="../../core/android_strings.h" line="1021"/>
         <source>No compatible files were found.</source>
         <comment>transfer_data_no_files_found</comment>
         <translation>Совместимые файлы не найдены.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="992"/>
+        <location filename="../../core/android_strings.h" line="1022"/>
         <source>Looking for files</source>
         <comment>transfer_data_scanning</comment>
         <translation>Поиск файлов</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="993"/>
+        <location filename="../../core/android_strings.h" line="1023"/>
         <source>Importing files</source>
         <comment>transfer_data_importing</comment>
         <translation>Импорт файлов</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="994"/>
+        <location filename="../../core/android_strings.h" line="1024"/>
         <source>Exporting files</source>
         <comment>transfer_data_exporting</comment>
         <translation>Экспорт файлов</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="995"/>
+        <location filename="../../core/android_strings.h" line="1025"/>
         <source>The file &apos;%1$s&apos; already exists. Do you want to overwrite it? Any existing data will be lost.</source>
         <comment>transfer_data_conflict_message</comment>
         <translation>Файл «%1$s» уже существует. Перезаписать его? Все существующие данные будут утеряны.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="996"/>
+        <location filename="../../core/android_strings.h" line="1026"/>
         <source>Apply to the remaining %1$d files</source>
         <comment>transfer_data_apply_to_remaining</comment>
         <translation>Применить к оставшимся файлам: %1$d</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="997"/>
+        <location filename="../../core/android_strings.h" line="1027"/>
         <source>Overwrite</source>
         <comment>transfer_data_overwrite</comment>
         <translation>Перезаписать</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="998"/>
+        <location filename="../../core/android_strings.h" line="1028"/>
         <source>Skip</source>
         <comment>transfer_data_skip</comment>
         <translation>Пропустить</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="999"/>
+        <location filename="../../core/android_strings.h" line="1029"/>
         <source>Transfer complete. %1$d files copied, %2$d skipped.</source>
         <comment>transfer_data_result_complete</comment>
         <translation>Перенос завершён. Скопировано файлов: %1$d, пропропущено: %2$d.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1000"/>
+        <location filename="../../core/android_strings.h" line="1030"/>
         <source>Transfer finished with errors. %1$d files copied, %2$d skipped, %3$d failed.</source>
         <comment>transfer_data_result_failures</comment>
         <translation>Перенос завершён с ошибками. Скопировано файлов: %1$d, пропропущено: %2$d, ошибок: %3$d.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1001"/>
+        <location filename="../../core/android_strings.h" line="1031"/>
         <source>Transfer cancelled. %1$d files copied, %2$d skipped, %3$d failed.</source>
         <comment>transfer_data_result_cancelled</comment>
         <translation>Перенос отменён. Скопировано файлов: %1$d, пропропущено: %2$d, ошибок: %3$d.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1002"/>
+        <location filename="../../core/android_strings.h" line="1032"/>
         <source>The transfer failed.</source>
         <comment>transfer_data_result_error</comment>
         <translation>Ошибка переноса.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1003"/>
+        <location filename="../../core/android_strings.h" line="1033"/>
         <source>Increase</source>
         <comment>preference_increase</comment>
         <translation>Увеличить</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1004"/>
+        <location filename="../../core/android_strings.h" line="1034"/>
         <source>Decrease</source>
         <comment>preference_decrease</comment>
         <translation>Уменьшить</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1005"/>
+        <location filename="../../core/android_strings.h" line="1035"/>
         <source>Enabled</source>
         <comment>preference_enabled</comment>
         <translation>Вкл.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1006"/>
+        <location filename="../../core/android_strings.h" line="1036"/>
         <source>Disabled</source>
         <comment>preference_disabled</comment>
         <translation>Откл.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1011"/>
+        <location filename="../../core/android_strings.h" line="1041"/>
         <source>None</source>
         <comment>postfx_border_overlay_none</comment>
         <translation>Нет</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1012"/>
+        <location filename="../../core/android_strings.h" line="1042"/>
         <source>Red</source>
         <comment>postfx_component_red</comment>
         <translation>Красный</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1013"/>
+        <location filename="../../core/android_strings.h" line="1043"/>
         <source>Green</source>
         <comment>postfx_component_green</comment>
         <translation>Зелёный</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1014"/>
+        <location filename="../../core/android_strings.h" line="1044"/>
         <source>Blue</source>
         <comment>postfx_component_blue</comment>
         <translation>Синий</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1015"/>
+        <location filename="../../core/android_strings.h" line="1045"/>
         <source>Alpha</source>
         <comment>postfx_component_alpha</comment>
         <translation>Альфа</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1016"/>
+        <location filename="../../core/android_strings.h" line="1046"/>
         <source>%1$s [%2$s]</source>
         <comment>postfx_option_component</comment>
         <translation>%1$s [%2$s]</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1017"/>
+        <location filename="../../core/android_strings.h" line="1047"/>
         <source>Unknown (%1$d)</source>
         <comment>postfx_choice_unknown</comment>
         <translation>Неизвестно (%1$d)</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1019"/>
+        <location filename="../../core/android_strings.h" line="1049"/>
         <source>Disabled</source>
         <comment>settings_runahead_disabled</comment>
         <translation>Откл.</translation>
     </message>
     <message numerus="yes">
-        <location filename="../../core/android_strings.h" line="1021"/>
+        <location filename="../../core/android_strings.h" line="1051"/>
         <source>%d seconds</source>
         <comment>settings_duration_seconds</comment>
         <extracomment>Android plural quantities: one=&quot;%d second&quot;; other=&quot;%d seconds&quot;</extracomment>
@@ -6764,7 +6753,7 @@ Are you sure you want to continue?</source>
         </translation>
     </message>
     <message numerus="yes">
-        <location filename="../../core/android_strings.h" line="1023"/>
+        <location filename="../../core/android_strings.h" line="1053"/>
         <source>%d Frames</source>
         <comment>settings_runahead_frames</comment>
         <extracomment>Android plural quantities: one=&quot;%d Frame&quot;; other=&quot;%d Frames&quot;</extracomment>
@@ -6775,43 +6764,43 @@ Are you sure you want to continue?</source>
         </translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1024"/>
+        <location filename="../../core/android_strings.h" line="1054"/>
         <source>CPU Settings</source>
         <comment>settings_category_cpu</comment>
         <translation>Настройки CPU</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1025"/>
+        <location filename="../../core/android_strings.h" line="1055"/>
         <source>CD-ROM Settings</source>
         <comment>settings_category_cdrom</comment>
         <translation>Настройки CD-ROM</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1130"/>
+        <location filename="../../core/android_strings.h" line="1160"/>
         <source>Downsampling Display Scale</source>
         <comment>settings_downsample_scale</comment>
         <translation>Масштаб даунсэмплинга</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1131"/>
+        <location filename="../../core/android_strings.h" line="1161"/>
         <source>Selects the resolution scale that will be applied to the final image. 1x will downsample to the original console resolution.</source>
         <comment>settings_summary_downsample_scale</comment>
         <translation>Задаёт разрешение, применяемое к итоговому изображению. Значение 1x сжимает картинку игры до оригинального разрешения консоли.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1236"/>
+        <location filename="../../core/android_strings.h" line="1266"/>
         <source>Skip presenting frames when the image has not changed. Can help performance on very slow devices.</source>
         <comment>settings_summary_skip_duplicate_frames</comment>
         <translation>Пропускает вывод кадров при отсутствии изменений изображения. Может повысить производительность на очень слабых устройствах.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1238"/>
+        <location filename="../../core/android_strings.h" line="1268"/>
         <source>When enabled, the clock speed set below will be used. Overclocking may break games.</source>
         <comment>settings_summary_overclock_enable</comment>
         <translation>При включении опции будет использоваться заданное значение частоты. Разгон может нарушить работу игр.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1026"/>
+        <location filename="../../core/android_strings.h" line="1056"/>
         <source>Region</source>
         <comment>settings_region</comment>
         <translation>Регион</translation>
@@ -6829,109 +6818,109 @@ Are you sure you want to continue?</source>
         <translation>Включает отдельную конфигурацию контроллеров для игры вместо глобальных настроек.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="528"/>
+        <location filename="../../core/android_strings.h" line="554"/>
         <source>Copy %s to…</source>
         <comment>memory_card_editor_copy_save_to</comment>
         <translation>Копировать %s в…</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="592"/>
+        <location filename="../../core/android_strings.h" line="618"/>
         <source>File Name</source>
         <comment>game_properties_file_name</comment>
         <translation>Имя файла</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="594"/>
+        <location filename="../../core/android_strings.h" line="620"/>
         <source>Achievements</source>
         <comment>game_properties_achievements</comment>
         <translation>Достижения</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="595"/>
+        <location filename="../../core/android_strings.h" line="621"/>
         <source>RA Game ID</source>
         <comment>game_properties_achievements_game_id</comment>
         <translation>ID игры в RA</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="610"/>
+        <location filename="../../core/android_strings.h" line="636"/>
         <source>Show Advanced Settings</source>
         <comment>settings_show_advanced_settings</comment>
         <translation>Расширенные настройки</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="880"/>
+        <location filename="../../core/android_strings.h" line="910"/>
         <source>Search Settings</source>
         <comment>settings_search</comment>
         <translation>Поиск по настройкам</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="881"/>
+        <location filename="../../core/android_strings.h" line="911"/>
         <source>No matching settings.</source>
         <comment>settings_search_no_results</comment>
         <translation>Нет подходящих настроек.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1027"/>
+        <location filename="../../core/android_strings.h" line="1057"/>
         <source>Determines the emulated hardware type.</source>
         <comment>settings_summary_region</comment>
         <translation>Определяет тип эмулируемого оборудования.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1028"/>
+        <location filename="../../core/android_strings.h" line="1058"/>
         <source>Safe Mode</source>
         <comment>settings_disable_all_enhancements</comment>
         <translation>Безопасный режим</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1029"/>
+        <location filename="../../core/android_strings.h" line="1059"/>
         <source>Temporarily disables all enhancements, useful when testing.</source>
         <comment>settings_summary_disable_all_enhancements</comment>
         <translation>Временно отключает все улучшения. Полезно для диагностики проблем.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1030"/>
+        <location filename="../../core/android_strings.h" line="1060"/>
         <source>Fast Boot</source>
         <comment>settings_patch_fast_boot</comment>
         <translation>Быстрый запуск</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1031"/>
+        <location filename="../../core/android_strings.h" line="1061"/>
         <source>Patches the BIOS to skip the boot animation. Safe to enable.</source>
         <comment>settings_summary_patch_fast_boot</comment>
         <translation>Модифицирует BIOS для пропуска анимации запуска. Безопасно для включения.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1032"/>
+        <location filename="../../core/android_strings.h" line="1062"/>
         <source>Fast Forward Boot</source>
         <comment>settings_fast_forward_boot</comment>
         <translation>Ускорение загрузки</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1033"/>
+        <location filename="../../core/android_strings.h" line="1063"/>
         <source>Fast forwards through the early loading process when fast booting, saving time. Results may vary between games.</source>
         <comment>settings_summary_fast_forward_boot</comment>
         <translation>Сокращает ожидание за счёт ускорения начального этапа загрузки, если включен «Быстрый запуск». Результат зависит от игры.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1034"/>
+        <location filename="../../core/android_strings.h" line="1064"/>
         <source>Fast Forward Memory Card Access</source>
         <comment>settings_fast_forward_access</comment>
         <translation>Ускорение карт памяти</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1035"/>
+        <location filename="../../core/android_strings.h" line="1065"/>
         <source>Fast forwards through memory card access, both loading and saving. Can reduce waiting times in games that frequently access memory cards.</source>
         <comment>settings_summary_fast_forward_access</comment>
         <translation>Ускоряет эмуляцию при сохранении и загрузке. Снижает время ожидания в играх с частым обращением к карте памяти.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1036"/>
+        <location filename="../../core/android_strings.h" line="1066"/>
         <source>Overclocking Percentage</source>
         <comment>settings_overclock</comment>
         <translation>Частота процессора</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1037"/>
+        <location filename="../../core/android_strings.h" line="1067"/>
         <source>Selects the percentage of the normal clock speed the emulated hardware will run at.</source>
         <comment>settings_summary_overclock</comment>
         <translation>Задаёт тактовую частоту эмулируемого процессора относительно номинальной.</translation>
@@ -6947,159 +6936,159 @@ Are you sure you want to continue?</source>
         <translation type="vanished">Добавляет 6 МБ оперативной памяти к стандартным 2 МБ, как на отладочных моделях консоли.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1046"/>
+        <location filename="../../core/android_strings.h" line="1076"/>
         <source>Preload Images to RAM</source>
         <comment>settings_load_image_to_ram</comment>
         <translation>Предзагрузка образов в ОЗУ</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1047"/>
+        <location filename="../../core/android_strings.h" line="1077"/>
         <source>Loads the game image into RAM. Useful for network paths that may become unreliable during gameplay.</source>
         <comment>settings_summary_load_image_to_ram</comment>
         <translation>Загружает образ игры в оперативную память. Помогает избежать задержек при нестабильной скорости чтения с накопителя или по сети.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1048"/>
+        <location filename="../../core/android_strings.h" line="1078"/>
         <source>Apply Image Patches</source>
         <comment>settings_load_image_patches</comment>
         <translation>Применять патчи к образам</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1049"/>
+        <location filename="../../core/android_strings.h" line="1079"/>
         <source>Automatically applies patches to disc images when they are present, currently only PPF is supported.</source>
         <comment>settings_summary_load_image_patches</comment>
         <translation>Автоматически применяет патчи из папки с образами игр (при их наличии). Поддерживается только формат PPF.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1052"/>
+        <location filename="../../core/android_strings.h" line="1082"/>
         <source>Read Speedup</source>
         <comment>settings_read_speedup</comment>
         <translation>Ускорение чтения</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1053"/>
+        <location filename="../../core/android_strings.h" line="1083"/>
         <source>Speeds up CD-ROM reads by the specified factor. May improve loading speeds in some games, and break others.</source>
         <comment>settings_summary_read_speedup</comment>
         <translation>Ускоряет чтение данных диска на заданный множитель. Может снизить время загрузок, но нарушает работу некоторых игр.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1054"/>
+        <location filename="../../core/android_strings.h" line="1084"/>
         <source>Seek Speedup</source>
         <comment>settings_seek_speedup</comment>
         <translation>Ускорение поиска</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1055"/>
+        <location filename="../../core/android_strings.h" line="1085"/>
         <source>Speeds up CD-ROM seeks by the specified factor. May improve loading speeds in some games, and break others.</source>
         <comment>settings_summary_seek_speedup</comment>
         <translation>Ускоряет поиск секторов диска на заданный множитель. Может снизить время загрузок, но нарушает работу некоторых игр.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1056"/>
+        <location filename="../../core/android_strings.h" line="1086"/>
         <source>Auto-Detect</source>
         <comment>bios_auto_detect</comment>
         <translation>Автоопределение</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1057"/>
+        <location filename="../../core/android_strings.h" line="1087"/>
         <source>No BIOS images found, you must import one first.</source>
         <comment>bios_select_no_images</comment>
         <translation>BIOS не найдены. Необходимо импортировать образ.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1058"/>
+        <location filename="../../core/android_strings.h" line="1088"/>
         <source>Are you sure you want to remove the BIOS named &apos;%s&apos;? This action is permanent.</source>
         <comment>bios_delete_confirm</comment>
         <translation>Вы уверены, что хотите удалить BIOS с именем «%s»? Восстановление невозможно.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1059"/>
+        <location filename="../../core/android_strings.h" line="1089"/>
         <source>Import BIOS</source>
         <comment>setup_wizard_bios_title</comment>
         <translation>Импорт BIOS</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1060"/>
+        <location filename="../../core/android_strings.h" line="1090"/>
         <source>A PS1 or PS2 BIOS image is required to play games and is not optional.
         This image should be dumped from your own console, using tools such as Caetla or Unirom. There are plenty of
         guides available online on how to dump your console&apos;s BIOS.</source>
         <comment>setup_wizard_bios_message</comment>
-        <translation>Наличие образа BIOS PS1 или PS2 необходимо для запуска игр. Образ должен быть снят с вашей собственной консоли при помощи таких утилит, как Caetla или Unirom. В сети есть множество инструкций по снятию дампа BIOS консоли.</translation>
+        <translation>Для запуска игр требуется образ BIOS PS1 или PS2. Он должен быть снят с вашей собственной консоли при помощи таких утилит, как Caetla или Unirom. В сети есть множество инструкций по созданию дампа BIOS.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1061"/>
+        <location filename="../../core/android_strings.h" line="1091"/>
         <source>Console</source>
         <comment>settings_tab_console</comment>
         <translation>Консоль</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1062"/>
+        <location filename="../../core/android_strings.h" line="1092"/>
         <source>%1$d%% (%2$d MHz)</source>
         <comment>settings_cpu_overclock_value_format</comment>
         <translation>%1$d%% (%2$d МГц)</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1063"/>
+        <location filename="../../core/android_strings.h" line="1093"/>
         <source>BIOS</source>
         <comment>settings_tab_bios</comment>
         <translation>BIOS</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1064"/>
+        <location filename="../../core/android_strings.h" line="1094"/>
         <source>Folders</source>
         <comment>settings_tab_folders</comment>
         <translation>Папки</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1087"/>
+        <location filename="../../core/android_strings.h" line="1117"/>
         <source>Install BIOS</source>
         <comment>bios_install</comment>
         <translation>Установить BIOS</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1088"/>
+        <location filename="../../core/android_strings.h" line="1118"/>
         <source>Imports a new image to the BIOS directory.</source>
         <comment>bios_install_summary</comment>
         <translation>Импортирует новый образ в папку BIOS.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1089"/>
+        <location filename="../../core/android_strings.h" line="1119"/>
         <source>Delete BIOS</source>
         <comment>bios_delete</comment>
         <translation>Удалить BIOS</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1090"/>
+        <location filename="../../core/android_strings.h" line="1120"/>
         <source>Selected BIOS Images</source>
         <comment>bios_selected_images</comment>
         <translation>Выбранные образы BIOS</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1091"/>
+        <location filename="../../core/android_strings.h" line="1121"/>
         <source>Installed BIOS Images</source>
         <comment>bios_installed_images</comment>
         <translation>Установленные образы BIOS</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1092"/>
+        <location filename="../../core/android_strings.h" line="1122"/>
         <source>Unknown / Any Region</source>
         <comment>bios_unknown_region</comment>
         <translation>Неизвестный / любой регион</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1093"/>
+        <location filename="../../core/android_strings.h" line="1123"/>
         <source>Importing BIOS image…</source>
         <comment>bios_installing</comment>
         <translation>Импортирование образа BIOS…</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1094"/>
+        <location filename="../../core/android_strings.h" line="1124"/>
         <source>Missing BIOS Image</source>
         <comment>bios_missing_title</comment>
         <translation>Отсутствует образ BIOS</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1095"/>
+        <location filename="../../core/android_strings.h" line="1125"/>
         <source>A BIOS image is required to start this game.
 
 %1$s
@@ -7113,331 +7102,331 @@ Would you like to import one now?</source>
 Импортировать его сейчас?</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1096"/>
+        <location filename="../../core/android_strings.h" line="1126"/>
         <source>BIOS Imported</source>
         <comment>bios_import_success_title</comment>
         <translation>BIOS импортирован</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1097"/>
+        <location filename="../../core/android_strings.h" line="1127"/>
         <source>The BIOS image was imported successfully. Would you like to retry starting the game?</source>
         <comment>bios_import_success_retry</comment>
         <translation>Образ BIOS успешно импортирован. Повторить запуск игры?</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1098"/>
+        <location filename="../../core/android_strings.h" line="1128"/>
         <source>Internal Resolution</source>
         <comment>settings_resolution_scale</comment>
         <translation>Внутреннее разрешение</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1099"/>
+        <location filename="../../core/android_strings.h" line="1129"/>
         <source>Upscales the game&apos;s rendering by the specified multiplier.</source>
         <comment>settings_summary_resolution_scale</comment>
         <translation>Масштабирует рендеринг в игре на указанный множитель.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1100"/>
+        <location filename="../../core/android_strings.h" line="1130"/>
         <source>Mute CD Audio</source>
         <comment>settings_mute_cd_audio</comment>
         <translation>Заглушить CD-аудио</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1101"/>
+        <location filename="../../core/android_strings.h" line="1131"/>
         <source>Forcibly mutes both CD-DA and XA audio from the CD-ROM. Can be used to disable background music in some games.</source>
         <comment>settings_summary_mute_cd_audio</comment>
         <translation>Принудительно отключает вывод аудио в формате XA и с дорожек диска. Может использоваться для отключения музыки в некоторых играх.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1102"/>
+        <location filename="../../core/android_strings.h" line="1132"/>
         <source>Crop Mode</source>
         <comment>settings_crop_mode</comment>
         <translation>Режим кадрирования</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1103"/>
+        <location filename="../../core/android_strings.h" line="1133"/>
         <source>Determines how much of the area typically not visible on a consumer TV set to crop/hide.</source>
         <comment>settings_summary_crop_mode</comment>
-        <translation>Определяет, какую часть скрытой на стандартных ТВ области изображения следует обрезать.</translation>
+        <translation>Определяет режим обрезки области по краям изображения, обычно скрытой на экранах ТВ.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1104"/>
+        <location filename="../../core/android_strings.h" line="1134"/>
         <source>Deinterlacing Mode</source>
         <comment>settings_deinterlacing_mode</comment>
         <translation>Режим деинтерлейсинга</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1105"/>
+        <location filename="../../core/android_strings.h" line="1135"/>
         <source>Determines which algorithm is used to convert interlaced frames to progressive for display on your system.</source>
         <comment>settings_summary_deinterlacing_mode</comment>
         <translation>Определяет алгоритм преобразования чересстрочных кадров в прогрессивную развёртку.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1106"/>
+        <location filename="../../core/android_strings.h" line="1136"/>
         <source>Force Video Timing</source>
         <comment>settings_force_video_timing</comment>
         <translation>Переопределение частоты кадров</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1107"/>
+        <location filename="../../core/android_strings.h" line="1137"/>
         <source>Utilizes the chosen frame rate regardless of the game&apos;s setting.</source>
         <comment>settings_summary_force_video_timing</comment>
         <translation>Использует выбранную частоту кадров независимо от региона игры.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1108"/>
+        <location filename="../../core/android_strings.h" line="1138"/>
         <source>Show GPU Statistics</source>
         <comment>settings_show_gpu_statistics</comment>
         <translation>Статистика GPU</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1109"/>
+        <location filename="../../core/android_strings.h" line="1139"/>
         <source>Shows information about the emulated GPU in the top-right corner of the display.</source>
         <comment>settings_summary_show_gpu_statistics</comment>
         <translation>Показывает в правом верхнем углу экрана сведения по графическому процессору консоли.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1110"/>
+        <location filename="../../core/android_strings.h" line="1140"/>
         <source>Show Enhancement Settings</source>
         <comment>settings_show_enhancements</comment>
         <translation>Настройки улучшений</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1111"/>
+        <location filename="../../core/android_strings.h" line="1141"/>
         <source>Shows enhancement settings in the bottom-right corner of the screen.</source>
         <comment>settings_summary_show_enhancements</comment>
         <translation>Показывает в правом нижнем углу экрана текущие настройки улучшений.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1112"/>
+        <location filename="../../core/android_strings.h" line="1142"/>
         <source>Dithering</source>
         <comment>settings_dithering_mode</comment>
         <translation>Дизеринг</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1113"/>
+        <location filename="../../core/android_strings.h" line="1143"/>
         <source>Controls how dithering is applied in the emulated GPU. True Color disables dithering and produces the nicest looking gradients.</source>
         <comment>settings_summary_dithering_mode</comment>
         <translation>Управляет применением дизеринга в GPU консоли. Режим «True Color» отключает дизеринг, обеспечивая наиболее плавные градиенты.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1114"/>
+        <location filename="../../core/android_strings.h" line="1144"/>
         <source>Texture Filtering</source>
         <comment>settings_texture_filter</comment>
         <translation>Сглаживание текстур</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1115"/>
+        <location filename="../../core/android_strings.h" line="1145"/>
         <source>Smooths out the blockiness of magnified textures on 3D objects.</source>
         <comment>settings_summary_texture_filter</comment>
         <translation>Уменьшает ступенчатость при увеличении текстур 3D-объектов.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1116"/>
+        <location filename="../../core/android_strings.h" line="1146"/>
         <source>Sprite Texture Filtering</source>
         <comment>settings_sprite_texture_filter</comment>
         <translation>Сглаживание текстур спрайтов</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1117"/>
+        <location filename="../../core/android_strings.h" line="1147"/>
         <source>Smooths out the blockiness of magnified textures on 2D objects.</source>
         <comment>settings_summary_sprite_texture_filter</comment>
         <translation>Уменьшает ступенчатость при увеличении текстур 2D-объектов.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1118"/>
+        <location filename="../../core/android_strings.h" line="1148"/>
         <source>Widescreen Rendering</source>
         <comment>settings_widescreen_hack</comment>
         <translation>Широкоэкранный рендеринг</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1119"/>
+        <location filename="../../core/android_strings.h" line="1149"/>
         <source>Increases the field of view from 4:3 to the chosen display aspect ratio in 3D games.</source>
         <comment>settings_summary_widescreen_hack</comment>
         <translation>Увеличивает область обзора в 3D-играх с 4:3 до выбранного соотношения сторон.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1120"/>
+        <location filename="../../core/android_strings.h" line="1150"/>
         <source>Force 4:3 For FMVs</source>
         <comment>settings_force_4_3_for_24_bit</comment>
         <translation>Принудительно 4:3 для FMV</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1121"/>
+        <location filename="../../core/android_strings.h" line="1151"/>
         <source>Switches back to 4:3 display aspect ratio when displaying 24-bit content, usually FMVs.</source>
         <comment>settings_summary_force_4_3_for_24_bit</comment>
-        <translation>Переключает соотношение сторон на 4:3 при выводе содержимого в 24-битном формате (обычно видеозаставок).</translation>
+        <translation>Переключает соотношение сторон обратно на 4:3 при выводе содержимого в 24-битном цвете (обычно видеозаставок).</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1122"/>
+        <location filename="../../core/android_strings.h" line="1152"/>
         <source>FMV Chroma Smoothing</source>
         <comment>settings_chroma_smoothing_24_bit</comment>
         <translation>Сглаживание цветности FMV</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1123"/>
+        <location filename="../../core/android_strings.h" line="1153"/>
         <source>Smooths out blockyness between colour transitions in 24-bit content, usually FMVs.</source>
         <comment>settings_summary_chroma_smoothing_24_bit</comment>
-        <translation>Уменьшает артефакты блочности цветовых переходов для содержимого в 24-битном формате (обычно видеозаставок).</translation>
+        <translation>Уменьшает артефакты блочности цветовых переходов для содержимого в 24-битном цвете (обычно видеозаставок).</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1124"/>
+        <location filename="../../core/android_strings.h" line="1154"/>
         <source>PGXP Geometry Correction</source>
         <comment>settings_pgxp_enable</comment>
         <translation>Коррекция геометрии (PGXP)</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1125"/>
+        <location filename="../../core/android_strings.h" line="1155"/>
         <source>Reduces &quot;wobbly&quot; polygons and &quot;warping&quot; textures that are common in PS1 games. Only works with the hardware renderers.</source>
         <comment>settings_summary_pgxp_enable</comment>
         <translation>Уменьшает дрожание полигонов и искривление текстур, характерное для игр PS1. Работает только с аппаратным рендерингом.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1126"/>
+        <location filename="../../core/android_strings.h" line="1156"/>
         <source>PGXP Depth Buffer</source>
         <comment>settings_pgxp_depth_buffer</comment>
         <translation>Буфер глубины PGXP</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1127"/>
+        <location filename="../../core/android_strings.h" line="1157"/>
         <source>Reduces polygon Z-fighting through depth testing. Low compatibility with games.</source>
         <comment>settings_summary_pgxp_depth_buffer</comment>
         <translation>Снижает мерцание полигонов с помощью теста глубины. Низкая совместимость с играми.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1128"/>
+        <location filename="../../core/android_strings.h" line="1158"/>
         <source>Downsampling</source>
         <comment>settings_downsample_mode</comment>
         <translation>Даунсэмплинг</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1129"/>
+        <location filename="../../core/android_strings.h" line="1159"/>
         <source>Downsamples the rendered image prior to displaying it. Can improve overall image quality in mixed 2D/3D games.</source>
         <comment>settings_summary_downsample_mode</comment>
         <translation>Снижает разрешение итогового изображения перед выводом на экран. Может улучшить общее качество картинки в играх со смешанной 2D/3D-графикой.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1132"/>
+        <location filename="../../core/android_strings.h" line="1162"/>
         <source>Show Resolution</source>
         <comment>settings_show_resolution</comment>
         <translation>Разрешение рендеринга</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1133"/>
+        <location filename="../../core/android_strings.h" line="1163"/>
         <source>Shows the current rendering resolution of the system in the top-right corner of the display.</source>
         <comment>settings_summary_show_resolution</comment>
         <translation>Показывает в правом верхнем углу экрана текущее разрешение рендеринга.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1134"/>
+        <location filename="../../core/android_strings.h" line="1164"/>
         <source>Use Software Renderer For Readbacks</source>
         <comment>settings_use_software_renderer_for_readbacks</comment>
         <translation>Программный рендерер для чтения VRAM</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1135"/>
+        <location filename="../../core/android_strings.h" line="1165"/>
         <source>Runs the software renderer in parallel for VRAM readbacks, which may improve performance with the hardware renderer.</source>
         <comment>settings_summary_use_software_renderer_for_readbacks</comment>
-        <translation>Запускает параллельный программный рендерер для чтения видеопамяти. Может повысить производительность при аппаратном рендеринге.</translation>
+        <translation>Запускает программный рендерер параллельно для чтения из VRAM. Может повысить производительность при аппаратной отрисовке.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1136"/>
+        <location filename="../../core/android_strings.h" line="1166"/>
         <source>Texture Replacement</source>
         <comment>settings_category_texture_replacements</comment>
         <translation>Замена текстур</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1137"/>
+        <location filename="../../core/android_strings.h" line="1167"/>
         <source>Enable Texture Cache</source>
         <comment>settings_enable_texture_cache</comment>
         <translation>Текстурный кэш</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1138"/>
+        <location filename="../../core/android_strings.h" line="1168"/>
         <source>Enables caching of guest textures, required for texture replacement.</source>
         <comment>settings_summary_enable_texture_cache</comment>
         <translation>Включает кэширование оригинальных текстур, необходимое для работы функции замены.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1139"/>
+        <location filename="../../core/android_strings.h" line="1169"/>
         <source>Use Old MDEC Routines</source>
         <comment>settings_use_old_mdec_routines</comment>
         <translation>Старые алгоритмы MDEC</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1140"/>
+        <location filename="../../core/android_strings.h" line="1170"/>
         <source>Enables the older, less accurate MDEC decoding routines. May be required for old replacement backgrounds to match/load.</source>
         <comment>settings_summary_use_old_mdec_routines</comment>
         <translation>Включает менее точные процедуры декодирования MDEC. Может требоваться для корректной загрузки заменяемых текстур фона в старом формате.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1141"/>
+        <location filename="../../core/android_strings.h" line="1171"/>
         <source>Enable Texture Replacements</source>
         <comment>settings_enable_texture_replacements</comment>
         <translation>Замена текстур</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1142"/>
+        <location filename="../../core/android_strings.h" line="1172"/>
         <source>Enables loading of replacement textures. Not compatible with all games.</source>
         <comment>settings_summary_enable_texture_replacements</comment>
         <translation>Включает загрузку внешних текстур. Совместимость зависит от игры.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1143"/>
+        <location filename="../../core/android_strings.h" line="1173"/>
         <source>Enable VRAM Write Replacement</source>
         <comment>settings_enable_vram_write_replacements</comment>
         <translation>Замена текстур в VRAM</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1144"/>
+        <location filename="../../core/android_strings.h" line="1174"/>
         <source>Enables the replacement of background textures in supported games.</source>
         <comment>settings_summary_enable_vram_write_replacements</comment>
         <translation>Включает замену текстур фона в поддерживаемых играх.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1145"/>
+        <location filename="../../core/android_strings.h" line="1175"/>
         <source>Preload Replacement Textures</source>
         <comment>settings_preload_textures</comment>
         <translation>Предзагрузка внешних текстур</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1146"/>
+        <location filename="../../core/android_strings.h" line="1176"/>
         <source>Loads all replacement texture to RAM, reducing stuttering at runtime.</source>
         <comment>settings_summary_preload_textures</comment>
         <translation>Загружает все внешние текстуры в ОЗУ, снижая подтормаживания во время игры.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1147"/>
+        <location filename="../../core/android_strings.h" line="1177"/>
         <source>Screenshots</source>
         <comment>settings_category_screenshots</comment>
         <translation>Скриншоты</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1148"/>
+        <location filename="../../core/android_strings.h" line="1178"/>
         <source>Numerator</source>
         <comment>preference_ratio_numerator</comment>
         <translation>Числитель</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1149"/>
+        <location filename="../../core/android_strings.h" line="1179"/>
         <source>Denominator</source>
         <comment>preference_ratio_denominator</comment>
         <translation>Знаменатель</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1150"/>
+        <location filename="../../core/android_strings.h" line="1180"/>
         <source>Apply Compatibility Settings</source>
         <comment>settings_apply_compatibility_settings</comment>
         <translation>Применять настройки совместимости</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1151"/>
+        <location filename="../../core/android_strings.h" line="1181"/>
         <source>Readahead Sectors</source>
         <comment>settings_readahead_sectors</comment>
         <translation>Упреждающее чтение</translation>
     </message>
     <message numerus="yes">
-        <location filename="../../core/android_strings.h" line="1153"/>
+        <location filename="../../core/android_strings.h" line="1183"/>
         <source>%d Sectors</source>
         <comment>settings_readahead_sectors_value</comment>
         <extracomment>Android plural quantities: one=&quot;%d Sector&quot;; other=&quot;%d Sectors&quot;</extracomment>
@@ -7448,961 +7437,961 @@ Would you like to import one now?</source>
         </translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1154"/>
+        <location filename="../../core/android_strings.h" line="1184"/>
         <source>Reduces hitches in emulation by reading/decompressing CD data asynchronously on a worker thread.</source>
         <comment>settings_summary_readahead_sectors</comment>
         <translation>Снижает задержки эмуляции за счёт асинхронного чтения и распаковки данных диска в отдельном потоке.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1155"/>
+        <location filename="../../core/android_strings.h" line="1185"/>
         <source>Enable Region Check</source>
         <comment>settings_region_check</comment>
         <translation>Региональная проверка</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1156"/>
+        <location filename="../../core/android_strings.h" line="1186"/>
         <source>Enable TTY Logging</source>
         <comment>settings_tty_logging</comment>
         <translation>Логирование TTY</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1157"/>
+        <location filename="../../core/android_strings.h" line="1187"/>
         <source>Enable Recompiler Block Linking</source>
         <comment>settings_recompiler_block_linking</comment>
         <translation>Связывание блоков в рекомпиляторе</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1158"/>
+        <location filename="../../core/android_strings.h" line="1188"/>
         <source>Recompiler Fast Memory Access</source>
         <comment>settings_fastmem_mode</comment>
         <translation>Быстрый доступ к памяти в рекомпиляторе</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1161"/>
+        <location filename="../../core/android_strings.h" line="1191"/>
         <source>Enable Recompiler ICache</source>
         <comment>settings_recompiler_icache</comment>
         <translation>Кэш инструкций в рекомпиляторе</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1162"/>
+        <location filename="../../core/android_strings.h" line="1192"/>
         <source>Disable Dual-Source Blending</source>
         <comment>settings_disable_dual_source_blend</comment>
         <translation>Отключить смешивание с двойным источником</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1163"/>
+        <location filename="../../core/android_strings.h" line="1193"/>
         <source>Disable Framebuffer Fetch</source>
         <comment>settings_disable_framebuffer_fetch</comment>
         <translation>Отключить выборку из фреймбуфера</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1164"/>
+        <location filename="../../core/android_strings.h" line="1194"/>
         <source>Disable Texture Buffers</source>
         <comment>settings_disable_texture_buffers</comment>
         <translation>Отключить текстурные буферы</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1165"/>
+        <location filename="../../core/android_strings.h" line="1195"/>
         <source>Disable Texture Copy To Self</source>
         <comment>settings_disable_texture_copy_to_self</comment>
         <translation>Отключить копирование текстуры на себя</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1166"/>
+        <location filename="../../core/android_strings.h" line="1196"/>
         <source>Line Detection</source>
         <comment>settings_line_detect_mode</comment>
         <translation>Распознавание линий</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1167"/>
+        <location filename="../../core/android_strings.h" line="1197"/>
         <source>Attempts to detect one pixel high/wide lines that rely on non-upscaled rasterization behavior, filling in gaps introduced by upscaling.</source>
         <comment>settings_summary_line_detect_mode</comment>
         <translation>Пытается определять линии толщиной в один пиксель, рассчитанные на оригинальное разрешение, устраняя разрывы от повышения разрешения.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1168"/>
+        <location filename="../../core/android_strings.h" line="1198"/>
         <source>Multisample Antialiasing</source>
         <comment>settings_multisamples</comment>
         <translation>Мультисэмплинг</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1169"/>
+        <location filename="../../core/android_strings.h" line="1199"/>
         <source>Smooths polygon edges by rendering multiple samples per pixel. Increases GPU load.</source>
         <comment>settings_summary_multisamples</comment>
         <translation>Сглаживает края полигонов за счёт множественной выборки пикселей. Увеличивает нагрузку на GPU.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1170"/>
+        <location filename="../../core/android_strings.h" line="1200"/>
         <source>Perspective Correct Colors</source>
         <comment>settings_pgxp_color_correction</comment>
         <translation>Перспективная коррекция цветов</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1171"/>
+        <location filename="../../core/android_strings.h" line="1201"/>
         <source>CPU Mode</source>
         <comment>settings_pgxp_cpu</comment>
         <translation>Режим CPU</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1172"/>
+        <location filename="../../core/android_strings.h" line="1202"/>
         <source>Culling Correction</source>
         <comment>settings_pgxp_culling</comment>
         <translation>Коррекция отсечения</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1173"/>
+        <location filename="../../core/android_strings.h" line="1203"/>
         <source>Disable on 2D Polygons</source>
         <comment>settings_pgxp_disable_on_2d_polygons</comment>
         <translation>Отключать для 2D-полигонов</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1174"/>
+        <location filename="../../core/android_strings.h" line="1204"/>
         <source>Preserve Projection Precision</source>
         <comment>settings_pgxp_preserve_proj_fp</comment>
         <translation>Сохранение точности проекции</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1175"/>
+        <location filename="../../core/android_strings.h" line="1205"/>
         <source>Perspective Correct Textures</source>
         <comment>settings_pgxp_texture_correction</comment>
         <translation>Перспективная коррекция текстур</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1176"/>
+        <location filename="../../core/android_strings.h" line="1206"/>
         <source>Vertex Cache</source>
         <comment>settings_pgxp_vertex_cache</comment>
         <translation>Кэш вершин</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1177"/>
+        <location filename="../../core/android_strings.h" line="1207"/>
         <source>Round Upscaled Texture Coordinates</source>
         <comment>settings_force_round_texture_coordinates</comment>
-        <translation>Округление координат текстур при апскейле</translation>
+        <translation>Округление координат текстур при масштабировании</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1178"/>
+        <location filename="../../core/android_strings.h" line="1208"/>
         <source>Scaled Interlacing</source>
         <comment>settings_scaled_interlacing</comment>
         <translation>Масштабирование чересстрочной развёртки</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1179"/>
+        <location filename="../../core/android_strings.h" line="1209"/>
         <source>Show VRAM</source>
         <comment>settings_show_vram</comment>
         <translation>Отображение VRAM</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1180"/>
+        <location filename="../../core/android_strings.h" line="1210"/>
         <source>Automatically disable enhancements when they are not supported by games.</source>
         <comment>settings_summary_apply_compatibility_settings</comment>
         <translation>Автоматически отключает улучшения, которые не поддерживаются играми.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1181"/>
+        <location filename="../../core/android_strings.h" line="1211"/>
         <source>Sets the minimum delay for the &apos;Maximum&apos; read speedup level.</source>
         <comment>settings_summary_max_read_speedup_cycles</comment>
         <translation>Задаёт минимальную задержку в циклах для ускорения поиска в режиме «Максимум».</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1182"/>
+        <location filename="../../core/android_strings.h" line="1212"/>
         <source>Simulates the region check present in original, unmodified consoles.</source>
         <comment>settings_summary_region_check</comment>
-        <translation>Имитирует проверку региона оригинальных немодифицированных консолей.</translation>
+        <translation>Имитирует проверку региона оригинальных консолей без модификаций.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1183"/>
+        <location filename="../../core/android_strings.h" line="1213"/>
         <source>Logs BIOS calls to printf(). Not all games contain debugging messages.</source>
         <comment>settings_summary_tty_logging</comment>
         <translation>Записывает вызовы BIOS в printf(). Сообщения по отладке доступны не во всех играх.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1186"/>
+        <location filename="../../core/android_strings.h" line="1216"/>
         <source>Performance enhancement - jumps directly between blocks instead of returning to the dispatcher.</source>
         <comment>settings_summary_recompiler_block_linking</comment>
-        <translation>Выполняет переходы напрямую между блоками кода, минуя диспетчер. Повышает производительность.</translation>
+        <translation>Выполняет прямые переходы между блоками кода, минуя диспетчер. Повышает производительность.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1187"/>
+        <location filename="../../core/android_strings.h" line="1217"/>
         <source>Avoids calls to C++ code, significantly speeding up the recompiler.</source>
         <comment>settings_summary_fastmem_mode</comment>
         <translation>Исключает вызовы функций C++, значительно ускоряя работу рекомпилятора.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1188"/>
+        <location filename="../../core/android_strings.h" line="1218"/>
         <source>Determines whether the CPU&apos;s instruction cache is simulated in the recompiler. Improves accuracy at a small cost to performance. If games are running too fast, try enabling this option.</source>
         <comment>settings_summary_recompiler_icache</comment>
         <translation>Включает симуляцию кэша инструкций CPU. Повышает точность ценой небольшого снижения производительности. Попробуйте включить при завышенной скорости геймплея.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1189"/>
+        <location filename="../../core/android_strings.h" line="1219"/>
         <source>Prevents the use of the dual-source blending extensions.</source>
         <comment>settings_summary_disable_dual_source_blend</comment>
         <translation>Запрещает использование расширений смешивания из двух источников.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1190"/>
+        <location filename="../../core/android_strings.h" line="1220"/>
         <source>Prevents the use of the framebuffer fetch extensions.</source>
         <comment>settings_summary_disable_framebuffer_fetch</comment>
         <translation>Запрещает использование расширений выборки из фреймбуфера.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1191"/>
+        <location filename="../../core/android_strings.h" line="1221"/>
         <source>Prevents the use of the texture/shader storage buffers. Will reduce performance.</source>
         <comment>settings_summary_disable_texture_buffers</comment>
         <translation>Запрещает использование буферов хранения текстур и шейдеров. Снижает производительность.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1192"/>
+        <location filename="../../core/android_strings.h" line="1222"/>
         <source>Always copies through the shadow texture. Will reduce performance.</source>
         <comment>settings_summary_disable_texture_copy_to_self</comment>
         <translation>Всегда выполняет копирование через теневую текстуру. Снижает производительность.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1193"/>
+        <location filename="../../core/android_strings.h" line="1223"/>
         <source>Uses perspective-correct interpolation for colors, which can improve visuals in some games.</source>
         <comment>settings_summary_pgxp_color_correction</comment>
         <translation>Использует правильную интерполяцию цветов. Может улучшить качество графики.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1195"/>
+        <location filename="../../core/android_strings.h" line="1225"/>
         <source>Increases the precision of polygon culling, reducing the number of holes in geometry.</source>
         <comment>settings_summary_pgxp_culling</comment>
         <translation>Повышает точность рендеринга полигонов, снижая количество пустот в геометрии.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1196"/>
+        <location filename="../../core/android_strings.h" line="1226"/>
         <source>Uses native resolution coordinates for 2D polygons, instead of precise coordinates. Can fix misaligned UI in some games, but otherwise should be left disabled.</source>
         <comment>settings_summary_pgxp_disable_on_2d_polygons</comment>
         <translation>Применяет координаты оригинального разрешения вместо точных. Помогает исправить смещение интерфейса в некоторых играх, но в остальных случаях должно быть выключено.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1203"/>
+        <location filename="../../core/android_strings.h" line="1233"/>
         <source>Adds additional precision to PGXP data post-projection. May improve visuals in some games.</source>
         <comment>settings_summary_pgxp_preserve_proj_fp</comment>
         <translation>Повышает точность данных PGXP после проецирования. Может улучшить графику в некоторых играх.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1204"/>
+        <location filename="../../core/android_strings.h" line="1234"/>
         <source>Uses perspective-correct interpolation for texture coordinates, straightening out warped textures.</source>
         <comment>settings_summary_pgxp_texture_correction</comment>
         <translation>Использует правильную интерполяцию координат, выпрямляя искажения на поверхностях объектов.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1206"/>
+        <location filename="../../core/android_strings.h" line="1236"/>
         <source>Rounds texture coordinates instead of flooring when upscaling. Can fix misaligned textures in some games, but break others.</source>
         <comment>settings_summary_force_round_texture_coordinates</comment>
         <translation>Принудительно округляет текстурные координаты вместо отбрасывания дробной части при масштабировании. Может исправить смещение текстур в некоторых играх, но вызывает сбои в других.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1207"/>
+        <location filename="../../core/android_strings.h" line="1237"/>
         <source>Scales line skipping in interlaced rendering to the internal resolution, making it less noticeable. Usually safe to enable.</source>
         <comment>settings_summary_scaled_interlacing</comment>
         <translation>Маскирует чересстрочный рендеринг, масштабируя пропуск строк до внутреннего разрешения. Безопасно для включения.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1208"/>
+        <location filename="../../core/android_strings.h" line="1238"/>
         <source>Texture Modulation Cropping (&quot;Old/v0&quot; GPU)</source>
         <comment>settings_enable_modulation_crop</comment>
         <translation>Сжатие модуляции текстур (старый GPU v0)</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1209"/>
+        <location filename="../../core/android_strings.h" line="1239"/>
         <source>Crops vertex colours to 5:5:5 before modulating with the texture colour, which typically results in more visible banding.</source>
         <comment>settings_summary_enable_modulation_crop</comment>
         <translation>Ограничивает цвета вершин до формата 5:5:5 перед модуляцией с цветом текстуры. Обычно приводит к появлению ступенчатых градиентов.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1210"/>
+        <location filename="../../core/android_strings.h" line="1240"/>
         <source>Disable Upscaled Direct Textures</source>
         <comment>settings_disable_upscaled_direct_textures</comment>
         <translation>Отключить масштабирование прямых текстур</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1211"/>
+        <location filename="../../core/android_strings.h" line="1241"/>
         <source>Samples 16-bit direct-color textures at native resolution when upscaling. Can fix filtering of FMVs/backgrounds in some games.</source>
         <comment>settings_summary_disable_upscaled_direct_textures</comment>
-        <translation>Выполняет выборку 16-битных текстур прямого цвета в исходном разрешении при апскейле. Может исправить фильтрацию видеороликов и фона в некоторых играх.</translation>
+        <translation>Выполняет выборку 16-битных текстур прямого цвета в исходном разрешении при повышении разрешения. Может исправить фильтрацию видеозаставок и фона в некоторых играх.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1212"/>
+        <location filename="../../core/android_strings.h" line="1242"/>
         <source>Filter Framebuffer Uploads</source>
         <comment>settings_filter_framebuffer_uploads</comment>
         <translation>Фильтрация данных фреймбуфера</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1213"/>
+        <location filename="../../core/android_strings.h" line="1243"/>
         <source>Applies the selected sprite texture filter to framebuffer uploads, smoothing backgrounds in some games while preserving 24-bit video.</source>
         <comment>settings_summary_filter_framebuffer_uploads</comment>
         <translation>Применяет выбранный фильтр текстур спрайтов к загрузкам во фреймбуфер. Сглаживает фон в некоторых играх, не затрагивая 24-битное видео.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1214"/>
+        <location filename="../../core/android_strings.h" line="1244"/>
         <source>Minimum Framebuffer Upload Width</source>
         <comment>settings_filter_framebuffer_uploads_minimum_width</comment>
         <translation>Минимальная ширина загрузок фреймбуфера</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1215"/>
+        <location filename="../../core/android_strings.h" line="1245"/>
         <source>Only filters framebuffer uploads at least this wide. Increase this value to avoid filtering texture data.</source>
         <comment>settings_summary_filter_framebuffer_uploads_minimum_width</comment>
         <translation>Фильтрует загрузки во фреймбуфер только с шириной не менее заданной. Повысьте значение, чтобы избежать сглаживания текстур.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1216"/>
+        <location filename="../../core/android_strings.h" line="1246"/>
         <source>Minimum Framebuffer Upload Height</source>
         <comment>settings_filter_framebuffer_uploads_minimum_height</comment>
         <translation>Минимальная высота загрузок фреймбуфера</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1217"/>
+        <location filename="../../core/android_strings.h" line="1247"/>
         <source>Only filters framebuffer uploads at least this tall. Increase this value to avoid filtering texture data.</source>
         <comment>settings_summary_filter_framebuffer_uploads_minimum_height</comment>
         <translation>Фильтрует загрузки во фреймбуфер только с высотой не менее заданной. Повысьте значение, чтобы избежать сглаживания текстур.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1218"/>
+        <location filename="../../core/android_strings.h" line="1248"/>
         <source>Shows the entirety of the console&apos;s VRAM instead of the display area (debugging feature).</source>
         <comment>settings_summary_show_vram</comment>
         <translation>Показывает полное содержимое видеопамяти консоли вместо области игры (функция отладки).</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1219"/>
+        <location filename="../../core/android_strings.h" line="1249"/>
         <source>Global settings copied.</source>
         <comment>game_properties_settings_copied</comment>
         <translation>Скопированы глобальные настройки.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1220"/>
+        <location filename="../../core/android_strings.h" line="1250"/>
         <source>Compatibility</source>
         <comment>game_properties_compatibility_rating</comment>
         <translation>Совместимость</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1221"/>
+        <location filename="../../core/android_strings.h" line="1251"/>
         <source>Database Title</source>
         <comment>game_properties_database_title</comment>
         <translation>Название в базе данных</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1222"/>
+        <location filename="../../core/android_strings.h" line="1252"/>
         <source>Disc Set</source>
         <comment>game_properties_disc_set_title</comment>
         <translation>Сет дисков</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1223"/>
+        <location filename="../../core/android_strings.h" line="1253"/>
         <source>Developer</source>
         <comment>game_properties_developer</comment>
         <translation>Разработчик</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1224"/>
+        <location filename="../../core/android_strings.h" line="1254"/>
         <source>Publisher</source>
         <comment>game_properties_publisher</comment>
         <translation>Издатель</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1225"/>
+        <location filename="../../core/android_strings.h" line="1255"/>
         <source>Genre</source>
         <comment>game_properties_genre</comment>
         <translation>Жанр</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1226"/>
+        <location filename="../../core/android_strings.h" line="1256"/>
         <source>Released</source>
         <comment>game_properties_release_date</comment>
         <translation>Дата выпуска</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1227"/>
+        <location filename="../../core/android_strings.h" line="1257"/>
         <source>Players</source>
         <comment>game_properties_players</comment>
         <translation>Игроки</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1228"/>
+        <location filename="../../core/android_strings.h" line="1258"/>
         <source>Save Blocks</source>
         <comment>game_properties_memory_card_blocks</comment>
-        <translation>Блоков сохранения</translation>
+        <translation>Блоков карты памяти</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1229"/>
+        <location filename="../../core/android_strings.h" line="1259"/>
         <source>Use Separate Disc Settings</source>
         <comment>game_settings_use_separate_disc_settings</comment>
         <translation>Раздельные настройки дисков</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1230"/>
+        <location filename="../../core/android_strings.h" line="1260"/>
         <source>Uses separate game settings for each disc in a set. Can only be changed on the first disc.</source>
         <comment>game_settings_use_separate_disc_settings_summary</comment>
         <translation>Использует раздельные настройки для дисков игры. Можно применить только к первому диску.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1232"/>
+        <location filename="../../core/android_strings.h" line="1262"/>
         <source>Maximum Read Speedup Cycles</source>
         <comment>settings_max_read_speedup_cycles</comment>
         <translation>Задержка макс. ускорения чтения</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1233"/>
+        <location filename="../../core/android_strings.h" line="1263"/>
         <source>Maximum Seek Speedup Cycles</source>
         <comment>settings_max_seek_speedup_cycles</comment>
         <translation>Задержка макс. ускорения поиска</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1234"/>
+        <location filename="../../core/android_strings.h" line="1264"/>
         <source>Sets the minimum delay for the &apos;Maximum&apos; seek speedup level.</source>
         <comment>settings_summary_max_seek_speedup_cycles</comment>
         <translation>Задаёт минимальную задержку в циклах для ускорения поиска в режиме «Максимум».</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1235"/>
+        <location filename="../../core/android_strings.h" line="1265"/>
         <source>Skip Duplicate Frames</source>
         <comment>settings_skip_duplicate_frames</comment>
         <translation>Пропуск идентичных кадров</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1237"/>
+        <location filename="../../core/android_strings.h" line="1267"/>
         <source>Enable Overclocking</source>
         <comment>settings_overclock_enable</comment>
         <translation>Включить разгон</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1293"/>
+        <location filename="../../core/android_strings.h" line="1323"/>
         <source>Automatic</source>
         <comment>settings_gpu_resolution_scale_entries[0]</comment>
         <translation>Автоматически</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1294"/>
+        <location filename="../../core/android_strings.h" line="1324"/>
         <source>1x</source>
         <comment>settings_gpu_resolution_scale_entries[1]</comment>
         <translation>1x</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1295"/>
+        <location filename="../../core/android_strings.h" line="1325"/>
         <source>2x</source>
         <comment>settings_gpu_resolution_scale_entries[2]</comment>
         <translation>2x</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1296"/>
+        <location filename="../../core/android_strings.h" line="1326"/>
         <source>3x (for 720p)</source>
         <comment>settings_gpu_resolution_scale_entries[3]</comment>
         <translation>3x (для 720p)</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1297"/>
+        <location filename="../../core/android_strings.h" line="1327"/>
         <source>4x</source>
         <comment>settings_gpu_resolution_scale_entries[4]</comment>
         <translation>4x</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1298"/>
+        <location filename="../../core/android_strings.h" line="1328"/>
         <source>5x (for 1080p)</source>
         <comment>settings_gpu_resolution_scale_entries[5]</comment>
         <translation>5x (для 1080p)</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1299"/>
+        <location filename="../../core/android_strings.h" line="1329"/>
         <source>6x (for 1440p)</source>
         <comment>settings_gpu_resolution_scale_entries[6]</comment>
         <translation>6x (для 1440p)</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1300"/>
+        <location filename="../../core/android_strings.h" line="1330"/>
         <source>7x</source>
         <comment>settings_gpu_resolution_scale_entries[7]</comment>
         <translation>7x</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1301"/>
+        <location filename="../../core/android_strings.h" line="1331"/>
         <source>8x</source>
         <comment>settings_gpu_resolution_scale_entries[8]</comment>
         <translation>8x</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1302"/>
+        <location filename="../../core/android_strings.h" line="1332"/>
         <source>9x (for 4K)</source>
         <comment>settings_gpu_resolution_scale_entries[9]</comment>
         <translation>9x (для 4K)</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1303"/>
+        <location filename="../../core/android_strings.h" line="1333"/>
         <source>10x</source>
         <comment>settings_gpu_resolution_scale_entries[10]</comment>
         <translation>10x</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1304"/>
+        <location filename="../../core/android_strings.h" line="1334"/>
         <source>11x</source>
         <comment>settings_gpu_resolution_scale_entries[11]</comment>
         <translation>11x</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1305"/>
+        <location filename="../../core/android_strings.h" line="1335"/>
         <source>12x</source>
         <comment>settings_gpu_resolution_scale_entries[12]</comment>
         <translation>12x</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1306"/>
+        <location filename="../../core/android_strings.h" line="1336"/>
         <source>13x</source>
         <comment>settings_gpu_resolution_scale_entries[13]</comment>
         <translation>13x</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1307"/>
+        <location filename="../../core/android_strings.h" line="1337"/>
         <source>14x</source>
         <comment>settings_gpu_resolution_scale_entries[14]</comment>
         <translation>14x</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1308"/>
+        <location filename="../../core/android_strings.h" line="1338"/>
         <source>15x</source>
         <comment>settings_gpu_resolution_scale_entries[15]</comment>
         <translation>15x</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1309"/>
+        <location filename="../../core/android_strings.h" line="1339"/>
         <source>16x</source>
         <comment>settings_gpu_resolution_scale_entries[16]</comment>
         <translation>16x</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1310"/>
+        <location filename="../../core/android_strings.h" line="1340"/>
         <source>Disabled</source>
         <comment>settings_gpu_msaa_entries[0]</comment>
         <translation>Откл.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1311"/>
+        <location filename="../../core/android_strings.h" line="1341"/>
         <source>2x MSAA</source>
         <comment>settings_gpu_msaa_entries[1]</comment>
         <translation>2x MSAA</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1312"/>
+        <location filename="../../core/android_strings.h" line="1342"/>
         <source>4x MSAA</source>
         <comment>settings_gpu_msaa_entries[2]</comment>
         <translation>4x MSAA</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1313"/>
+        <location filename="../../core/android_strings.h" line="1343"/>
         <source>8x MSAA</source>
         <comment>settings_gpu_msaa_entries[3]</comment>
         <translation>8x MSAA</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1314"/>
+        <location filename="../../core/android_strings.h" line="1344"/>
         <source>2x SSAA</source>
         <comment>settings_gpu_msaa_entries[4]</comment>
         <translation>2x SSAA</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1315"/>
+        <location filename="../../core/android_strings.h" line="1345"/>
         <source>4x SSAA</source>
         <comment>settings_gpu_msaa_entries[5]</comment>
         <translation>4x SSAA</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1316"/>
+        <location filename="../../core/android_strings.h" line="1346"/>
         <source>8x SSAA</source>
         <comment>settings_gpu_msaa_entries[6]</comment>
         <translation>8x SSAA</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="789"/>
+        <location filename="../../core/android_strings.h" line="815"/>
         <source>Track %1$d (Audio)</source>
         <comment>disc_verify_audio_track</comment>
         <translation>Трек %1$d (Аудио)</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="790"/>
+        <location filename="../../core/android_strings.h" line="816"/>
         <source>Track %1$d (Data)</source>
         <comment>disc_verify_data_track</comment>
         <translation>Трек %1$d (Данные)</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="791"/>
+        <location filename="../../core/android_strings.h" line="817"/>
         <source>Start: %1$s | Length: %2$s</source>
         <comment>disc_verify_track_times</comment>
         <translation>Начало: %1\(s \vert{} Длина: \%2\)s</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="792"/>
+        <location filename="../../core/android_strings.h" line="818"/>
         <source>Hash: %1$s</source>
         <comment>disc_verify_track_hash</comment>
         <translation>Хэш: %1$s</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="793"/>
+        <location filename="../../core/android_strings.h" line="819"/>
         <source>Search on redump.info</source>
         <comment>disc_verify_search_redump</comment>
         <translation>Поиск на redump.info</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="794"/>
+        <location filename="../../core/android_strings.h" line="820"/>
         <source>Save State Compression</source>
         <comment>settings_save_state_compression</comment>
         <translation>Сжатие сохранений</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="795"/>
+        <location filename="../../core/android_strings.h" line="821"/>
         <source>Create Save State Backups</source>
         <comment>settings_create_save_state_backups</comment>
         <translation>Резервировать сохранения</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="798"/>
+        <location filename="../../core/android_strings.h" line="824"/>
         <source>Logged in as %s</source>
         <comment>setup_wizard_achievements_logged_in</comment>
         <translation>Выполнен вход для %s</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="799"/>
+        <location filename="../../core/android_strings.h" line="825"/>
         <source>Screenshot saved.</source>
         <comment>screenshot_saved</comment>
         <translation>Скриншот сохранён.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="802"/>
+        <location filename="../../core/android_strings.h" line="828"/>
         <source>Screenshot Format</source>
         <comment>settings_screenshot_format</comment>
-        <translation>Формат скриншота</translation>
+        <translation>Формат скриншотов</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="808"/>
+        <location filename="../../core/android_strings.h" line="834"/>
         <source>Fine Crop Mode</source>
         <comment>settings_fine_crop_mode</comment>
         <translation>Режим точной обрезки</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="810"/>
+        <location filename="../../core/android_strings.h" line="836"/>
         <source>Left Crop</source>
         <comment>settings_fine_crop_left</comment>
         <translation>Обрезка слева</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="811"/>
+        <location filename="../../core/android_strings.h" line="837"/>
         <source>Adjusts the left crop edge in pixels.</source>
         <comment>settings_summary_fine_crop_left</comment>
         <translation>Количество пикселей, срезаемых с левого края.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="812"/>
+        <location filename="../../core/android_strings.h" line="838"/>
         <source>Top Crop</source>
         <comment>settings_fine_crop_top</comment>
         <translation>Обрезка сверху</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="813"/>
+        <location filename="../../core/android_strings.h" line="839"/>
         <source>Adjusts the top crop edge in pixels.</source>
         <comment>settings_summary_fine_crop_top</comment>
         <translation>Количество пикселей, срезаемых с верхнего края.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="814"/>
+        <location filename="../../core/android_strings.h" line="840"/>
         <source>Right Crop</source>
         <comment>settings_fine_crop_right</comment>
         <translation>Обрезка справа</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="815"/>
+        <location filename="../../core/android_strings.h" line="841"/>
         <source>Adjusts the right crop edge in pixels.</source>
         <comment>settings_summary_fine_crop_right</comment>
         <translation>Количество пикселей, срезаемых с правого края.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="816"/>
+        <location filename="../../core/android_strings.h" line="842"/>
         <source>Bottom Crop</source>
         <comment>settings_fine_crop_bottom</comment>
         <translation>Обрезка снизу</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="817"/>
+        <location filename="../../core/android_strings.h" line="843"/>
         <source>Adjusts the bottom crop edge in pixels.</source>
         <comment>settings_summary_fine_crop_bottom</comment>
         <translation>Количество пикселей, срезаемых с нижнего края.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="818"/>
+        <location filename="../../core/android_strings.h" line="844"/>
         <source>Pre-Frame Sleep</source>
         <comment>settings_pre_frame_sleep</comment>
         <translation>Ожидание перед кадром</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="819"/>
+        <location filename="../../core/android_strings.h" line="845"/>
         <source>Sleeps briefly before presenting each frame to reduce latency.</source>
         <comment>settings_summary_pre_frame_sleep</comment>
         <translation>Кратковременно откладывает вывод каждого кадра для снижения задержки ввода.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="820"/>
+        <location filename="../../core/android_strings.h" line="846"/>
         <source>Pre-Frame Sleep Buffer</source>
         <comment>settings_pre_frame_sleep_buffer</comment>
         <translation>Время ожидания перед кадром</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="821"/>
+        <location filename="../../core/android_strings.h" line="847"/>
         <source>Time to sleep before presenting each frame, in milliseconds.</source>
         <comment>settings_summary_pre_frame_sleep_buffer</comment>
         <translation>Задаёт длительность задержки перед выводом каждого кадра (в миллисекундах).</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="822"/>
+        <location filename="../../core/android_strings.h" line="848"/>
         <source>Disable Mailbox Presentation</source>
         <comment>settings_disable_mailbox_presentation</comment>
         <translation>Отключить режим Mailbox</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="823"/>
+        <location filename="../../core/android_strings.h" line="849"/>
         <source>Forces the use of FIFO over mailbox presentation, which may be needed for some drivers.</source>
         <comment>settings_summary_disable_mailbox_presentation</comment>
         <translation>Принудительно использует вывод в FIFO вместо Mailbox. Может требоваться для работы некоторых драйверов.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="836"/>
+        <location filename="../../core/android_strings.h" line="862"/>
         <source>Time Stretching</source>
         <comment>settings_category_time_stretching</comment>
         <translation>Растяжение звука</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="837"/>
+        <location filename="../../core/android_strings.h" line="863"/>
         <source>None</source>
         <comment>controller_type_none</comment>
         <translation>Нет</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="838"/>
+        <location filename="../../core/android_strings.h" line="864"/>
         <source>Fast Forward</source>
         <comment>touchscreen_controller_fast_forward</comment>
         <translation>Ускоренная перемотка</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="839"/>
+        <location filename="../../core/android_strings.h" line="865"/>
         <source>Switch View</source>
         <comment>touchscreen_controller_switch_view</comment>
         <translation>Переключить вид</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="840"/>
+        <location filename="../../core/android_strings.h" line="866"/>
         <source>Open Pause Menu</source>
         <comment>touchscreen_controller_open_pause_menu</comment>
         <translation>Открыть меню паузы</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="841"/>
+        <location filename="../../core/android_strings.h" line="867"/>
         <source>Quick Load</source>
         <comment>touchscreen_controller_quick_load</comment>
         <translation>Быстрая загрузка</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="842"/>
+        <location filename="../../core/android_strings.h" line="868"/>
         <source>Quick Save</source>
         <comment>touchscreen_controller_quick_save</comment>
         <translation>Быстрое сохранение</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="844"/>
+        <location filename="../../core/android_strings.h" line="870"/>
         <source>D-Pad</source>
         <comment>touchscreen_controller_dpad</comment>
         <translation>D-Pad</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="845"/>
+        <location filename="../../core/android_strings.h" line="871"/>
         <source>Left Stick</source>
         <comment>touchscreen_controller_left_stick</comment>
         <translation>Левый стик</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="846"/>
+        <location filename="../../core/android_strings.h" line="872"/>
         <source>Left Stick Button</source>
         <comment>touchscreen_controller_left_stick_button</comment>
         <translation>Кнопка левого стика</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="847"/>
+        <location filename="../../core/android_strings.h" line="873"/>
         <source>Right Stick</source>
         <comment>touchscreen_controller_right_stick</comment>
         <translation>Правый стик</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="848"/>
+        <location filename="../../core/android_strings.h" line="874"/>
         <source>Right Stick Button</source>
         <comment>touchscreen_controller_right_stick_button</comment>
         <translation>Кнопка правого стика</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="859"/>
+        <location filename="../../core/android_strings.h" line="885"/>
         <source>Start</source>
         <comment>touchscreen_controller_start</comment>
         <translation>Start</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="871"/>
+        <location filename="../../core/android_strings.h" line="897"/>
         <source>Macro 1</source>
         <comment>touchscreen_controller_macro_1</comment>
         <translation>Макрос 1</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="872"/>
+        <location filename="../../core/android_strings.h" line="898"/>
         <source>Macro 2</source>
         <comment>touchscreen_controller_macro_2</comment>
         <translation>Макрос 2</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="873"/>
+        <location filename="../../core/android_strings.h" line="899"/>
         <source>Macro 3</source>
         <comment>touchscreen_controller_macro_3</comment>
         <translation>Макрос 3</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="874"/>
+        <location filename="../../core/android_strings.h" line="900"/>
         <source>Macro 4</source>
         <comment>touchscreen_controller_macro_4</comment>
         <translation>Макрос 4</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="891"/>
+        <location filename="../../core/android_strings.h" line="921"/>
         <source>App Version</source>
         <comment>version_dialog_title</comment>
         <translation>Версия приложения</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="936"/>
+        <location filename="../../core/android_strings.h" line="966"/>
         <source>Digital</source>
         <comment>touchscreen_layout_digital</comment>
         <translation>Цифровой</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="937"/>
+        <location filename="../../core/android_strings.h" line="967"/>
         <source>Analog Stick</source>
         <comment>touchscreen_layout_analog_stick</comment>
         <translation>Аналоговый стик</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="938"/>
+        <location filename="../../core/android_strings.h" line="968"/>
         <source>Twin Analog Sticks</source>
         <comment>touchscreen_layout_analog_sticks</comment>
         <translation>Два аналоговых стика</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="939"/>
+        <location filename="../../core/android_strings.h" line="969"/>
         <source>Light Gun</source>
         <comment>touchscreen_layout_lightgun</comment>
         <translation>Световой пистолет</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="943"/>
+        <location filename="../../core/android_strings.h" line="973"/>
         <source>Edit Layout</source>
         <comment>settings_touchscreen_controller_edit_layout</comment>
         <translation>Редактор макета</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="944"/>
+        <location filename="../../core/android_strings.h" line="974"/>
         <source>Reposition, resize, and show or hide touchscreen buttons.</source>
         <comment>settings_touchscreen_controller_edit_layout_summary</comment>
         <translation>Настраивайте расположение/размер, добавляйте или скрывайте экранные кнопки.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="945"/>
+        <location filename="../../core/android_strings.h" line="975"/>
         <source>Folder Locations</source>
         <comment>settings_folder_experimental_category</comment>
         <translation>Расположение папок</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="946"/>
+        <location filename="../../core/android_strings.h" line="976"/>
         <source>This feature is experimental</source>
         <comment>settings_folder_experimental_title</comment>
         <translation>Экспериментальная функция</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="947"/>
+        <location filename="../../core/android_strings.h" line="977"/>
         <source>Changing folders may cause data loss. Make a backup first. Copy Files is recommended over Move Files because it preserves the original data.</source>
         <comment>settings_folder_experimental_summary</comment>
-        <translation>Изменение папок может привести к потере данных. Сначала создайте резервную копию. Вместо «Переместить файлы» рекомендуется использовать «Копировать файлы», т.к. этот метод сохраняет исходные данные.</translation>
+        <translation>Изменение папок может привести к потере данных. Сначала создайте резервную копию. Рекомендуется использовать «Копировать файлы» вместо «Переместить файлы», т.к. это действие сохраняет исходные данные.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="948"/>
+        <location filename="../../core/android_strings.h" line="978"/>
         <source>Folder Changes Unavailable</source>
         <comment>settings_folder_unavailable_title</comment>
         <translation>Изменение папок недоступно</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="949"/>
+        <location filename="../../core/android_strings.h" line="979"/>
         <source>Folder locations cannot be changed while a session is active.</source>
         <comment>settings_folder_session_active</comment>
         <translation>Невозможно изменить расположение папок во время игры.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="950"/>
+        <location filename="../../core/android_strings.h" line="980"/>
         <source>%1$s (Modified)</source>
         <comment>settings_folder_modified_title</comment>
         <translation>%1$s (изменено)</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="951"/>
+        <location filename="../../core/android_strings.h" line="981"/>
         <source>Save States</source>
         <comment>settings_folder_save_states</comment>
         <translation>Сохранения состояний</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="952"/>
+        <location filename="../../core/android_strings.h" line="982"/>
         <source>Cheats</source>
         <comment>settings_folder_cheats</comment>
         <translation>Чит-коды</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="953"/>
+        <location filename="../../core/android_strings.h" line="983"/>
         <source>Covers</source>
         <comment>settings_folder_covers</comment>
         <translation>Обложки</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="954"/>
+        <location filename="../../core/android_strings.h" line="984"/>
         <source>Choose New Location</source>
         <comment>settings_folder_choose_location</comment>
         <translation>Выбрать новое расположение</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="955"/>
+        <location filename="../../core/android_strings.h" line="985"/>
         <source>Restore Default</source>
         <comment>settings_folder_restore_default</comment>
         <translation>Восстановить по умолчанию</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="956"/>
+        <location filename="../../core/android_strings.h" line="986"/>
         <source>Transfer Existing Files?</source>
         <comment>settings_folder_transfer_title</comment>
         <translation>Перенести существующие файлы?</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="957"/>
+        <location filename="../../core/android_strings.h" line="987"/>
         <source>Copy Files is the safer, recommended choice because it preserves the old contents. Move Files copies first and removes copied originals only after the new setting is saved.</source>
         <comment>settings_folder_transfer_summary</comment>
         <translation>«Копировать файлы» - более безопасный и рекомендуемый метод, т.к. сохраняет исходные данные. При выборе «Переместить файлы» данные сначала копируются, а оригиналы удаляются только после сохранения новой настройки.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="958"/>
+        <location filename="../../core/android_strings.h" line="988"/>
         <source>Copy Files (Recommended)</source>
         <comment>settings_folder_copy_files</comment>
         <translation>Копировать файлы (рекомендуется)</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="959"/>
+        <location filename="../../core/android_strings.h" line="989"/>
         <source>Move Files</source>
         <comment>settings_folder_move_files</comment>
         <translation>Переместить файлы</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="960"/>
+        <location filename="../../core/android_strings.h" line="990"/>
         <source>Do Nothing</source>
         <comment>settings_folder_do_nothing</comment>
         <translation>Ничего не делать</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="961"/>
+        <location filename="../../core/android_strings.h" line="991"/>
         <source>A file already exists at the destination:
 %1$s</source>
         <comment>settings_folder_file_conflict</comment>
@@ -8410,55 +8399,55 @@ Would you like to import one now?</source>
 %1$s</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="962"/>
+        <location filename="../../core/android_strings.h" line="992"/>
         <source>Overwrite</source>
         <comment>settings_folder_overwrite</comment>
         <translation>Перезаписать</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="963"/>
+        <location filename="../../core/android_strings.h" line="993"/>
         <source>Keep Existing</source>
         <comment>settings_folder_keep_existing</comment>
         <translation>Оставить текущий</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="964"/>
+        <location filename="../../core/android_strings.h" line="994"/>
         <source>That location overlaps another managed folder: %1$s</source>
         <comment>settings_folder_overlap_error</comment>
         <translation>Это расположение пересекается с другой настроенной папкой: %1$s</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="965"/>
+        <location filename="../../core/android_strings.h" line="995"/>
         <source>Could not retain read and write access to that folder.</source>
         <comment>settings_folder_permission_error</comment>
         <translation>Не удалось сохранить доступ на чтение и запись в эту папку.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="966"/>
+        <location filename="../../core/android_strings.h" line="996"/>
         <source>This document provider does not expose a path-based folder and cannot be used here.</source>
         <comment>settings_folder_provider_unsupported</comment>
         <translation>Этот провайдер документов не предоставляет прямой путь к папкам и не может быть использован.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="967"/>
+        <location filename="../../core/android_strings.h" line="997"/>
         <source>Copying files</source>
         <comment>settings_folder_copying</comment>
         <translation>Копирование файлов</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="968"/>
+        <location filename="../../core/android_strings.h" line="998"/>
         <source>Removing old files</source>
         <comment>settings_folder_removing</comment>
         <translation>Удаление старых файлов</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="969"/>
+        <location filename="../../core/android_strings.h" line="999"/>
         <source>The files could not be transferred. The previous setting remains active.</source>
         <comment>settings_folder_copy_error</comment>
         <translation>Не удалось перенести файлы. Предыдущая настройка остаётся активной.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="970"/>
+        <location filename="../../core/android_strings.h" line="1000"/>
         <source>The new folder is active, but some old files could not be removed and remain as duplicates.</source>
         <comment>settings_folder_cleanup_warning</comment>
         <translation>Новая папка активна, но часть старых файлов не удалось удалить - они остаются в виде копий.</translation>
@@ -8605,7 +8594,7 @@ Would you like to import one now?</source>
         <location filename="../../core/android_strings.h" line="179"/>
         <source>Local game storage is for devices that do not support selecting game folders through the system file picker (Storage Access Framework). Games can be copied here with Add Files, or placed in this folder with a file manager or over USB.</source>
         <comment>local_game_storage_message</comment>
-        <translation>Локальное хранилище предназначено для устройств, которые не поддерживают выбор папок с играми через системный проводник (Storage Access Framework). Игры можно скопировать в данную папку с помощью опции «Добавить игры», а также используя файловый менеджер или по USB.</translation>
+        <translation>Локальное хранилище предназначено для устройств, которые не поддерживают выбор папок с играми через системный проводник (Storage Access Framework). Игры можно скопировать в данную папку с помощью опции «Добавить игры», а также по USB или используя файловый менеджер.</translation>
     </message>
     <message>
         <location filename="../../core/android_strings.h" line="180"/>
@@ -8787,7 +8776,7 @@ Would you like to import one now?</source>
         <comment>achievement_unpromoted_summary_format_string</comment>
         <extracomment>Android plural quantities: one=&quot;You have unlocked %1$d of %2$d unpromoted achievement, earning %3$d of %4$d possible points.&quot;; other=&quot;You have unlocked %1$d of %2$d unpromoted achievements, earning %3$d of %4$d possible points.&quot;</extracomment>
         <translation>
-            <numerusform>Вы открыли %1$d из %2$d неутверждённых достижений, заработав %3$d очков из %4$d возможных.</numerusform>
+            <numerusform>Вы открыли %1$d из %2$d неутверждённого достижения, заработав %3$d очков из %4$d возможных.</numerusform>
             <numerusform>Вы открыли %1$d из %2$d неутверждённых достижений, заработав %3$d очков из %4$d возможных.</numerusform>
             <numerusform>Вы открыли %1$d из %2$d неутверждённых достижений, заработав %3$d очков из %4$d возможных.</numerusform>
         </translation>
@@ -8838,7 +8827,7 @@ Would you like to import one now?</source>
         <location filename="../../core/android_strings.h" line="375"/>
         <source>Asks for each button and axis in turn, so you can bind them by pressing them on your controller.</source>
         <comment>controller_settings_summary_bind_all</comment>
-        <translation>Поочерёдно опрашивает все кнопки и оси, позволяя настроить их нажатием на контроллере.</translation>
+        <translation>Поочерёдно опрашивает все кнопки и оси, позволяя настроить их нажатием на геймпаде.</translation>
     </message>
     <message>
         <location filename="../../core/android_strings.h" line="376"/>
@@ -8892,7 +8881,7 @@ Would you like to import one now?</source>
         <location filename="../../core/android_strings.h" line="434"/>
         <source>Restart Game</source>
         <comment>emulation_menu_restart_game</comment>
-        <translation>Перезапуск игры</translation>
+        <translation>Сбросить консоль</translation>
     </message>
     <message>
         <location filename="../../core/android_strings.h" line="435"/>
@@ -8913,67 +8902,281 @@ Would you like to import one now?</source>
         <translation>Периодически сохраняет состояние, позволяя отмотать игру для исправления ошибок.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="558"/>
+        <location filename="../../core/android_strings.h" line="464"/>
+        <source>%1$s triggers %2$s</source>
+        <comment>edit_macro_button_summary</comment>
+        <translation>%1$s активирует %2$s</translation>
+    </message>
+    <message>
+        <location filename="../../core/android_strings.h" line="465"/>
+        <source>%1$s triggers %2$s, looping</source>
+        <comment>edit_macro_button_summary_loop</comment>
+        <translation>%1$s активирует %2$s, циклично</translation>
+    </message>
+    <message>
+        <location filename="../../core/android_strings.h" line="467"/>
+        <source>Loop While Active</source>
+        <comment>edit_macro_loop</comment>
+        <translation>Цикл при удержании</translation>
+    </message>
+    <message>
+        <location filename="../../core/android_strings.h" line="468"/>
+        <source>Repeats the sequence while the macro is active, instead of playing it once per press.</source>
+        <comment>edit_macro_loop_summary</comment>
+        <translation>Повторяет последовательность, пока макрос активен, вместо одиночного срабатывания при нажатии.</translation>
+    </message>
+    <message>
+        <location filename="../../core/android_strings.h" line="469"/>
+        <source>Press To Toggle</source>
+        <comment>edit_macro_toggle</comment>
+        <translation>Переключение по нажатию</translation>
+    </message>
+    <message>
+        <location filename="../../core/android_strings.h" line="470"/>
+        <source>The trigger turns the looping sequence on and off, instead of having to be held.</source>
+        <comment>edit_macro_toggle_summary</comment>
+        <translation>Триггер включает и выключает повтор последовательности без необходимости удерживать кнопку.</translation>
+    </message>
+    <message>
+        <location filename="../../core/android_strings.h" line="471"/>
+        <source>Trigger Deadzone</source>
+        <comment>edit_macro_deadzone</comment>
+        <translation>Мёртвая зона триггера</translation>
+    </message>
+    <message>
+        <location filename="../../core/android_strings.h" line="472"/>
+        <source>How far an analog trigger must be pressed before the macro activates.</source>
+        <comment>edit_macro_deadzone_summary</comment>
+        <translation>Степень отклонения аналогового триггера для активации макроса.</translation>
+    </message>
+    <message>
+        <location filename="../../core/android_strings.h" line="473"/>
+        <source>Sequence</source>
+        <comment>edit_macro_sequence</comment>
+        <translation>Последовательность</translation>
+    </message>
+    <message>
+        <location filename="../../core/android_strings.h" line="474"/>
+        <source>The sequence is empty. Add inputs and waits, use Quick Setup, or record it from a controller.</source>
+        <comment>edit_macro_sequence_empty</comment>
+        <translation>Последовательность не задана. Добавьте действия и ожидания, используйте быструю настройку или запись с геймпада.</translation>
+    </message>
+    <message>
+        <location filename="../../core/android_strings.h" line="475"/>
+        <source>Add Input</source>
+        <comment>edit_macro_add_input</comment>
+        <translation>Добавить действие</translation>
+    </message>
+    <message>
+        <location filename="../../core/android_strings.h" line="476"/>
+        <source>Adds a button or axis press to the end of the sequence.</source>
+        <comment>edit_macro_add_input_summary</comment>
+        <translation>Добавляет кнопку или ось в конец последовательности.</translation>
+    </message>
+    <message>
+        <location filename="../../core/android_strings.h" line="477"/>
+        <source>Add Wait</source>
+        <comment>edit_macro_add_wait</comment>
+        <translation>Добавить ожидание</translation>
+    </message>
+    <message>
+        <location filename="../../core/android_strings.h" line="478"/>
+        <source>Adds a delay to the end of the sequence.</source>
+        <comment>edit_macro_add_wait_summary</comment>
+        <translation>Добавляет ожидание в конец последовательности.</translation>
+    </message>
+    <message>
+        <location filename="../../core/android_strings.h" line="479"/>
+        <source>Quick Setup</source>
+        <comment>edit_macro_quick_setup</comment>
+        <translation>Быстрая настройка</translation>
+    </message>
+    <message>
+        <location filename="../../core/android_strings.h" line="480"/>
+        <source>Replaces the sequence with one input that is held, or toggled on and off as a turbo button.</source>
+        <comment>edit_macro_quick_setup_summary</comment>
+        <translation>Заменяет последовательность на одно действие с удержанием или переключением, как у турбо-кнопки.</translation>
+    </message>
+    <message>
+        <location filename="../../core/android_strings.h" line="481"/>
+        <source>Turbo Interval for %1$s</source>
+        <comment>edit_macro_quick_setup_interval_title</comment>
+        <translation>Интервал турбо для %1$s</translation>
+    </message>
+    <message>
+        <location filename="../../core/android_strings.h" line="482"/>
+        <source>Hold</source>
+        <comment>edit_macro_hold</comment>
+        <translation>Удерживать</translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../../core/android_strings.h" line="484"/>
+        <source>Toggle every %d frames</source>
+        <comment>edit_macro_toggle_every_frames</comment>
+        <extracomment>Android plural quantities: one=&quot;Toggle every %d frame&quot;; other=&quot;Toggle every %d frames&quot;</extracomment>
+        <translation>
+            <numerusform>Повтор каждый %d кадр</numerusform>
+            <numerusform>Повтор каждые %d кадра</numerusform>
+            <numerusform>Повтор каждые %d кадров</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location filename="../../core/android_strings.h" line="485"/>
+        <source>Clear Sequence</source>
+        <comment>edit_macro_clear_sequence</comment>
+        <translation>Сброс последовательности</translation>
+    </message>
+    <message>
+        <location filename="../../core/android_strings.h" line="486"/>
+        <source>Removes every action from the sequence.</source>
+        <comment>edit_macro_clear_sequence_summary</comment>
+        <translation>Удаляет все действия из последовательности.</translation>
+    </message>
+    <message>
+        <location filename="../../core/android_strings.h" line="487"/>
+        <source>Remove every action from this macro&apos;s sequence?</source>
+        <comment>edit_macro_clear_sequence_confirm</comment>
+        <translation>Удалить все действия из последовательности этого макроса?</translation>
+    </message>
+    <message>
+        <location filename="../../core/android_strings.h" line="488"/>
+        <source>Select Input</source>
+        <comment>edit_macro_select_input</comment>
+        <translation>Выберите действие</translation>
+    </message>
+    <message>
+        <location filename="../../core/android_strings.h" line="489"/>
+        <source>Wait</source>
+        <comment>edit_macro_wait</comment>
+        <translation>Ожидание</translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../../core/android_strings.h" line="491"/>
+        <source>%d frames</source>
+        <comment>edit_macro_wait_frames</comment>
+        <extracomment>Android plural quantities: one=&quot;%d frame&quot;; other=&quot;%d frames&quot;</extracomment>
+        <translation>
+            <numerusform>%d кадр</numerusform>
+            <numerusform>%d кадра</numerusform>
+            <numerusform>%d кадров</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location filename="../../core/android_strings.h" line="492"/>
+        <source>Wait Duration</source>
+        <comment>edit_macro_wait_title</comment>
+        <translation>Длительность ожидания</translation>
+    </message>
+    <message>
+        <location filename="../../core/android_strings.h" line="493"/>
+        <source>%1$s Value</source>
+        <comment>edit_macro_value_title</comment>
+        <translation>Значение для %1$s</translation>
+    </message>
+    <message>
+        <location filename="../../core/android_strings.h" line="494"/>
+        <source>Action options</source>
+        <comment>edit_macro_action_options</comment>
+        <translation>Параметры действия</translation>
+    </message>
+    <message>
+        <location filename="../../core/android_strings.h" line="495"/>
+        <source>Change Input</source>
+        <comment>edit_macro_change_input</comment>
+        <translation>Изменить действие</translation>
+    </message>
+    <message>
+        <location filename="../../core/android_strings.h" line="496"/>
+        <source>Insert Input After</source>
+        <comment>edit_macro_insert_input_after</comment>
+        <translation>Вставить действие после</translation>
+    </message>
+    <message>
+        <location filename="../../core/android_strings.h" line="497"/>
+        <source>Insert Wait After</source>
+        <comment>edit_macro_insert_wait_after</comment>
+        <translation>Вставить ожидание после</translation>
+    </message>
+    <message>
+        <location filename="../../core/android_strings.h" line="498"/>
+        <source>Record</source>
+        <comment>edit_macro_record</comment>
+        <translation>Запись</translation>
+    </message>
+    <message>
+        <location filename="../../core/android_strings.h" line="499"/>
+        <source>Stop Recording</source>
+        <comment>edit_macro_stop_recording</comment>
+        <translation>Остановить</translation>
+    </message>
+    <message>
+        <location filename="../../core/android_strings.h" line="500"/>
+        <source>Recording. Press the inputs of the sequence on a controller or keyboard, then tap Stop. Touchscreen input is not recorded.</source>
+        <comment>edit_macro_recording_message</comment>
+        <translation>Запись запущена. Введите последовательность действий геймпада или клавиатуры и затем нажмите «Остановить». Нажатия сенсорного экрана не записываются.</translation>
+    </message>
+    <message>
+        <location filename="../../core/android_strings.h" line="584"/>
         <source>Memory Cards</source>
         <comment>settings_tab_memory_cards</comment>
         <translation>Карты памяти</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="559"/>
+        <location filename="../../core/android_strings.h" line="585"/>
         <source>Create New Card</source>
         <comment>memory_card_create_new_card</comment>
         <translation>Создать новую карту</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="560"/>
+        <location filename="../../core/android_strings.h" line="586"/>
         <source>Creates a new, formatted memory card.</source>
         <comment>memory_card_summary_create_new_card</comment>
         <translation>Создаёт новую отформатированную карту памяти.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="561"/>
+        <location filename="../../core/android_strings.h" line="587"/>
         <source>Import Memory Card</source>
         <comment>memory_card_import</comment>
         <translation>Импорт карты памяти</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="562"/>
+        <location filename="../../core/android_strings.h" line="588"/>
         <source>Imports a memory card from storage, converting it if necessary.</source>
         <comment>memory_card_summary_import</comment>
         <translation>Импортирует карту памяти из хранилища, при необходимости преобразуя её формат.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="563"/>
+        <location filename="../../core/android_strings.h" line="589"/>
         <source>Memory card &apos;%s&apos; imported.</source>
         <comment>memory_card_imported</comment>
         <translation>Карта памяти &apos;%s&apos; импортирована.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="564"/>
+        <location filename="../../core/android_strings.h" line="590"/>
         <source>A memory card named &apos;%s&apos; already exists. Do you want to overwrite it? Any existing data will be lost.</source>
         <comment>memory_card_import_already_exists</comment>
         <translation>Карта памяти с именем «&apos;%s» уже существует. Перезаписать её? Все данные будут утеряны.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="565"/>
+        <location filename="../../core/android_strings.h" line="591"/>
         <source>Use Single Card For Multi-Disc Games</source>
         <comment>settings_memory_card_use_playlist_title</comment>
-        <translation>Одна карта для мультидисковых игр</translation>
+        <translation>Общая карта для мультидисковых игр</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="566"/>
+        <location filename="../../core/android_strings.h" line="592"/>
         <source>When playing a multi-disc game with per-game (title) memory cards, uses a single card for all discs. If disabled, each disc uses a separate card.</source>
         <comment>settings_summary_memory_card_use_playlist_title</comment>
-        <translation>Использует общую карту памяти для всех дисков, если включен режим «Своя для каждой игры (по названию)». Если опция выключена, для каждого диска создаётся отдельная карта.</translation>
+        <translation>Использует одну карту памяти для всех дисков игры, если включен режим «Своя для каждой игры (по названию)». Если выключено, для каждого диска создаётся отдельная карта.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="567"/>
+        <location filename="../../core/android_strings.h" line="593"/>
         <source>The number of memory cards that can be used depends on multitap and game support.</source>
         <comment>settings_memory_card_multitap_message</comment>
-        <translation>Количество доступных карт памяти зависит от multitap и поддержки в игре.</translation>
+        <translation>Количество доступных карт памяти зависит от Multitap и поддержки в игре.</translation>
     </message>
     <message numerus="yes">
-        <location filename="../../core/android_strings.h" line="569"/>
+        <location filename="../../core/android_strings.h" line="595"/>
         <source>Current Multitap Mode: %1$s (%2$d Cards)</source>
         <comment>settings_memory_card_multitap_mode</comment>
         <extracomment>Android plural quantities: one=&quot;Current Multitap Mode: %1$s (%2$d Card)&quot;; other=&quot;Current Multitap Mode: %1$s (%2$d Cards)&quot;</extracomment>
@@ -8984,121 +9187,121 @@ Would you like to import one now?</source>
         </translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="570"/>
+        <location filename="../../core/android_strings.h" line="596"/>
         <source>Memory Card Type</source>
         <comment>settings_memory_card_type</comment>
         <translation>Тип карты памяти</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="571"/>
+        <location filename="../../core/android_strings.h" line="597"/>
         <source>Selects which memory card image is inserted in this slot.</source>
         <comment>settings_summary_memory_card_type</comment>
         <translation>Выбор образа карты памяти для данного слота.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="572"/>
+        <location filename="../../core/android_strings.h" line="598"/>
         <source>Shared Card Name</source>
         <comment>settings_memory_card_name</comment>
         <translation>Имя общей карты</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="573"/>
+        <location filename="../../core/android_strings.h" line="599"/>
         <source>Selects the card used when the type is shared between all games.</source>
         <comment>settings_summary_memory_card_name</comment>
         <translation>Выбор карты, используемой в качестве общей для всех игр.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="585"/>
+        <location filename="../../core/android_strings.h" line="611"/>
         <source>Game Hash</source>
         <comment>game_properties_hash</comment>
         <translation>Хэш игры</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="617"/>
+        <location filename="../../core/android_strings.h" line="643"/>
         <source>Game Folders</source>
         <comment>setup_wizard_game_folders_title</comment>
         <translation>Папки с играми</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="618"/>
+        <location filename="../../core/android_strings.h" line="644"/>
         <source>DuckStation will automatically detect games in the folders you specify here. You should add at least one folder to scan. Please do not add the top of your storage volume, otherwise scanning will take a very long time.</source>
         <comment>setup_wizard_game_folders_message</comment>
         <translation>DuckStation будет автоматически искать игры в указанных папках. Добавьте не менее одной папки для сканирования. Не добавляйте корневой каталог накопителя, иначе поиск займёт много времени.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="625"/>
+        <location filename="../../core/android_strings.h" line="651"/>
         <source>Supported formats: %s</source>
         <comment>setup_wizard_game_folders_supported_formats</comment>
         <translation>Поддерживаемые форматы: %s</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="659"/>
+        <location filename="../../core/android_strings.h" line="685"/>
         <source>Use GPU-Based Validation</source>
         <comment>settings_use_gpu_based_validation</comment>
         <translation>Валидация на стороне GPU</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="660"/>
+        <location filename="../../core/android_strings.h" line="686"/>
         <source>Enable GPU-based validation when supported by the host&apos;s renderer API. Only for developer use.</source>
         <comment>settings_summary_use_gpu_based_validation</comment>
         <translation>Включает валидацию на стороне GPU, если она поддерживается графическим API устройства. Только для разработчиков.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="672"/>
+        <location filename="../../core/android_strings.h" line="698"/>
         <source>Display Shaders</source>
         <comment>postfx_display_chain</comment>
         <translation>Экранные шейдеры</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="673"/>
+        <location filename="../../core/android_strings.h" line="699"/>
         <source>Internal Shaders</source>
         <comment>postfx_internal_chain</comment>
         <translation>Внутренние шейдеры</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="674"/>
+        <location filename="../../core/android_strings.h" line="700"/>
         <source>Enable Display Shaders</source>
         <comment>postfx_setting_enable_display</comment>
         <translation>Включить экранные шейдеры</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="675"/>
+        <location filename="../../core/android_strings.h" line="701"/>
         <source>Applied after scaling to the screen, e.g. CRT filters.</source>
         <comment>postfx_setting_summary_enable_display</comment>
         <translation>Применяются после масштабирования под экран (напр., CRT-фильтры).</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="676"/>
+        <location filename="../../core/android_strings.h" line="702"/>
         <source>Enable Internal Shaders</source>
         <comment>postfx_setting_enable_internal</comment>
         <translation>Включить внутренние шейдеры</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="677"/>
+        <location filename="../../core/android_strings.h" line="703"/>
         <source>Applied at the internal resolution before scaling, e.g. SSAO.</source>
         <comment>postfx_setting_summary_enable_internal</comment>
         <translation>Применяются во внутреннем разрешении до масштабирования (напр., SSAO).</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="678"/>
+        <location filename="../../core/android_strings.h" line="704"/>
         <source>Subframes</source>
         <comment>postfx_setting_subframes</comment>
         <translation>Подкадры</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="679"/>
+        <location filename="../../core/android_strings.h" line="705"/>
         <source>Presents extra frames for effects such as black frame insertion.</source>
         <comment>postfx_setting_summary_subframes</comment>
-        <translation>Вывод дополнительных кадров для таких эффектов, как вставка чёрного кадра.</translation>
+        <translation>Выводит дополнительные кадры для таких эффектов, как вставка чёрного кадра.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="680"/>
+        <location filename="../../core/android_strings.h" line="706"/>
         <source>Automatic</source>
         <comment>postfx_subframes_automatic</comment>
         <translation>Автоматически</translation>
     </message>
     <message numerus="yes">
-        <location filename="../../core/android_strings.h" line="682"/>
+        <location filename="../../core/android_strings.h" line="708"/>
         <source>%d Frames</source>
         <comment>postfx_subframes_frames</comment>
         <extracomment>Android plural quantities: one=&quot;%d Frame&quot;; other=&quot;%d Frames&quot;</extracomment>
@@ -9109,301 +9312,343 @@ Would you like to import one now?</source>
         </translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="683"/>
+        <location filename="../../core/android_strings.h" line="709"/>
         <source>Stage actions</source>
         <comment>postfx_stage_actions</comment>
         <translation>Действия с шагом</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="684"/>
+        <location filename="../../core/android_strings.h" line="710"/>
         <source>Tap to change shader options.</source>
         <comment>postfx_stage_summary</comment>
         <translation>Нажмите для изменения параметров шейдера.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="685"/>
+        <location filename="../../core/android_strings.h" line="711"/>
         <source>Preset</source>
         <comment>postfx_border_overlay_preset_name</comment>
         <translation>Пресет</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="686"/>
+        <location filename="../../core/android_strings.h" line="712"/>
         <source>Custom</source>
         <comment>postfx_border_overlay_custom</comment>
         <translation>Пользовательский</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="687"/>
+        <location filename="../../core/android_strings.h" line="713"/>
         <source>Image Path</source>
         <comment>postfx_border_overlay_image_path</comment>
         <translation>Путь к изображению</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="688"/>
+        <location filename="../../core/android_strings.h" line="714"/>
         <source>No image selected.</source>
         <comment>postfx_border_overlay_image_path_unset</comment>
         <translation>Файл изображения не выбран.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="689"/>
+        <location filename="../../core/android_strings.h" line="715"/>
         <source>Display Start X</source>
         <comment>postfx_border_overlay_display_start_x</comment>
         <translation>Начало экрана по X</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="690"/>
+        <location filename="../../core/android_strings.h" line="716"/>
         <source>Display Start Y</source>
         <comment>postfx_border_overlay_display_start_y</comment>
         <translation>Начало экрана по Y</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="691"/>
+        <location filename="../../core/android_strings.h" line="717"/>
         <source>Display End X</source>
         <comment>postfx_border_overlay_display_end_x</comment>
         <translation>Конец экрана по X</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="692"/>
+        <location filename="../../core/android_strings.h" line="718"/>
         <source>Display End Y</source>
         <comment>postfx_border_overlay_display_end_y</comment>
         <translation>Конец экрана по Y</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="693"/>
+        <location filename="../../core/android_strings.h" line="719"/>
         <source>Alpha Blending</source>
         <comment>postfx_border_overlay_alpha_blend</comment>
         <translation>Альфа-смешивание</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="694"/>
+        <location filename="../../core/android_strings.h" line="720"/>
         <source>Applies the transparency of the overlay image.</source>
         <comment>postfx_border_overlay_summary_alpha_blend</comment>
         <translation>Применят прозрачность накладываемого оверлея.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="695"/>
+        <location filename="../../core/android_strings.h" line="721"/>
         <source>Destination Alpha Blending</source>
         <comment>postfx_border_overlay_destination_alpha_blend</comment>
         <translation>Целевое альфа-смешивание</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="696"/>
+        <location filename="../../core/android_strings.h" line="722"/>
         <source>Blends the game with the transparency of the overlay image.</source>
         <comment>postfx_border_overlay_summary_destination_alpha_blend</comment>
         <translation>Смешивает картинку игры с прозрачностью накладываемого оверлея.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="715"/>
+        <location filename="../../core/android_strings.h" line="730"/>
+        <source>Move Up</source>
+        <comment>list_item_move_up</comment>
+        <translation>Сдвинуть вверх</translation>
+    </message>
+    <message>
+        <location filename="../../core/android_strings.h" line="734"/>
+        <source>Remove</source>
+        <comment>list_item_remove</comment>
+        <translation>Удалить</translation>
+    </message>
+    <message>
+        <location filename="../../core/android_strings.h" line="735"/>
+        <source>Move Down</source>
+        <comment>list_item_move_down</comment>
+        <translation>Сдвинуть вниз</translation>
+    </message>
+    <message>
+        <location filename="../../core/android_strings.h" line="741"/>
         <source>Additional GLSL, ReShade, and Slang shaders can be added in %1$s.</source>
         <comment>postfx_additional_shaders_location</comment>
         <translation>Дополнительные шейдеры GLSL, ReShade и Slang можно добавить в папку %1$s.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="716"/>
+        <location filename="../../core/android_strings.h" line="742"/>
         <source>Additional border overlays can be added in %1$s.</source>
         <comment>postfx_additional_overlays_location</comment>
         <translation>Дополнительные оверлеи рамок можно добавить в папку %1$s.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="744"/>
+        <location filename="../../core/android_strings.h" line="770"/>
         <source>Unavailable while RetroAchievements hardcore mode is active.</source>
         <comment>patch_codes_hardcore_restricted</comment>
         <translation>Недоступно в режиме хардкора RetroAchievements.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="782"/>
+        <location filename="../../core/android_strings.h" line="808"/>
         <source>Verify</source>
         <comment>game_verification_verify</comment>
-        <translation>Проверить</translation>
+        <translation>Проверка</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="783"/>
+        <location filename="../../core/android_strings.h" line="809"/>
         <source>Verifying Content…</source>
         <comment>game_verification_progress_title</comment>
         <translation>Проверка содержимого…</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="784"/>
+        <location filename="../../core/android_strings.h" line="810"/>
         <source>Reading and checking game…</source>
         <comment>game_verification_progress_status</comment>
         <translation>Чтение и проверка игры…</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="785"/>
+        <location filename="../../core/android_strings.h" line="811"/>
         <source>Content verification could not be completed.</source>
         <comment>game_verification_failed_to_run</comment>
         <translation>Не удалось завершить проверку содержимого.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="786"/>
+        <location filename="../../core/android_strings.h" line="812"/>
         <source>Content Verification Error</source>
         <comment>game_verification_error_title</comment>
         <translation>Ошибка проверки содержимого</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="787"/>
+        <location filename="../../core/android_strings.h" line="813"/>
         <source>Valid</source>
         <comment>game_verification_item_valid</comment>
         <translation>Совпадает</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="788"/>
+        <location filename="../../core/android_strings.h" line="814"/>
         <source>Invalid</source>
         <comment>game_verification_item_invalid</comment>
         <translation>Не совпадает</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="843"/>
+        <location filename="../../core/android_strings.h" line="869"/>
         <source>Rewind</source>
         <comment>touchscreen_controller_rewind</comment>
         <translation>Перемотка</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="863"/>
+        <location filename="../../core/android_strings.h" line="889"/>
         <source>I</source>
         <comment>touchscreen_controller_i</comment>
         <translation>I</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="864"/>
+        <location filename="../../core/android_strings.h" line="890"/>
         <source>II</source>
         <comment>touchscreen_controller_ii</comment>
         <translation>II</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="865"/>
+        <location filename="../../core/android_strings.h" line="891"/>
         <source>L</source>
         <comment>touchscreen_controller_l</comment>
         <translation>L</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="866"/>
+        <location filename="../../core/android_strings.h" line="892"/>
         <source>R</source>
         <comment>touchscreen_controller_r</comment>
         <translation>R</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="867"/>
+        <location filename="../../core/android_strings.h" line="893"/>
         <source>Mode</source>
         <comment>touchscreen_controller_mode</comment>
         <translation>Режим</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="868"/>
+        <location filename="../../core/android_strings.h" line="894"/>
         <source>Steering</source>
         <comment>touchscreen_controller_steering</comment>
         <translation>Руль</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="869"/>
+        <location filename="../../core/android_strings.h" line="895"/>
         <source>Left Button</source>
         <comment>touchscreen_controller_mouse_left</comment>
         <translation>Левая кнопка</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="870"/>
+        <location filename="../../core/android_strings.h" line="896"/>
         <source>Right Button</source>
         <comment>touchscreen_controller_mouse_right</comment>
         <translation>Правая кнопка</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="875"/>
+        <location filename="../../core/android_strings.h" line="901"/>
+        <source>Macro 5</source>
+        <comment>touchscreen_controller_macro_5</comment>
+        <translation>Макрос 5</translation>
+    </message>
+    <message>
+        <location filename="../../core/android_strings.h" line="902"/>
+        <source>Macro 6</source>
+        <comment>touchscreen_controller_macro_6</comment>
+        <translation>Макрос 6</translation>
+    </message>
+    <message>
+        <location filename="../../core/android_strings.h" line="903"/>
+        <source>Macro 7</source>
+        <comment>touchscreen_controller_macro_7</comment>
+        <translation>Макрос 7</translation>
+    </message>
+    <message>
+        <location filename="../../core/android_strings.h" line="904"/>
+        <source>Macro 8</source>
+        <comment>touchscreen_controller_macro_8</comment>
+        <translation>Макрос 8</translation>
+    </message>
+    <message>
+        <location filename="../../core/android_strings.h" line="905"/>
         <source>N/A</source>
         <comment>game_list_no_achievements</comment>
         <translation>Н/Д</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="876"/>
+        <location filename="../../core/android_strings.h" line="906"/>
         <source>All Files</source>
         <comment>game_list_filter_all</comment>
         <translation>Все файлы</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="877"/>
+        <location filename="../../core/android_strings.h" line="907"/>
         <source>Type: %s</source>
         <comment>game_list_filter_type_template</comment>
         <translation>Тип: %s</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="878"/>
+        <location filename="../../core/android_strings.h" line="908"/>
         <source>Sort By: %s</source>
         <comment>game_list_sort_template</comment>
         <translation>Сортировка: %s</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="879"/>
+        <location filename="../../core/android_strings.h" line="909"/>
         <source>Search…</source>
         <comment>game_list_search</comment>
         <translation>Поиск…</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="882"/>
+        <location filename="../../core/android_strings.h" line="912"/>
         <source>No matching items.</source>
         <comment>list_selection_no_matches</comment>
         <translation>Нет подходящих элементов.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="883"/>
+        <location filename="../../core/android_strings.h" line="913"/>
         <source>Merge Disc Sets</source>
         <comment>game_list_merge_media_sets</comment>
         <translation>Объединять сеты дисков</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="884"/>
+        <location filename="../../core/android_strings.h" line="914"/>
         <source>Start File</source>
         <comment>game_list_start_file</comment>
         <translation>Запустить файл</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="885"/>
+        <location filename="../../core/android_strings.h" line="915"/>
         <source>Scan For New Games</source>
         <comment>game_list_scan_new</comment>
         <translation>Искать новые игры</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="886"/>
+        <location filename="../../core/android_strings.h" line="916"/>
         <source>Rescan All Games</source>
         <comment>game_list_rescan_all</comment>
         <translation>Пересканировать игры</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="887"/>
+        <location filename="../../core/android_strings.h" line="917"/>
         <source>Save State Manager</source>
         <comment>game_list_save_state_manager</comment>
         <translation>Менеджер сохранений</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="888"/>
+        <location filename="../../core/android_strings.h" line="918"/>
         <source>Download Covers</source>
         <comment>game_list_download_covers</comment>
         <translation>Загрузить обложки</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="889"/>
+        <location filename="../../core/android_strings.h" line="919"/>
         <source>Change Background</source>
         <comment>game_list_change_background</comment>
         <translation>Изменить фон</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="890"/>
+        <location filename="../../core/android_strings.h" line="920"/>
         <source>Show Version</source>
         <comment>game_list_show_version</comment>
         <translation>Показать версию</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="892"/>
+        <location filename="../../core/android_strings.h" line="922"/>
         <source>Third-Party Notices</source>
         <comment>game_list_third_party_notices</comment>
         <translation>Сведения о компонентах</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="893"/>
+        <location filename="../../core/android_strings.h" line="923"/>
         <source>No games were found. Please add a directory with games to begin.</source>
         <comment>game_list_empty_title</comment>
-        <translation>Игры не найдены. Пожалуйста, добавьте папку с образами.</translation>
+        <translation>Игры не найдены. Добавьте папку, чтобы начать поиск.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="894"/>
+        <location filename="../../core/android_strings.h" line="924"/>
         <source>.cue (Cue Sheets)
 .iso (Single Track Image)
 .ecm (Error Code Modeling Image)
@@ -9421,7 +9666,7 @@ Would you like to import one now?</source>
 .pbp (образы PlayStation Portable без шифрования)</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="895"/>
+        <location filename="../../core/android_strings.h" line="925"/>
         <source>Supported formats are:
 
 %s
@@ -9435,109 +9680,109 @@ Multi-track games in bin format require a cuesheet (.cue) to start.</source>
 Для запуска мультитрековых игр в формате .bin требуется файл разметки (.cue).</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="896"/>
+        <location filename="../../core/android_strings.h" line="926"/>
         <source>Add Game Directory</source>
         <comment>game_list_empty_add_directory</comment>
         <translation>Добавить папку с играми</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="897"/>
+        <location filename="../../core/android_strings.h" line="927"/>
         <source>Show Grid</source>
         <comment>game_list_show_grid</comment>
         <translation>Показать сетку</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="898"/>
+        <location filename="../../core/android_strings.h" line="928"/>
         <source>Show List</source>
         <comment>game_list_show_list</comment>
         <translation>Показать список</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="899"/>
+        <location filename="../../core/android_strings.h" line="929"/>
         <source>Favorite</source>
         <comment>game_list_favorite</comment>
         <translation>В избранное</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="900"/>
+        <location filename="../../core/android_strings.h" line="930"/>
         <source>Start Game</source>
         <comment>game_list_bottom_sheet_start</comment>
         <translation>Запустить игру</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="901"/>
+        <location filename="../../core/android_strings.h" line="931"/>
         <source>Favorite</source>
         <comment>game_list_bottom_sheet_favorite</comment>
         <translation>Добавить в избранное</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="902"/>
+        <location filename="../../core/android_strings.h" line="932"/>
         <source>Unfavorite</source>
         <comment>game_list_bottom_sheet_unfavorite</comment>
         <translation>Удалить из избранного</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="903"/>
+        <location filename="../../core/android_strings.h" line="933"/>
         <source>Load State</source>
         <comment>game_list_bottom_sheet_load_state</comment>
-        <translation>Загрузить сохранение</translation>
+        <translation>Загрузить состояние</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="904"/>
+        <location filename="../../core/android_strings.h" line="934"/>
         <source>Game Properties</source>
         <comment>game_list_bottom_sheet_properties</comment>
         <translation>Свойства игры</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="905"/>
+        <location filename="../../core/android_strings.h" line="935"/>
         <source>Choose Cover Image</source>
         <comment>game_list_bottom_sheet_choose_cover</comment>
         <translation>Выбрать обложку</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="906"/>
+        <location filename="../../core/android_strings.h" line="936"/>
         <source>Delete Cover Image</source>
         <comment>game_list_bottom_sheet_delete_cover</comment>
         <translation>Удаление обложки</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="907"/>
+        <location filename="../../core/android_strings.h" line="937"/>
         <source>Are you sure you want to delete the cover image for this game? It cannot be recovered.</source>
         <comment>game_list_bottom_sheet_delete_cover_message</comment>
         <translation>Вы уверены, что хотите удалить обложку для этой игры? Восстановление невозможно.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="908"/>
+        <location filename="../../core/android_strings.h" line="938"/>
         <source>Cover Already Exists</source>
         <comment>game_replace_cover_title</comment>
         <translation>Обложка уже существует</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="909"/>
+        <location filename="../../core/android_strings.h" line="939"/>
         <source>A cover image for this game already exists, do you wish to replace it?</source>
         <comment>game_replace_cover_message</comment>
         <translation>Обложка для этой игры уже установлена. Хотите её заменить?</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="910"/>
+        <location filename="../../core/android_strings.h" line="940"/>
         <source>Create Launcher Shortcut</source>
         <comment>game_list_bottom_sheet_create_shortcut</comment>
         <translation>Создать ярлык</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="911"/>
+        <location filename="../../core/android_strings.h" line="941"/>
         <source>Exclude From List</source>
         <comment>game_list_bottom_sheet_exclude_from_list</comment>
         <translation>Скрыть из списка</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="912"/>
+        <location filename="../../core/android_strings.h" line="942"/>
         <source>Achievements</source>
         <comment>game_list_bottom_sheet_achievements</comment>
         <translation>Достижения</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="913"/>
+        <location filename="../../core/android_strings.h" line="943"/>
         <source>Do you want to load the automatic save created %s?
 </source>
         <comment>game_resume_summary</comment>
@@ -9545,277 +9790,277 @@ Multi-track games in bin format require a cuesheet (.cue) to start.</source>
 </translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="914"/>
+        <location filename="../../core/android_strings.h" line="944"/>
         <source>Clean Boot</source>
         <comment>game_resume_clean_boot</comment>
         <translation>Чистый запуск</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="915"/>
+        <location filename="../../core/android_strings.h" line="945"/>
         <source>Delete State</source>
         <comment>game_resume_delete_state</comment>
         <translation>Удалить сохранение</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="916"/>
+        <location filename="../../core/android_strings.h" line="946"/>
         <source>Do you want to clear or set a new background image?</source>
         <comment>game_list_background_prompt</comment>
         <translation>Удалить или установить новое изображение фона?</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="917"/>
+        <location filename="../../core/android_strings.h" line="947"/>
         <source>Change</source>
         <comment>game_list_background_change</comment>
         <translation>Изменить</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="918"/>
+        <location filename="../../core/android_strings.h" line="948"/>
         <source>Clear</source>
         <comment>game_list_background_clear</comment>
         <translation>Очистить</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="919"/>
+        <location filename="../../core/android_strings.h" line="949"/>
         <source>Scaling</source>
         <comment>game_list_background_mode</comment>
         <translation>Масштабирование</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="920"/>
+        <location filename="../../core/android_strings.h" line="950"/>
         <source>Fit</source>
         <comment>game_list_background_mode_fit</comment>
         <translation>Вписать</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="921"/>
+        <location filename="../../core/android_strings.h" line="951"/>
         <source>Fill</source>
         <comment>game_list_background_mode_fill</comment>
         <translation>Заполнить</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="922"/>
+        <location filename="../../core/android_strings.h" line="952"/>
         <source>Stretch</source>
         <comment>game_list_background_mode_stretch</comment>
         <translation>Растянуть</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="923"/>
+        <location filename="../../core/android_strings.h" line="953"/>
         <source>Shortcut created for %s.</source>
         <comment>game_shortcut_created</comment>
         <translation>Создан ярлык для %s.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="924"/>
+        <location filename="../../core/android_strings.h" line="954"/>
         <source>Cannot create shortcut. Make sure your launcher supports it.</source>
         <comment>game_shortcut_failed</comment>
         <translation>Не удалось создать ярлык. Убедитесь, что ваш лаунчер поддерживает эту функцию.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="930"/>
+        <location filename="../../core/android_strings.h" line="960"/>
         <source>Download</source>
         <comment>game_list_download_covers_start</comment>
         <translation>Скачать</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="931"/>
+        <location filename="../../core/android_strings.h" line="961"/>
         <source>URL does not contain ${title}, ${savetitle}, ${localizedtitle}, ${filetitle}, or ${serial}.</source>
         <comment>game_list_download_covers_invalid_url</comment>
         <translation>URL не содержит ${title}, ${savetitle}, ${localizedtitle}, ${filetitle} или ${serial}.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="933"/>
+        <location filename="../../core/android_strings.h" line="963"/>
         <source>Use Serial File Names</source>
         <comment>game_list_download_covers_use_serial</comment>
         <translation>Серийные номера для имён файлов</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="934"/>
+        <location filename="../../core/android_strings.h" line="964"/>
         <source>Stopping…</source>
         <comment>game_list_download_covers_stopping</comment>
         <translation>Остановка…</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="935"/>
+        <location filename="../../core/android_strings.h" line="965"/>
         <source>Download complete.</source>
         <comment>game_list_download_covers_complete</comment>
         <translation>Загрузка завершена.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="940"/>
+        <location filename="../../core/android_strings.h" line="970"/>
         <source>Mouse</source>
         <comment>touchscreen_layout_mouse</comment>
         <translation>Мышь</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="941"/>
+        <location filename="../../core/android_strings.h" line="971"/>
         <source>NeGcon</source>
         <comment>touchscreen_layout_negcon</comment>
         <translation>NeGcon</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="942"/>
+        <location filename="../../core/android_strings.h" line="972"/>
         <source>JogCon</source>
         <comment>touchscreen_layout_jogcon</comment>
         <translation>JogCon</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1007"/>
+        <location filename="../../core/android_strings.h" line="1037"/>
         <source>Reset to Default</source>
         <comment>preference_reset_to_default</comment>
         <translation>Сброс настройки</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1008"/>
+        <location filename="../../core/android_strings.h" line="1038"/>
         <source>Current Value</source>
         <comment>preference_reset_current_value</comment>
         <translation>Текущее значение</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1009"/>
+        <location filename="../../core/android_strings.h" line="1039"/>
         <source>Default Value</source>
         <comment>preference_reset_default_value</comment>
         <translation>Значение по умолчанию</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1010"/>
+        <location filename="../../core/android_strings.h" line="1040"/>
         <source>Global Setting</source>
         <comment>preference_reset_global_value</comment>
         <translation>Глобальное значение</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1018"/>
+        <location filename="../../core/android_strings.h" line="1048"/>
         <source>Selected URI is not a document tree.</source>
         <comment>game_folders_not_document_tree</comment>
         <translation>Выбранный URI не является деревом документов.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1039"/>
+        <location filename="../../core/android_strings.h" line="1069"/>
         <source>Changes the amount of RAM installed in the emulated console. Retail games do not use extra RAM.</source>
         <comment>settings_summary_ram_size</comment>
         <translation>Изменяет объём ОЗУ эмулируемой консоли. Коммерческие игры не используют расширенную память.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1040"/>
+        <location filename="../../core/android_strings.h" line="1070"/>
         <source>Installed VRAM</source>
         <comment>settings_vram_size</comment>
         <translation>Объём видеопамяти</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1041"/>
+        <location filename="../../core/android_strings.h" line="1071"/>
         <source>Changes the amount of VRAM installed in the emulated console. Retail games do not use extra VRAM.</source>
         <comment>settings_summary_vram_size</comment>
         <translation>Изменяет объём видеопамяти эмулируемой консоли. Коммерческие игры не используют расширенную видеопамять.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1042"/>
+        <location filename="../../core/android_strings.h" line="1072"/>
         <source>Fast Forward While Loading</source>
         <comment>settings_fast_forward_loading</comment>
         <translation>Ускорение во время загрузок</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1043"/>
+        <location filename="../../core/android_strings.h" line="1073"/>
         <source>Fast forwards when the game stops updating the screen while reading from the disc. Does not apply to animated loading screens.</source>
         <comment>settings_summary_fast_forward_loading</comment>
         <translation>Ускоряет эмуляцию, когда игра перестаёт обновлять экран при чтении с диска. Не работает на анимированных экранах загрузки.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1044"/>
+        <location filename="../../core/android_strings.h" line="1074"/>
         <source>Scale Idle Timeout</source>
         <comment>settings_idle_timeout_scale</comment>
         <translation>Масштабировать тайм-аут простоя</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1045"/>
+        <location filename="../../core/android_strings.h" line="1075"/>
         <source>Stops games from timing out while waiting for vertical blank when overclocking.</source>
         <comment>settings_summary_idle_timeout_scale</comment>
         <translation>При включени разгона не даёт играм превысить тайм-аут ожидания кадрового гасящего импульса.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1050"/>
+        <location filename="../../core/android_strings.h" line="1080"/>
         <source>Switch to Next Disc on Stop</source>
         <comment>settings_auto_disc_change</comment>
         <translation>Переход на следующий диск при остановке</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1051"/>
+        <location filename="../../core/android_strings.h" line="1081"/>
         <source>Automatically switches to the next disc in the game when the game stops the CD-ROM. Does not work for all games.</source>
         <comment>settings_summary_auto_disc_change</comment>
         <translation>Автоматически переключается на следующий диск игры при остановке CD-ROM. Работает не во всех играх.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1159"/>
+        <location filename="../../core/android_strings.h" line="1189"/>
         <source>Enable Recompiler Idle Loop Fast Forward</source>
         <comment>settings_idle_fast_forward</comment>
         <translation>Ускорение циклов простоя в рекомпиляторе</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1160"/>
+        <location filename="../../core/android_strings.h" line="1190"/>
         <source>Skips over the busy loop that games use to wait for vertical blank.</source>
         <comment>settings_summary_idle_fast_forward</comment>
         <translation>Пропускает в играх цикл активного ожидания кадрового гасящего импульса.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1184"/>
+        <location filename="../../core/android_strings.h" line="1214"/>
         <source>Reset SPU On Game Start</source>
         <comment>settings_reset_spu_on_game_start</comment>
         <translation>Сброс SPU при запуске игры</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1185"/>
+        <location filename="../../core/android_strings.h" line="1215"/>
         <source>Resets the SPU when the game starts, removing leftover BIOS reverb echoes in games that do not initialize it. Has no effect when fast booting.</source>
         <comment>settings_summary_reset_spu_on_game_start</comment>
-        <translation>Сбрасывает состояние SPU на старте, устраняя эхо реверберации BIOS в играх, которые его не инициализируют. Игнорируется при быстром запуске.</translation>
+        <translation>Сбрасывает состояние SPU, устраняя эхо реверберации BIOS в играх, которые его не инициализируют. Не имеет эффекта при быстром запуске.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1194"/>
+        <location filename="../../core/android_strings.h" line="1224"/>
         <source>Uses PGXP for all instructions, not just memory operations. Automatic uses the game database setting.</source>
         <comment>settings_summary_pgxp_cpu</comment>
         <translation>Использует PGXP для всех инструкций, а не только операций с памятью. В автоматическом режиме для игры применяется значение из базы данных.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1197"/>
+        <location filename="../../core/android_strings.h" line="1227"/>
         <source>Depth Clear Threshold</source>
         <comment>settings_pgxp_depth_clear_threshold</comment>
         <translation>Порог очистки буфера глубины</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1198"/>
+        <location filename="../../core/android_strings.h" line="1228"/>
         <source>Determines the increase in depth that will result in the depth buffer being cleared. Can help with depth issues in some games, but is still a hack/workaround.</source>
         <comment>settings_summary_pgxp_depth_clear_threshold</comment>
         <translation>Определяет значение прироста глубины, при котором буфер будет очищен. Помогает устранить графические артефакты в некоторых играх, но является обходным решением/хаком.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1199"/>
+        <location filename="../../core/android_strings.h" line="1229"/>
         <source>Depth Bias</source>
         <comment>settings_pgxp_depth_bias</comment>
         <translation>Смещение глубины</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1200"/>
+        <location filename="../../core/android_strings.h" line="1230"/>
         <source>Offsets each polygon towards the camera to reduce flickering decals and shadows. Too high can show hidden surfaces.</source>
         <comment>settings_summary_pgxp_depth_bias</comment>
         <translation>Сдвигает полигоны ближе к камере для устранения мерцания теней и текстур. Превышение значения может проявить скрытые поверхности.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1201"/>
+        <location filename="../../core/android_strings.h" line="1231"/>
         <source>Normalize Depth Scale</source>
         <comment>settings_pgxp_normalize_depth</comment>
         <translation>Нормализация масштаба глубины</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1202"/>
+        <location filename="../../core/android_strings.h" line="1232"/>
         <source>Fixes missing geometry with the depth buffer in some games, but breaks others.</source>
         <comment>settings_summary_pgxp_normalize_depth</comment>
         <translation>Исправляет пропуски геометрии при использовании буфера глубины в некоторых играх, но может нарушить работу других.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1205"/>
+        <location filename="../../core/android_strings.h" line="1235"/>
         <source>Uses screen positions to resolve PGXP data. May improve visuals in some games. Automatic uses the game database setting.</source>
         <comment>settings_summary_pgxp_vertex_cache</comment>
         <translation>Использует координаты экрана для обработки данных PGXP. Может улучшить графику в некоторых играх. В режиме «Автоматически» применяется значение настройки из базы данных.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1231"/>
+        <location filename="../../core/android_strings.h" line="1261"/>
         <source>Select Disc</source>
         <comment>game_select_disc</comment>
         <translation>Выберите диск</translation>
@@ -9902,7 +10147,7 @@ Multi-track games in bin format require a cuesheet (.cue) to start.</source>
         <location filename="../../core/android_strings.h" line="393"/>
         <source>Show Touchscreen Controller</source>
         <comment>settings_show_touchscreen_controller</comment>
-        <translation>Отображение экранного контроллера</translation>
+        <translation>Показывать экранный контроллер</translation>
     </message>
     <message>
         <location filename="../../core/android_strings.h" line="394"/>
@@ -9935,55 +10180,55 @@ Multi-track games in bin format require a cuesheet (.cue) to start.</source>
         <translation>Всегда</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="652"/>
+        <location filename="../../core/android_strings.h" line="678"/>
         <source>Swipe for Right Stick</source>
         <comment>settings_bind_to_right_stick</comment>
         <translation>Свайп для правого стика</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="653"/>
+        <location filename="../../core/android_strings.h" line="679"/>
         <source>Swiping outside the controls moves the right stick. With Floating Left Stick on, only the right half of the screen does.</source>
         <comment>settings_summary_bind_to_right_stick</comment>
         <translation>Свайпы в свободной от кнопок области управляют правым стиком. Если включен «Плавающий левый стик», функция работает только в правой половине экрана.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="654"/>
+        <location filename="../../core/android_strings.h" line="680"/>
         <source>Floating Left Stick</source>
         <comment>settings_floating_left_stick</comment>
         <translation>Плавающий левый стик</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="655"/>
+        <location filename="../../core/android_strings.h" line="681"/>
         <source>Touching the left half of the screen places the left stick under your finger, instead of at a fixed position.</source>
         <comment>settings_summary_floating_left_stick</comment>
         <translation>Касание в левой части экрана перемещает левый стик под палец, вместо фиксированной позиции.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="925"/>
+        <location filename="../../core/android_strings.h" line="955"/>
         <source>DuckStation can automatically download covers for games which do not currently have a cover set. Depending on your jurisdiction, game covers may be copyrighted. You are only authorized to use this tool with your own servers and images, we do not provide any.</source>
         <comment>game_list_download_covers_description</comment>
         <translation>DuckStation поддерживает автоматическую загрузку изображений для игр без установленных обложек. В зависимости от законодательства вашей страны обложки игр могут быть защищены авторским правом. Мы не размещаем файлы обложек. Используйте этот инструмент только с собственными серверами и изображениями.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="926"/>
+        <location filename="../../core/android_strings.h" line="956"/>
         <source>Cover URLs</source>
         <comment>game_list_download_covers_urls_category</comment>
         <translation>Адреса обложек</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="927"/>
+        <location filename="../../core/android_strings.h" line="957"/>
         <source>Specify the URLs to download covers from, with one template URL per line. Tap a variable below to insert it at the cursor.</source>
         <comment>game_list_download_covers_instructions</comment>
         <translation>Укажите ссылки для загрузки обложек, по одной в строке. Нажмите на переменную ниже, чтобы вставить её в позицию курсора.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="928"/>
+        <location filename="../../core/android_strings.h" line="958"/>
         <source>Example: https://www.example-not-a-real-domain.com/covers/${serial}.jpg</source>
         <comment>game_list_download_covers_example</comment>
         <translation>Пример: https://www.example-not-a-real-domain.com/covers/${serial}.jpg</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="929"/>
+        <location filename="../../core/android_strings.h" line="959"/>
         <source>${title}: Title of the game.
 ${savetitle}: Save title for the game, including the region suffix.
 ${localizedtitle}: Localized title for the game in its native language.
@@ -9997,13 +10242,13 @@ ${filetitle}: Name component of the game&apos;s filename.
 ${serial}: Serial of the game.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="932"/>
+        <location filename="../../core/android_strings.h" line="962"/>
         <source>Save covers using the game&apos;s serial instead of its title, which prevents conflicts when multiple regions of the same game are used.</source>
         <comment>game_list_download_covers_use_serial_description</comment>
         <translation>Сохранять обложки, используя для имён файлов серийные номера вместо названий игр. Исключает конфликты при наличии нескольких версий игры для разных регионов.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1038"/>
+        <location filename="../../core/android_strings.h" line="1068"/>
         <source>Installed RAM</source>
         <comment>settings_ram_size</comment>
         <translation>Установленный объём ОЗУ</translation>
@@ -10024,133 +10269,133 @@ ${serial}: Serial of the game.</translation>
         <translation type="vanished">Распределяет весь установленный объём ОЗУ независимо от конфигурации BIOS или игры.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1065"/>
+        <location filename="../../core/android_strings.h" line="1095"/>
         <source>Language, theme, game list and behavior</source>
         <comment>settings_tab_interface_summary</comment>
         <translation>Язык, тема, список игр и поведение</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1066"/>
+        <location filename="../../core/android_strings.h" line="1096"/>
         <source>On-Screen Display</source>
         <comment>settings_tab_osd</comment>
         <translation>Экранная индикация</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1067"/>
+        <location filename="../../core/android_strings.h" line="1097"/>
         <source>Theme, fonts, messages and statistics overlays</source>
         <comment>settings_tab_osd_summary</comment>
         <translation>Тема, шрифты, уведомления и статистика</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1068"/>
+        <location filename="../../core/android_strings.h" line="1098"/>
         <source>Region, CPU and CD-ROM</source>
         <comment>settings_tab_console_summary</comment>
         <translation>Регион, процессор и CD-привод</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1069"/>
+        <location filename="../../core/android_strings.h" line="1099"/>
         <source>Speed, latency, rewind and save states</source>
         <comment>settings_tab_emulation_summary</comment>
         <translation>Скорость, задержка, перемотка и сохранения</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1070"/>
+        <location filename="../../core/android_strings.h" line="1100"/>
         <source>Renderer, resolution, display and screenshots</source>
         <comment>settings_tab_video_summary</comment>
         <translation>Рендеринг, разрешение, отображение и скриншоты</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1071"/>
+        <location filename="../../core/android_strings.h" line="1101"/>
         <source>Volume and sound output configuration</source>
         <comment>settings_tab_audio_summary</comment>
         <translation>Громкость и настройки вывода звука</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1072"/>
+        <location filename="../../core/android_strings.h" line="1102"/>
         <source>Shader chains and border overlays</source>
         <comment>settings_tab_post_processing_summary</comment>
         <translation>Цепочки шейдеров и оверлеи рамок</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1073"/>
+        <location filename="../../core/android_strings.h" line="1103"/>
         <source>RetroAchievements account and notifications</source>
         <comment>settings_tab_achievements_summary</comment>
         <translation>Действия с аккаунтом и уведомления RetroAchievements</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1074"/>
+        <location filename="../../core/android_strings.h" line="1104"/>
         <source>Memory card types and locations</source>
         <comment>settings_tab_memory_cards_summary</comment>
         <translation>Расположение и типы карт памяти</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1075"/>
+        <location filename="../../core/android_strings.h" line="1105"/>
         <source>BIOS image selection and installation</source>
         <comment>settings_tab_bios_summary</comment>
         <translation>Выбор и установка образов BIOS</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1076"/>
+        <location filename="../../core/android_strings.h" line="1106"/>
         <source>Locations for data storage</source>
         <comment>settings_tab_folders_summary</comment>
         <translation>Расположение папок с данными</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1077"/>
+        <location filename="../../core/android_strings.h" line="1107"/>
         <source>Logging, debugging and low-level options</source>
         <comment>settings_tab_advanced_summary</comment>
         <translation>Логирование, отладка и низкоуровневые настройки</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1078"/>
+        <location filename="../../core/android_strings.h" line="1108"/>
         <source>Game details and verification</source>
         <comment>settings_tab_information_summary</comment>
         <translation>Сведения и проверка игры</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1079"/>
+        <location filename="../../core/android_strings.h" line="1109"/>
         <source>Fixes and enhancements for this game</source>
         <comment>settings_tab_patches_summary</comment>
         <translation>Исправления и улучшения для этой игры</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1080"/>
+        <location filename="../../core/android_strings.h" line="1110"/>
         <source>Cheat codes for this game</source>
         <comment>settings_tab_cheats_summary</comment>
         <translation>Чит-коды для этой игры</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1081"/>
+        <location filename="../../core/android_strings.h" line="1111"/>
         <source>On-screen controller layout and appearance</source>
         <comment>controller_settings_tab_touchscreen_summary</comment>
         <translation>Внешний вид и раскладка экранного контроллера</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1082"/>
+        <location filename="../../core/android_strings.h" line="1112"/>
         <source>Controller type and bindings</source>
         <comment>controller_settings_tab_port_summary</comment>
         <translation>Тип и привязки контроллера</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1083"/>
+        <location filename="../../core/android_strings.h" line="1113"/>
         <source>Shortcuts for emulator actions</source>
         <comment>controller_settings_tab_hotkeys_summary</comment>
         <translation>Привязки для действий эмулятора</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1084"/>
+        <location filename="../../core/android_strings.h" line="1114"/>
         <source>Folders which are scanned for games</source>
         <comment>game_folders_tab_folders_summary</comment>
         <translation>Папки для поиска игр</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1085"/>
+        <location filename="../../core/android_strings.h" line="1115"/>
         <source>Paths left out of the game list</source>
         <comment>game_folders_tab_excluded_summary</comment>
         <translation>Пути, скрытые из списка игр</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1086"/>
+        <location filename="../../core/android_strings.h" line="1116"/>
         <source>Games stored in the app&apos;s own storage</source>
         <comment>game_folders_tab_local_storage_summary</comment>
         <translation>Игры, расположенные в хранилище приложения</translation>
@@ -10593,7 +10838,7 @@ ${serial}: Serial of the game.</translation>
     <name>AutoUpdaterDialog</name>
     <message>
         <location filename="../autoupdaterdialog.ui" line="14"/>
-        <location filename="../autoupdaterdialog.cpp" line="398"/>
+        <location filename="../autoupdaterdialog.cpp" line="396"/>
         <source>Automatic Updater</source>
         <translation>Автоматическое обновление</translation>
     </message>
@@ -10620,7 +10865,7 @@ ${serial}: Serial of the game.</translation>
     <message>
         <location filename="../autoupdaterdialog.ui" line="144"/>
         <source>Download and Install...</source>
-        <translation>Загрузка и установка...</translation>
+        <translation>Скачать и установить...</translation>
     </message>
     <message>
         <location filename="../autoupdaterdialog.ui" line="151"/>
@@ -10633,12 +10878,12 @@ ${serial}: Serial of the game.</translation>
         <translation>Напомнить позже</translation>
     </message>
     <message>
-        <location filename="../autoupdaterdialog.cpp" line="197"/>
+        <location filename="../autoupdaterdialog.cpp" line="195"/>
         <source>Do not show again</source>
         <translation>Не показывать больше</translation>
     </message>
     <message>
-        <location filename="../autoupdaterdialog.cpp" line="302"/>
+        <location filename="../autoupdaterdialog.cpp" line="300"/>
         <source>Failed to retrieve or download update:
 
 %1
@@ -10651,19 +10896,19 @@ You can manually update DuckStation by re-downloading the latest release. Do you
 Вы можете обновить DuckStation вручную, повторно загрузив последнюю версию. Хотите открыть страницу загрузки сейчас?</translation>
     </message>
     <message>
-        <location filename="../autoupdaterdialog.cpp" line="305"/>
-        <location filename="../autoupdaterdialog.cpp" line="853"/>
+        <location filename="../autoupdaterdialog.cpp" line="303"/>
+        <location filename="../autoupdaterdialog.cpp" line="851"/>
         <source>Updater Error</source>
         <translation>Ошибка обновления</translation>
     </message>
     <message>
-        <location filename="../autoupdaterdialog.cpp" line="399"/>
+        <location filename="../autoupdaterdialog.cpp" line="397"/>
         <source>No updates are currently available. Please try again later.</source>
         <translation>В настоящее время обновлений нет. Попробуйте позже.</translation>
     </message>
     <message>
-        <location filename="../autoupdaterdialog.cpp" line="470"/>
-        <location filename="../autoupdaterdialog.cpp" line="474"/>
+        <location filename="../autoupdaterdialog.cpp" line="468"/>
+        <location filename="../autoupdaterdialog.cpp" line="472"/>
         <source>%1 (%2)</source>
         <translation>%1 (%2)</translation>
     </message>
@@ -10672,57 +10917,57 @@ You can manually update DuckStation by re-downloading the latest release. Do you
         <translation type="vanished">%1 МБ</translation>
     </message>
     <message>
-        <location filename="../autoupdaterdialog.cpp" line="481"/>
+        <location filename="../autoupdaterdialog.cpp" line="479"/>
         <source>Loading...</source>
         <translation>Загрузка...</translation>
     </message>
     <message>
-        <location filename="../autoupdaterdialog.cpp" line="528"/>
+        <location filename="../autoupdaterdialog.cpp" line="526"/>
         <source>&lt;h2&gt;Changes:&lt;/h2&gt;</source>
         <translation>&lt;h2&gt;Изменения:&lt;/h2&gt;</translation>
     </message>
     <message>
-        <location filename="../autoupdaterdialog.cpp" line="749"/>
+        <location filename="../autoupdaterdialog.cpp" line="747"/>
         <source>Updater Warning</source>
         <translation>Предупреждение обновления</translation>
     </message>
     <message>
-        <location filename="../autoupdaterdialog.cpp" line="750"/>
+        <location filename="../autoupdaterdialog.cpp" line="748"/>
         <source>&lt;h1&gt;Inconsistent Application State&lt;/h1&gt;&lt;h3&gt;The update zip is missing the current executable:&lt;/h3&gt;&lt;div align=&quot;center&quot;&gt;&lt;pre&gt;%1&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;strong&gt;This is usually a result of manually renaming the file.&lt;/strong&gt; Continuing to install this update may result in a broken installation if the renamed executable is used. The DuckStation executable should be named:&lt;/p&gt;&lt;div align=&quot;center&quot;&gt;&lt;pre&gt;%2&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;Do you want to continue anyway?&lt;/p&gt;</source>
         <translation>&lt;h1&gt;Несогласованное состояние приложения&lt;/h1&gt;&lt;h3&gt;В ZIP-архиве обновления отсутствует текущий исполняемый файл:&lt;/h3&gt;&lt;div align=&quot;center&quot;&gt;&lt;pre&gt;%1&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;strong&gt;Обычно это происходит из-за ручного переименования файла.&lt;/strong&gt; Продолжение установки этого обновления может привести к повреждению установки, если используется переименованный исполняемый файл. Исполняемый файл DuckStation должен называться:&lt;/p&gt;&lt;div align=&quot;center&quot;&gt;&lt;pre&gt;%2&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;Всё равно продолжить?&lt;/p&gt;</translation>
     </message>
     <message>
-        <location filename="../autoupdaterdialog.cpp" line="557"/>
+        <location filename="../autoupdaterdialog.cpp" line="555"/>
         <source>&lt;h2&gt;Save State Warning&lt;/h2&gt;&lt;p&gt;Installing this update will make your save states &lt;b&gt;incompatible&lt;/b&gt;. Please ensure you have saved your games to memory card before installing this update or you will lose progress.&lt;/p&gt;</source>
-        <translation>&lt;h2&gt;Предупреждение о сохраненных состояниях&lt;/h2&gt;&lt;p&gt;Установка этого обновления сделает ваши сохраненные состояний &lt;b&gt;несовместимыми&lt;/b&gt;. Перед установкой этого обновления убедитесь, что вы сохранили свои игры на карту памяти, иначе вы потеряете прогресс. &lt;/p&gt;</translation>
+        <translation>&lt;h2&gt;Предупреждение о сохранениях состояний&lt;/h2&gt;&lt;p&gt;Установка этого обновления сделает ваши сохранения состояний &lt;b&gt;несовместимыми&lt;/b&gt;. Перед обновлением убедитесь, что вы сохранили прогресс на карту памяти, иначе он будет утерян.&lt;/p&gt;</translation>
     </message>
     <message>
-        <location filename="../autoupdaterdialog.cpp" line="854"/>
+        <location filename="../autoupdaterdialog.cpp" line="852"/>
         <source>Failed to remove updater exe after update:
 %1</source>
         <translation>Не удалось удалить исполняемый файл обновления после обновления:
 %1</translation>
     </message>
     <message>
-        <location filename="../autoupdaterdialog.cpp" line="110"/>
+        <location filename="../autoupdaterdialog.cpp" line="108"/>
         <source>Stable Releases</source>
-        <translation>Стабильные версии</translation>
+        <translation>Стабильные сборки</translation>
     </message>
     <message>
-        <location filename="../autoupdaterdialog.cpp" line="111"/>
+        <location filename="../autoupdaterdialog.cpp" line="109"/>
         <source>Preview Releases</source>
-        <translation>Предварительные версии</translation>
+        <translation>Предварительные сборки</translation>
     </message>
 </context>
 <context>
     <name>AutoUpdaterWindow</name>
     <message>
-        <location filename="../autoupdaterdialog.cpp" line="593"/>
+        <location filename="../autoupdaterdialog.cpp" line="591"/>
         <source>Downloading Update...</source>
         <translation>Загрузка обновления...</translation>
     </message>
     <message>
-        <location filename="../autoupdaterdialog.cpp" line="606"/>
+        <location filename="../autoupdaterdialog.cpp" line="604"/>
         <source>Processing Update...</source>
         <translation>Обработка обновления...</translation>
     </message>
@@ -10774,7 +11019,7 @@ You can manually update DuckStation by re-downloading the latest release. Do you
     <message>
         <location filename="../biossettingswidget.ui" line="144"/>
         <source>More Options</source>
-        <translation type="unfinished"></translation>
+        <translation>Другие настройки</translation>
     </message>
     <message>
         <location filename="../biossettingswidget.ui" line="160"/>
@@ -11025,10 +11270,10 @@ You can manually update DuckStation by re-downloading the latest release. Do you
         <location filename="../../util/cd_image.cpp" line="458"/>
         <source>%n tracks covering {0} MB ({1} MB on disk)</source>
         <comment>Number of tracks</comment>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n дорожка объёмом {0} МБ ({1} МБ на диске)</numerusform>
+            <numerusform>%n дорожки объёмом {0} МБ ({1} МБ на диске)</numerusform>
+            <numerusform>%n дорожек объёмом {0} МБ ({1} МБ на диске)</numerusform>
         </translation>
     </message>
     <message>
@@ -11150,7 +11395,7 @@ Your dump may be corrupted, or the physical disc is scratched.</source>
         <location filename="../capturesettingswidget.ui" line="105"/>
         <location filename="../capturesettingswidget.ui" line="170"/>
         <source>More Options</source>
-        <translation type="unfinished"></translation>
+        <translation>Другие настройки</translation>
     </message>
     <message>
         <location filename="../capturesettingswidget.ui" line="121"/>
@@ -11643,13 +11888,13 @@ Trying to use this cheat will not work as expected. Do you want to continue?</so
     <message>
         <location filename="../consolesettingswidget.ui" line="65"/>
         <source>Installed VRAM:</source>
-        <translation type="unfinished"></translation>
+        <translation>Объём видеопамяти:</translation>
     </message>
     <message>
         <location filename="../consolesettingswidget.ui" line="98"/>
         <location filename="../consolesettingswidget.cpp" line="129"/>
         <source>Fast Forward While Loading</source>
-        <translation type="unfinished"></translation>
+        <translation>Ускорение во время загрузок</translation>
     </message>
     <message>
         <location filename="../consolesettingswidget.ui" line="128"/>
@@ -11667,7 +11912,7 @@ Trying to use this cheat will not work as expected. Do you want to continue?</so
         <location filename="../consolesettingswidget.ui" line="197"/>
         <location filename="../consolesettingswidget.cpp" line="157"/>
         <source>Scale Idle Timeout</source>
-        <translation type="unfinished"></translation>
+        <translation>Масштабировать тайм-аут простоя</translation>
     </message>
     <message>
         <location filename="../consolesettingswidget.ui" line="209"/>
@@ -11862,22 +12107,22 @@ Trying to use this cheat will not work as expected. Do you want to continue?</so
     <message>
         <location filename="../consolesettingswidget.cpp" line="130"/>
         <source>Fast forwards when the game stops updating the screen while reading from the disc. Does not apply to animated loading screens.</source>
-        <translation type="unfinished"></translation>
+        <translation>Ускоряет эмуляцию, когда игра перестаёт обновлять экран при чтении с диска. Не работает на анимированных экранах загрузки.</translation>
     </message>
     <message>
         <location filename="../consolesettingswidget.cpp" line="135"/>
         <source>Changes the amount of RAM installed in the emulated console. Retail games do not use extra RAM. Forced maps all installed RAM regardless of game configuration, needed for 16MB with retail BIOSes.</source>
-        <translation type="unfinished"></translation>
+        <translation>Изменяет объём ОЗУ эмулируемой консоли. Коммерческие игры не используют расширенную память. В режимах «Принудительно» объём ОЗУ распределяется полностью независимо от конфигурации игры. Требуется для работы 16 МБ с BIOS серийных моделей.</translation>
     </message>
     <message>
         <location filename="../consolesettingswidget.cpp" line="138"/>
         <source>Installed VRAM</source>
-        <translation type="unfinished"></translation>
+        <translation>Объём видеопамяти</translation>
     </message>
     <message>
         <location filename="../consolesettingswidget.cpp" line="140"/>
         <source>Changes the amount of VRAM installed in the emulated console. Retail games do not use extra VRAM. Forced makes the second VRAM bank accessible regardless of the game enabling it or not.</source>
-        <translation type="unfinished"></translation>
+        <translation>Изменяет объём видеопамяти эмулируемой консоли. Коммерческие игры не используют расширенную видеопамять. В режимах «Принудительно» второй банк VRAM доступен независимо от поддержки в игре.</translation>
     </message>
     <message>
         <location filename="../consolesettingswidget.cpp" line="144"/>
@@ -11920,12 +12165,12 @@ Trying to use this cheat will not work as expected. Do you want to continue?</so
     <message>
         <location filename="../consolesettingswidget.cpp" line="157"/>
         <source>Checked</source>
-        <translation type="unfinished"></translation>
+        <translation>Отмечено</translation>
     </message>
     <message>
         <location filename="../consolesettingswidget.cpp" line="158"/>
         <source>Games give up waiting for vertical blank after a fixed number of loop iterations, which pass faster when overclocking. Scales this timeout to keep games synchronized to vertical blank.</source>
-        <translation type="unfinished"></translation>
+        <translation>Игры прекращают ожидание кадрового гасящего импульса после определённого числа итераций цикла, которые при разгоне выполняются быстрее. Масштабирует данный тайм-аут, чтобы сохранить синхронизацию игр с VBlank.</translation>
     </message>
     <message>
         <location filename="../consolesettingswidget.cpp" line="162"/>
@@ -12440,107 +12685,107 @@ This warning will only be shown once.</source>
     <message>
         <location filename="../controllerbindingwidget_ddgo.ui" line="43"/>
         <source>Power Lever</source>
-        <translation type="unfinished"></translation>
+        <translation>Рычаг тяги</translation>
     </message>
     <message>
         <location filename="../controllerbindingwidget_ddgo.ui" line="49"/>
         <source>Power</source>
-        <translation type="unfinished">Питание</translation>
+        <translation>Тяга</translation>
     </message>
     <message>
         <location filename="../controllerbindingwidget_ddgo.ui" line="80"/>
         <source>Off</source>
-        <translation type="unfinished">Откл.</translation>
+        <translation>Откл.</translation>
     </message>
     <message>
         <location filename="../controllerbindingwidget_ddgo.ui" line="117"/>
         <location filename="../controllerbindingwidget_ddgo.ui" line="462"/>
         <source>1</source>
-        <translation type="unfinished"></translation>
+        <translation>1</translation>
     </message>
     <message>
         <location filename="../controllerbindingwidget_ddgo.ui" line="154"/>
         <location filename="../controllerbindingwidget_ddgo.ui" line="499"/>
         <source>2</source>
-        <translation type="unfinished"></translation>
+        <translation>2</translation>
     </message>
     <message>
         <location filename="../controllerbindingwidget_ddgo.ui" line="191"/>
         <location filename="../controllerbindingwidget_ddgo.ui" line="536"/>
         <source>3</source>
-        <translation type="unfinished"></translation>
+        <translation>3</translation>
     </message>
     <message>
         <location filename="../controllerbindingwidget_ddgo.ui" line="228"/>
         <location filename="../controllerbindingwidget_ddgo.ui" line="573"/>
         <source>4</source>
-        <translation type="unfinished"></translation>
+        <translation>4</translation>
     </message>
     <message>
         <location filename="../controllerbindingwidget_ddgo.ui" line="265"/>
         <location filename="../controllerbindingwidget_ddgo.ui" line="610"/>
         <source>5</source>
-        <translation type="unfinished"></translation>
+        <translation>5</translation>
     </message>
     <message>
         <location filename="../controllerbindingwidget_ddgo.ui" line="322"/>
         <source>Select</source>
-        <translation type="unfinished"></translation>
+        <translation>Select</translation>
     </message>
     <message>
         <location filename="../controllerbindingwidget_ddgo.ui" line="353"/>
         <source>Start</source>
-        <translation type="unfinished"></translation>
+        <translation>Start</translation>
     </message>
     <message>
         <location filename="../controllerbindingwidget_ddgo.ui" line="388"/>
         <source>Brake Lever</source>
-        <translation type="unfinished"></translation>
+        <translation>Рычаг тормоза</translation>
     </message>
     <message>
         <location filename="../controllerbindingwidget_ddgo.ui" line="394"/>
         <source>Brake</source>
-        <translation type="unfinished">Тормоз</translation>
+        <translation>Тормоз</translation>
     </message>
     <message>
         <location filename="../controllerbindingwidget_ddgo.ui" line="425"/>
         <source>Released</source>
-        <translation type="unfinished">Дата выпуска</translation>
+        <translation>Не нажат</translation>
     </message>
     <message>
         <location filename="../controllerbindingwidget_ddgo.ui" line="647"/>
         <source>6</source>
-        <translation type="unfinished"></translation>
+        <translation>6</translation>
     </message>
     <message>
         <location filename="../controllerbindingwidget_ddgo.ui" line="684"/>
         <source>7</source>
-        <translation type="unfinished"></translation>
+        <translation>7</translation>
     </message>
     <message>
         <location filename="../controllerbindingwidget_ddgo.ui" line="721"/>
         <source>8</source>
-        <translation type="unfinished"></translation>
+        <translation>8</translation>
     </message>
     <message>
         <location filename="../controllerbindingwidget_ddgo.ui" line="758"/>
         <source>Emergency</source>
-        <translation type="unfinished"></translation>
+        <translation>Экстренное торможение</translation>
     </message>
     <message>
         <location filename="../controllerbindingwidget_ddgo.ui" line="867"/>
         <source>A</source>
-        <translation type="unfinished">A</translation>
+        <translation>A</translation>
     </message>
     <message>
         <location filename="../controllerbindingwidget_ddgo.ui" line="898"/>
         <source>B</source>
-        <translation type="unfinished">B</translation>
+        <translation>B</translation>
     </message>
     <message>
         <location filename="../controllerbindingwidget_ddgo.ui" line="929"/>
         <source>C</source>
-        <translation type="unfinished">C</translation>
+        <translation>C</translation>
     </message>
 </context>
 <context>
@@ -12705,109 +12950,109 @@ This warning will only be shown once.</source>
     <message>
         <location filename="../controllerbindingwidget_jogcon.ui" line="43"/>
         <source>D-Pad</source>
-        <translation type="unfinished"></translation>
+        <translation>Крестовина</translation>
     </message>
     <message>
         <location filename="../controllerbindingwidget_jogcon.ui" line="49"/>
         <source>Down</source>
-        <translation type="unfinished">Вниз</translation>
+        <translation>Вниз</translation>
     </message>
     <message>
         <location filename="../controllerbindingwidget_jogcon.ui" line="86"/>
         <location filename="../controllerbindingwidget_jogcon.ui" line="763"/>
         <source>Left</source>
-        <translation type="unfinished"></translation>
+        <translation>Влево</translation>
     </message>
     <message>
         <location filename="../controllerbindingwidget_jogcon.ui" line="123"/>
         <source>Up</source>
-        <translation type="unfinished">Вверх</translation>
+        <translation>Вверх</translation>
     </message>
     <message>
         <location filename="../controllerbindingwidget_jogcon.ui" line="160"/>
         <location filename="../controllerbindingwidget_jogcon.ui" line="800"/>
         <source>Right</source>
-        <translation type="unfinished"></translation>
+        <translation>Вправо</translation>
     </message>
     <message>
         <location filename="../controllerbindingwidget_jogcon.ui" line="200"/>
         <source>Vibration Motor</source>
-        <translation type="unfinished">Вибрационный двигатель</translation>
+        <translation>Вибромотор</translation>
     </message>
     <message>
         <location filename="../controllerbindingwidget_jogcon.ui" line="248"/>
         <source>L2</source>
-        <translation type="unfinished">L2</translation>
+        <translation>L2</translation>
     </message>
     <message>
         <location filename="../controllerbindingwidget_jogcon.ui" line="279"/>
         <source>Select</source>
-        <translation type="unfinished"></translation>
+        <translation>Select</translation>
     </message>
     <message>
         <location filename="../controllerbindingwidget_jogcon.ui" line="310"/>
         <source>Start</source>
-        <translation type="unfinished"></translation>
+        <translation>Start</translation>
     </message>
     <message>
         <location filename="../controllerbindingwidget_jogcon.ui" line="341"/>
         <source>R2</source>
-        <translation type="unfinished">R2</translation>
+        <translation>R2</translation>
     </message>
     <message>
         <location filename="../controllerbindingwidget_jogcon.ui" line="372"/>
         <source>L1</source>
-        <translation type="unfinished">L1</translation>
+        <translation>L1</translation>
     </message>
     <message>
         <location filename="../controllerbindingwidget_jogcon.ui" line="403"/>
         <source>Mode</source>
-        <translation type="unfinished">Режим</translation>
+        <translation>Mode</translation>
     </message>
     <message>
         <location filename="../controllerbindingwidget_jogcon.ui" line="434"/>
         <source>Mode LED</source>
-        <translation type="unfinished"></translation>
+        <translation>Подсветка Mode</translation>
     </message>
     <message>
         <location filename="../controllerbindingwidget_jogcon.ui" line="465"/>
         <source>R1</source>
-        <translation type="unfinished">R1</translation>
+        <translation>R1</translation>
     </message>
     <message>
         <location filename="../controllerbindingwidget_jogcon.ui" line="500"/>
         <source>Face Buttons</source>
-        <translation type="unfinished"></translation>
+        <translation>Лицевые кнопки</translation>
     </message>
     <message>
         <location filename="../controllerbindingwidget_jogcon.ui" line="506"/>
         <source>Cross</source>
-        <translation type="unfinished">Крест</translation>
+        <translation>Крест</translation>
     </message>
     <message>
         <location filename="../controllerbindingwidget_jogcon.ui" line="543"/>
         <source>Square</source>
-        <translation type="unfinished">Квадрат</translation>
+        <translation>Квадрат</translation>
     </message>
     <message>
         <location filename="../controllerbindingwidget_jogcon.ui" line="580"/>
         <source>Triangle</source>
-        <translation type="unfinished">Треугольник</translation>
+        <translation>Треугольник</translation>
     </message>
     <message>
         <location filename="../controllerbindingwidget_jogcon.ui" line="617"/>
         <source>Circle</source>
-        <translation type="unfinished">Круг</translation>
+        <translation>Круг</translation>
     </message>
     <message>
         <location filename="../controllerbindingwidget_jogcon.ui" line="657"/>
         <source>Force Feedback Device</source>
-        <translation type="unfinished">Устройство с обратной связью</translation>
+        <translation>Устройство с обратной связью</translation>
     </message>
     <message>
         <location filename="../controllerbindingwidget_jogcon.ui" line="757"/>
         <source>Steering</source>
-        <translation type="unfinished">Руль</translation>
+        <translation>Ось руля</translation>
     </message>
 </context>
 <context>
@@ -13082,51 +13327,51 @@ This warning will only be shown once.</source>
     <message>
         <location filename="../controllerbindingwidget_popn.ui" line="56"/>
         <source>Left Buttons</source>
-        <translation type="unfinished"></translation>
+        <translation>Кнопки слева</translation>
     </message>
     <message>
         <location filename="../controllerbindingwidget_popn.ui" line="62"/>
         <location filename="../controllerbindingwidget_popn.ui" line="352"/>
         <source>Yellow</source>
-        <translation type="unfinished"></translation>
+        <translation>Жёлтая</translation>
     </message>
     <message>
         <location filename="../controllerbindingwidget_popn.ui" line="99"/>
         <location filename="../controllerbindingwidget_popn.ui" line="315"/>
         <source>Blue/Sel</source>
-        <translation type="unfinished"></translation>
+        <translation>Синяя/Sel</translation>
     </message>
     <message>
         <location filename="../controllerbindingwidget_popn.ui" line="136"/>
         <location filename="../controllerbindingwidget_popn.ui" line="426"/>
         <source>White</source>
-        <translation type="unfinished"></translation>
+        <translation>Белая</translation>
     </message>
     <message>
         <location filename="../controllerbindingwidget_popn.ui" line="173"/>
         <location filename="../controllerbindingwidget_popn.ui" line="389"/>
         <source>Green</source>
-        <translation type="unfinished">Зелёный</translation>
+        <translation>Зелёная</translation>
     </message>
     <message>
         <location filename="../controllerbindingwidget_popn.ui" line="230"/>
         <source>Select</source>
-        <translation type="unfinished"></translation>
+        <translation>Select</translation>
     </message>
     <message>
         <location filename="../controllerbindingwidget_popn.ui" line="261"/>
         <source>Start</source>
-        <translation type="unfinished"></translation>
+        <translation>Start</translation>
     </message>
     <message>
         <location filename="../controllerbindingwidget_popn.ui" line="309"/>
         <source>Right Buttons</source>
-        <translation type="unfinished"></translation>
+        <translation>Кнопки справа</translation>
     </message>
     <message>
         <location filename="../controllerbindingwidget_popn.ui" line="535"/>
         <source>Middle Red/Okay</source>
-        <translation type="unfinished">Средний красный/ОК</translation>
+        <translation>Красная посередине/ОК</translation>
     </message>
 </context>
 <context>
@@ -13414,12 +13659,12 @@ The &quot;alternate&quot; color is used when analog mode is active.</source>
     <message>
         <location filename="../controllermacroeditwidget.ui" line="35"/>
         <source>The trigger activates the macro, and can be a single button or combination of buttons. Shift-click for multiple triggers.</source>
-        <translation type="unfinished"></translation>
+        <translation>Триггер активирует макрос и может быть одной кнопкой или комбинацией кнопок.Сделайте клик с Shift для настройки нескольких триггеров.</translation>
     </message>
     <message>
         <location filename="../controllermacroeditwidget.ui" line="58"/>
         <source>Activation Deadzone:</source>
-        <translation type="unfinished"></translation>
+        <translation>Мёртвая зона активации:</translation>
     </message>
     <message>
         <location filename="../controllermacroeditwidget.ui" line="93"/>
@@ -13429,79 +13674,79 @@ The &quot;alternate&quot; color is used when analog mode is active.</source>
     <message>
         <location filename="../controllermacroeditwidget.ui" line="103"/>
         <source>Sequence</source>
-        <translation type="unfinished"></translation>
+        <translation>Последовательность</translation>
     </message>
     <message>
         <location filename="../controllermacroeditwidget.ui" line="124"/>
         <source>Action</source>
-        <translation type="unfinished"></translation>
+        <translation>Действие</translation>
     </message>
     <message>
         <location filename="../controllermacroeditwidget.ui" line="129"/>
         <source>Value</source>
-        <translation type="unfinished">Значение</translation>
+        <translation>Значение</translation>
     </message>
     <message>
         <location filename="../controllermacroeditwidget.ui" line="139"/>
         <location filename="../controllerbindingwidgets.cpp" line="1130"/>
         <source>Record</source>
-        <translation type="unfinished"></translation>
+        <translation>Запись</translation>
     </message>
     <message>
         <location filename="../controllermacroeditwidget.ui" line="150"/>
         <source>Replaces the sequence with one which holds a button, or toggles it on and off every N frames (turbo).</source>
-        <translation type="unfinished"></translation>
+        <translation>Заменяет последовательность на одно действие с удержанием или переключением каждые N кадров (турбо-режим).</translation>
     </message>
     <message>
         <location filename="../controllermacroeditwidget.ui" line="153"/>
         <location filename="../controllerbindingwidgets.cpp" line="1059"/>
         <source>Quick Setup</source>
-        <translation type="unfinished"></translation>
+        <translation>Быстрая настройка</translation>
     </message>
     <message>
         <location filename="../controllermacroeditwidget.ui" line="164"/>
         <source>Add Input</source>
-        <translation type="unfinished"></translation>
+        <translation>Добавить действие</translation>
     </message>
     <message>
         <location filename="../controllermacroeditwidget.ui" line="175"/>
         <source>Add Wait</source>
-        <translation type="unfinished"></translation>
+        <translation>Добавить ожидание</translation>
     </message>
     <message>
         <location filename="../controllermacroeditwidget.ui" line="186"/>
         <source>Remove</source>
-        <translation type="unfinished">Удалить</translation>
+        <translation>Удалить</translation>
     </message>
     <message>
         <location filename="../controllermacroeditwidget.ui" line="197"/>
         <source>Move Up</source>
-        <translation type="unfinished"></translation>
+        <translation>Сдвинуть вверх</translation>
     </message>
     <message>
         <location filename="../controllermacroeditwidget.ui" line="208"/>
         <source>Move Down</source>
-        <translation type="unfinished"></translation>
+        <translation>Сдвинуть вниз</translation>
     </message>
     <message>
         <location filename="../controllermacroeditwidget.ui" line="219"/>
         <source>Clear</source>
-        <translation type="unfinished"></translation>
+        <translation>Очистить</translation>
     </message>
     <message>
         <location filename="../controllermacroeditwidget.ui" line="237"/>
         <source>Repeats the sequence while the macro is active, instead of playing it once for each press. The current repeat is always finished.</source>
-        <translation type="unfinished"></translation>
+        <translation>Повторяет последовательность, пока макрос активен, вместо одиночного срабатывания при нажатии. Начатый повтор всегда выполняется до конца.</translation>
     </message>
     <message>
         <location filename="../controllermacroeditwidget.ui" line="240"/>
         <source>Loop While Active</source>
-        <translation type="unfinished"></translation>
+        <translation>Цикл при удержании</translation>
     </message>
     <message>
         <location filename="../controllermacroeditwidget.ui" line="247"/>
         <source>Activates and deactivates the macro when the button is tapped instead of held.</source>
-        <translation type="unfinished"></translation>
+        <translation>Включает и выключает макрос при нажатии кнопки, вместо удержания.</translation>
     </message>
     <message>
         <location filename="../controllermacroeditwidget.ui" line="29"/>
@@ -13542,10 +13787,10 @@ The &quot;alternate&quot; color is used when analog mode is active.</source>
     <message numerus="yes">
         <location filename="../controllerbindingwidgets.cpp" line="972"/>
         <source>%n button(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n кнопка</numerusform>
+            <numerusform>%n кнопки</numerusform>
+            <numerusform>%n кнопок</numerusform>
         </translation>
     </message>
     <message>
@@ -13557,51 +13802,51 @@ The &quot;alternate&quot; color is used when analog mode is active.</source>
     <message>
         <location filename="../controllerbindingwidgets.cpp" line="1060"/>
         <source>Frames to toggle %1 on and off for, or 0 to hold it:</source>
-        <translation type="unfinished"></translation>
+        <translation>Интервал в кадрах для переключения %1 (или 0 для удержания):</translation>
     </message>
     <message>
         <location filename="../controllerbindingwidgets.cpp" line="1090"/>
         <source>Stop</source>
-        <translation type="unfinished">Остановить</translation>
+        <translation>Остановить</translation>
     </message>
     <message>
         <location filename="../controllerbindingwidgets.cpp" line="1223"/>
         <location filename="../controllerbindingwidgets.cpp" line="1235"/>
         <source>Wait</source>
-        <translation type="unfinished"></translation>
+        <translation>Ожидание</translation>
     </message>
     <message numerus="yes">
         <location filename="../controllerbindingwidgets.cpp" line="1225"/>
         <location filename="../controllerbindingwidgets.cpp" line="1322"/>
         <source>%n frame(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n кадр</numerusform>
+            <numerusform>%n кадра</numerusform>
+            <numerusform>%n кадров</numerusform>
         </translation>
     </message>
     <message>
         <location filename="../controllerbindingwidgets.cpp" line="1255"/>
         <source> frames</source>
-        <translation type="unfinished"></translation>
+        <translation> кадры</translation>
     </message>
     <message>
         <location filename="../controllerbindingwidgets.cpp" line="1261"/>
         <source>%</source>
-        <translation type="unfinished">%</translation>
+        <translation>%</translation>
     </message>
     <message>
         <location filename="../controllerbindingwidgets.cpp" line="1320"/>
         <source>Sequence (%1, %2)</source>
-        <translation type="unfinished"></translation>
+        <translation>Последовательность (%1, %2)</translation>
     </message>
     <message numerus="yes">
         <location filename="../controllerbindingwidgets.cpp" line="1321"/>
         <source>%n action(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n действие</numerusform>
+            <numerusform>%n действия</numerusform>
+            <numerusform>%n действий</numerusform>
         </translation>
     </message>
     <message>
@@ -14832,10 +15077,10 @@ This file can be several gigabytes, so be aware of SSD wear.</source>
         <location filename="../debuggerwindow.cpp" line="794"/>
         <source>Copied %n instruction(s) to the clipboard.</source>
         <comment>CopyRange</comment>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n инструкция скопирована в буфер обмена.</numerusform>
+            <numerusform>%n инструкции скопированы в буфер обмена.</numerusform>
+            <numerusform>%n инструкций скопировано в буфер обмена.</numerusform>
         </translation>
     </message>
     <message>
@@ -14938,7 +15183,7 @@ This file can be several gigabytes, so be aware of SSD wear.</source>
     <message>
         <location filename="../debuggingsettingswidget.cpp" line="228"/>
         <source>Enable Recompiler Idle Loop Fast Forward</source>
-        <translation type="unfinished"></translation>
+        <translation>Ускорение циклов простоя в рекомпиляторе</translation>
     </message>
     <message>
         <location filename="../debuggingsettingswidget.cpp" line="231"/>
@@ -15179,17 +15424,17 @@ Clicking Reset will restore the serial back to the value scanned from in the dis
     <message>
         <location filename="../emptygamelistwidget.ui" line="82"/>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:700;&quot;&gt;No games in supported formats were found.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Please add a directory with games to begin.&lt;/p&gt;&lt;p&gt;Game dumps in the following formats will be scanned and listed:&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:700;&quot;&gt;Игры в поддерживаемых форматах не найдены.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Пожалуйста, добавьте каталог с играми для начала.&lt;/p&gt;&lt;p&gt;Дампы игр в следующих форматах будут отсканированы и перечислены:&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:700;&quot;&gt;Не найдены игры в поддерживаемых форматах.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Добавьте каталог с играми, чтобы запустить поиск.&lt;/p&gt;&lt;p&gt;Будут отсканированы и добавлены в список образы игр в следующих форматах:&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
         <location filename="../emptygamelistwidget.ui" line="114"/>
         <source>Add Game Directory...</source>
-        <translation>Добавить каталог с играми...</translation>
+        <translation>Добавить папку с играми...</translation>
     </message>
     <message>
         <location filename="../emptygamelistwidget.ui" line="155"/>
         <source>Scan For New Games</source>
-        <translation>Поиск новых игр</translation>
+        <translation>Искать новые игры</translation>
     </message>
 </context>
 <context>
@@ -15255,7 +15500,7 @@ Clicking Reset will restore the serial back to the value scanned from in the dis
         <translation> миллисекунд</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1330"/>
+        <location filename="../../core/android_strings.h" line="1360"/>
         <source> MB</source>
         <translation> МБ</translation>
     </message>
@@ -15496,19 +15741,19 @@ Clicking Reset will restore the serial back to the value scanned from in the dis
     <message numerus="yes">
         <location filename="../emulationsettingswidget.cpp" line="322"/>
         <source>Rewind for %n frame(s), lasting %1 second(s) will require %2 of RAM and %3 of VRAM.</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>Обратная перемотка на %n кадр (%1 сек.) потребует %2 ОЗУ и %3 видеопамяти.</numerusform>
+            <numerusform>Обратная перемотка на %n кадра (%1 сек.) потребует %2 ОЗУ и %3 видеопамяти.</numerusform>
+            <numerusform>Обратная перемотка на %n кадров (%1 сек.) потребует %2 ОЗУ и %3 видеопамяти.</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <location filename="../emulationsettingswidget.cpp" line="326"/>
         <source>Rewind for %n frame(s), lasting %1 second(s) will require %2 of RAM.</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>Обратная перемотка на %n кадр (%1 сек.) потребует %2 ОЗУ.</numerusform>
+            <numerusform>Обратная перемотка на %n кадра (%1 сек.) потребует %2 ОЗУ.</numerusform>
+            <numerusform>Обратная перемотка на %n кадров (%1 сек.) потребует %2 ОЗУ.</numerusform>
         </translation>
     </message>
     <message numerus="yes">
@@ -15533,32 +15778,32 @@ Clicking Reset will restore the serial back to the value scanned from in the dis
         <translation>Перемотка назад отключена, поскольку включено опережение. Опережение значительно повышает системные требования.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1331"/>
+        <location filename="../../core/android_strings.h" line="1361"/>
         <source>Saves state periodically so you can rewind any mistakes while playing.</source>
         <translation>Периодически сохраняет состояние, чтобы вы могли перемотать назад и исправить ошибки во время игры.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1332"/>
+        <location filename="../../core/android_strings.h" line="1362"/>
         <source>How often a rewind state will be created. Higher frequencies have greater system requirements.</source>
         <translation>Как часто будет создаваться состояние перемотки назад. Более высокие частоты предъявляют более высокие системные требования.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1333"/>
+        <location filename="../../core/android_strings.h" line="1363"/>
         <source>How much memory will be reserved for rewind states. Determines how far back you can rewind.</source>
         <translation>Объём памяти, зарезервированный для состояний перемотки назад. Определяет, насколько далеко можно перемотать назад.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1334"/>
+        <location filename="../../core/android_strings.h" line="1364"/>
         <source>A %1MB rewind buffer holds %n state(s), allowing you to rewind up to %2 second(s).</source>
         <translation>Буфер перемотки назад размером %1 МБ вмещает состояний: %n, позволяя перемотать назад на %2 сек.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1335"/>
+        <location filename="../../core/android_strings.h" line="1365"/>
         <source>The rewind buffer is too small to hold a single state.</source>
         <translation>Буфер перемотки назад слишком мал, чтобы вместить хотя бы одно состояние.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1336"/>
+        <location filename="../../core/android_strings.h" line="1366"/>
         <source>A {0} MB rewind buffer holds {1} states, allowing you to rewind up to {2:.2f} seconds.</source>
         <translation>Буфер перемотки назад размером {0} МБ вмещает состояний: {1}, позволяя перемотать назад на {2:.2f} сек.</translation>
     </message>
@@ -15621,122 +15866,122 @@ Clicking Reset will restore the serial back to the value scanned from in the dis
     <message>
         <location filename="../folderssettingswidget.cpp" line="26"/>
         <source>Cache Directory</source>
-        <translation type="unfinished">Каталог кэша</translation>
+        <translation>Папка кэша</translation>
     </message>
     <message>
         <location filename="../folderssettingswidget.cpp" line="27"/>
         <source>Used for storing compiled shaders, game list data, and downloaded achievement images.</source>
-        <translation type="unfinished"></translation>
+        <translation>Используется для хранения скомпилированных шейдеров, данных списка игр и загруженных значков достижений.</translation>
     </message>
     <message>
         <location filename="../folderssettingswidget.cpp" line="29"/>
         <source>Cheats Directory</source>
-        <translation type="unfinished"></translation>
+        <translation>Папка чит-кодов</translation>
     </message>
     <message>
         <location filename="../folderssettingswidget.cpp" line="30"/>
         <source>Stores cheat files (.cht) that you have created or imported. These are used in addition to the built-in cheat database.</source>
-        <translation type="unfinished"></translation>
+        <translation>Содержит созданные или импортированные файлы чит-кодов (.cht). Они используются в дополнение к встроенной базе чит-кодов.</translation>
     </message>
     <message>
         <location filename="../folderssettingswidget.cpp" line="33"/>
         <source>Covers Directory</source>
-        <translation type="unfinished">Каталог обложек</translation>
+        <translation>Папка обложек</translation>
     </message>
     <message>
         <location filename="../folderssettingswidget.cpp" line="34"/>
         <source>Used for storing covers in the game grid/Big Picture UIs.</source>
-        <translation type="unfinished">Используется для хранения обложек в сетке игр/интерфейсе Big Picture.</translation>
+        <translation>Используется для хранения обложек сетки игр и интерфейса Big Picture.</translation>
     </message>
     <message>
         <location filename="../folderssettingswidget.cpp" line="35"/>
         <source>Game Icons Directory</source>
-        <translation type="unfinished"></translation>
+        <translation>Папка иконок игр</translation>
     </message>
     <message>
         <location filename="../folderssettingswidget.cpp" line="36"/>
         <source>Stores game list icons extracted from memory card saves. A PNG named after a game&apos;s serial can be placed here to use a custom icon.</source>
-        <translation type="unfinished"></translation>
+        <translation>Содержит значки списка игр, извлечённые из сохранений на картах памяти. Чтобы установить для игры собственный значок, поместите в папку файл PNG с серийным номером игры в качестве имени файла.</translation>
     </message>
     <message>
         <location filename="../folderssettingswidget.cpp" line="39"/>
         <source>Game Settings Directory</source>
-        <translation type="unfinished"></translation>
+        <translation>Папка настроек игр</translation>
     </message>
     <message>
         <location filename="../folderssettingswidget.cpp" line="40"/>
         <source>Stores per-game settings files, named by game serial.</source>
-        <translation type="unfinished"></translation>
+        <translation>Содержит файлы настроек для отдельных игр, с серийными номерами в качестве имён файлов.</translation>
     </message>
     <message>
         <location filename="../folderssettingswidget.cpp" line="41"/>
         <source>Input Profiles Directory</source>
-        <translation type="unfinished"></translation>
+        <translation>Папка профилей ввода</translation>
     </message>
     <message>
         <location filename="../folderssettingswidget.cpp" line="42"/>
         <source>Stores controller input profiles.</source>
-        <translation type="unfinished"></translation>
+        <translation>Содержит профили настроек контроллеров.</translation>
     </message>
     <message>
         <location filename="../folderssettingswidget.cpp" line="43"/>
         <source>Patches Directory</source>
-        <translation type="unfinished"></translation>
+        <translation>Папка патчей</translation>
     </message>
     <message>
         <location filename="../folderssettingswidget.cpp" line="44"/>
         <source>Stores patch files (.cht) that you have created or imported. These are used in addition to the built-in patch database.</source>
-        <translation type="unfinished"></translation>
+        <translation>Содержит созданные или импортированные файлы патчей (.cht). Они используются в дополнение к встроенной базе патчей.</translation>
     </message>
     <message>
         <location filename="../folderssettingswidget.cpp" line="47"/>
         <source>Shaders Directory</source>
-        <translation type="unfinished"></translation>
+        <translation>Папка шейдеров</translation>
     </message>
     <message>
         <location filename="../folderssettingswidget.cpp" line="48"/>
         <source>Searched for post-processing shaders: GLSL shaders in this directory, ReShade shaders in reshade/Shaders, and slang presets in slang.</source>
-        <translation type="unfinished"></translation>
+        <translation>Используется для поиска шейдеров постобработки: GLSL в корне, ReShade в подпапке reshade/Shaders и пресеты slang в подпапке slang.</translation>
     </message>
     <message>
         <location filename="../folderssettingswidget.cpp" line="51"/>
         <source>Subchannels Directory</source>
-        <translation type="unfinished"></translation>
+        <translation>Папка субканалов</translation>
     </message>
     <message>
         <location filename="../folderssettingswidget.cpp" line="52"/>
         <source>Searched for SBI/LSD subchannel files, which are required by LibCrypt-protected games, when they are not found next to the disc image.</source>
-        <translation type="unfinished"></translation>
+        <translation>Используется для поиска субканальных файлов SBI/LSD, необходимых для игр с защитой LibCrypt, когда файлы отсутствуют в папке с образом диска.</translation>
     </message>
     <message>
         <location filename="../folderssettingswidget.cpp" line="55"/>
         <source>User Resources Directory</source>
-        <translation type="unfinished"></translation>
+        <translation>Папка пользовательских ресурсов</translation>
     </message>
     <message>
         <location filename="../folderssettingswidget.cpp" line="56"/>
         <source>Files placed here override the bundled resources. Also used for custom themes and Big Picture backgrounds.</source>
-        <translation type="unfinished"></translation>
+        <translation>Файлы из этой папки заменяют встроенные ресурсы. Также используется для пользовательских тем и фоновых изображений в режиме Big Picture.</translation>
     </message>
     <message>
         <location filename="../folderssettingswidget.cpp" line="96"/>
         <source>Browse...</source>
-        <translation type="unfinished">Обзор...</translation>
+        <translation>Обзор...</translation>
     </message>
     <message>
         <location filename="../folderssettingswidget.cpp" line="98"/>
         <source>More Options</source>
-        <translation type="unfinished"></translation>
+        <translation>Другие настройки</translation>
     </message>
     <message>
         <location filename="../folderssettingswidget.cpp" line="104"/>
         <source>Select %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Выберите %1</translation>
     </message>
     <message>
         <location filename="../folderssettingswidget.cpp" line="107"/>
         <source>Default</source>
-        <translation type="unfinished">По умолчанию</translation>
+        <translation>По умолчанию</translation>
     </message>
 </context>
 <context>
@@ -15926,7 +16171,7 @@ Clicking Reset will restore the serial back to the value scanned from in the dis
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="88"/>
         <source>All unpromoted achievement progress for the current game will be removed. This cannot be undone.</source>
-        <translation type="unfinished"></translation>
+        <translation>Будет сброшен весь прогресс неофициальных достижений для текущей игры. Это действие нельзя отменить.</translation>
     </message>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="96"/>
@@ -15941,17 +16186,17 @@ Clicking Reset will restore the serial back to the value scanned from in the dis
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="102"/>
         <source>Apply</source>
-        <translation type="unfinished"></translation>
+        <translation>Применить</translation>
     </message>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="152"/>
         <source>Button</source>
-        <translation type="unfinished"></translation>
+        <translation>Кнопка</translation>
     </message>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="158"/>
         <source>Carousel</source>
-        <translation type="unfinished"></translation>
+        <translation>Карусель</translation>
     </message>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="282"/>
@@ -16001,12 +16246,12 @@ Clicking Reset will restore the serial back to the value scanned from in the dis
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="395"/>
         <source>Fast Forward While Loading</source>
-        <translation type="unfinished"></translation>
+        <translation>Ускорение во время загрузок</translation>
     </message>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="398"/>
         <source>Fast forwards when the game stops updating the screen while reading from the disc. Does not apply to animated loading screens.</source>
-        <translation type="unfinished"></translation>
+        <translation>Ускоряет эмуляцию, когда игра перестаёт обновлять экран при чтении с диска. Не работает на анимированных экранах загрузки.</translation>
     </message>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="426"/>
@@ -16041,12 +16286,12 @@ Clicking Reset will restore the serial back to the value scanned from in the dis
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="690"/>
         <source>Reset Unpromoted Achievement</source>
-        <translation type="unfinished"></translation>
+        <translation>Сбросить неутверждённое достижение</translation>
     </message>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="691"/>
         <source>Reset Unpromoted Achievement Unlocks</source>
-        <translation type="unfinished"></translation>
+        <translation>Сброс разблокировки неутверждённых достижений</translation>
     </message>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="823"/>
@@ -16118,7 +16363,7 @@ Clicking Reset will restore the serial back to the value scanned from in the dis
         <translation>%.1f мс</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1339"/>
+        <location filename="../../core/android_strings.h" line="1369"/>
         <source>%d MB</source>
         <translation>%d МБ</translation>
     </message>
@@ -16462,7 +16707,7 @@ You cannot undo this action.</source>
         <translation>Изменить серийный номер</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1337"/>
+        <location filename="../../core/android_strings.h" line="1367"/>
         <source>Change State</source>
         <translation>Сменить состояние</translation>
     </message>
@@ -16474,12 +16719,12 @@ You cannot undo this action.</source>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="169"/>
         <source>Changes the amount of RAM installed in the emulated console. Retail games do not use extra RAM.</source>
-        <translation type="unfinished"></translation>
+        <translation>Изменяет объём ОЗУ эмулируемой консоли. Коммерческие игры не используют расширенную память.</translation>
     </message>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="170"/>
         <source>Changes the amount of video RAM installed in the emulated console. Retail games do not use extra VRAM.</source>
-        <translation type="unfinished"></translation>
+        <translation>Изменяет объём видеопамяти эмулируемой консоли. Коммерческие игры не используют расширенную видеопамять.</translation>
     </message>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="171"/>
@@ -16867,7 +17112,7 @@ You cannot undo this action.</source>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="266"/>
         <source>Determines how the game list is displayed.</source>
-        <translation type="unfinished"></translation>
+        <translation>Определяет внешний вид списка игр.</translation>
     </message>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="267"/>
@@ -17114,7 +17359,7 @@ You cannot undo this action.</source>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="335"/>
         <source>Enable Recompiler Idle Loop Fast Forward</source>
-        <translation type="unfinished"></translation>
+        <translation>Ускорение циклов простоя в рекомпиляторе</translation>
     </message>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="336"/>
@@ -17320,7 +17565,7 @@ Error was:</source>
         <translation>Ускорение карт памяти</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1338"/>
+        <location filename="../../core/android_strings.h" line="1368"/>
         <source>Fast Scroll</source>
         <translation>Быстрая прокрутка</translation>
     </message>
@@ -17393,7 +17638,7 @@ Error was:</source>
         <translation type="vanished">Вид сетки</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1340"/>
+        <location filename="../../core/android_strings.h" line="1370"/>
         <source>How much memory will be reserved for rewind states. Determines how far back you can rewind.</source>
         <translation>Объём памяти, зарезервированный для состояний перемотки назад. Определяет, насколько далеко можно перемотать назад.</translation>
     </message>
@@ -17787,12 +18032,12 @@ Please check your username and password, and try again.</source>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="705"/>
         <source>Rewind for {0} frames, lasting {1:.2f} seconds will require {2} of RAM and {3} of VRAM.</source>
-        <translation type="unfinished"></translation>
+        <translation>Обратная перемотка на {0} кадров ({1:.2f} сек.) потребует {2} ОЗУ и {3} видеопамяти.</translation>
     </message>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="706"/>
         <source>Rewind for {0} frames, lasting {1:.2f} seconds will require {2} of RAM.</source>
-        <translation type="unfinished"></translation>
+        <translation>Обратная перемотка на {0} кадров ({1:.2f} сек.) потребует {2} ОЗУ.</translation>
     </message>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="708"/>
@@ -17858,7 +18103,7 @@ Please check your username and password, and try again.</source>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="736"/>
         <source>Scale Idle Timeout</source>
-        <translation type="unfinished"></translation>
+        <translation>Масштабировать тайм-аут простоя</translation>
     </message>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="737"/>
@@ -17912,7 +18157,7 @@ Please check your username and password, and try again.</source>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="757"/>
         <source>Select Button</source>
-        <translation type="unfinished"></translation>
+        <translation>Выберите кнопку</translation>
     </message>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="760"/>
@@ -18515,7 +18760,7 @@ Do you want to delete the save state and boot the game anyway?</source>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="194"/>
         <source>Confirm Game Close</source>
-        <translation>Подтверждать закрытие игры</translation>
+        <translation>Подтверждать выход из игры</translation>
     </message>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="196"/>
@@ -18872,7 +19117,7 @@ Do you want to delete the save state and boot the game anyway?</source>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="443"/>
         <source>Grid</source>
-        <translation type="unfinished"></translation>
+        <translation>Сетка</translation>
     </message>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="444"/>
@@ -18897,7 +19142,7 @@ Do you want to delete the save state and boot the game anyway?</source>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="449"/>
         <source>Hold</source>
-        <translation type="unfinished"></translation>
+        <translation>Удерживать</translation>
     </message>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="451"/>
@@ -18969,7 +19214,7 @@ Do you want to delete the save state and boot the game anyway?</source>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="473"/>
         <source>Installed VRAM</source>
-        <translation type="unfinished"></translation>
+        <translation>Объём видеопамяти</translation>
     </message>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="474"/>
@@ -19006,12 +19251,12 @@ Do you want to delete the save state and boot the game anyway?</source>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="489"/>
         <source>Library</source>
-        <translation type="unfinished"></translation>
+        <translation>Библиотека</translation>
     </message>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="492"/>
         <source>List</source>
-        <translation type="unfinished"></translation>
+        <translation>Список</translation>
     </message>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="495"/>
@@ -19103,7 +19348,7 @@ Do you want to delete the save state and boot the game anyway?</source>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="522"/>
         <source>Loop While Active</source>
-        <translation type="unfinished"></translation>
+        <translation>Цикл при удержании</translation>
     </message>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="523"/>
@@ -19113,7 +19358,7 @@ Do you want to delete the save state and boot the game anyway?</source>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="524"/>
         <source>Macro {} Sequence</source>
-        <translation type="unfinished"></translation>
+        <translation>Последовательность макроса {}</translation>
     </message>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="525"/>
@@ -19128,7 +19373,7 @@ Do you want to delete the save state and boot the game anyway?</source>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="529"/>
         <source>Maximum amount of video memory used to cache cover art and other images in the Big Picture UI.</source>
-        <translation type="unfinished"></translation>
+        <translation>Максимальный объём видеопамяти, используемый для кэширования обложек и других изображений режима Big Picture.</translation>
     </message>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="531"/>
@@ -19175,7 +19420,7 @@ Do you want to delete the save state and boot the game anyway?</source>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="543"/>
         <source>Midnight Amber</source>
-        <translation type="unfinished"></translation>
+        <translation>Midnight Amber</translation>
     </message>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="544"/>
@@ -19226,12 +19471,12 @@ Do you want to delete the save state and boot the game anyway?</source>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="567"/>
         <source>No games found.</source>
-        <translation type="unfinished"></translation>
+        <translation>Игры не найдены.</translation>
     </message>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="568"/>
         <source>No inputs.</source>
-        <translation type="unfinished"></translation>
+        <translation>Нет действий.</translation>
     </message>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="570"/>
@@ -19239,7 +19484,7 @@ Do you want to delete the save state and boot the game anyway?</source>
         <translation>Сохраненное состояние для возобновления не найдено.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1341"/>
+        <location filename="../../core/android_strings.h" line="1371"/>
         <source>No rewind states are available yet.</source>
         <translation>Состояния для перемотки назад пока недоступны.</translation>
     </message>
@@ -19273,7 +19518,7 @@ Do you want to delete the save state and boot the game anyway?</source>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="578"/>
         <source>Not Configured</source>
-        <translation type="unfinished">Не настроен</translation>
+        <translation>Не настроена</translation>
     </message>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="579"/>
@@ -19586,7 +19831,7 @@ Do you want to delete the save state and boot the game anyway?</source>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="651"/>
         <source>Quick Setup</source>
-        <translation type="unfinished"></translation>
+        <translation>Быстрая настройка</translation>
     </message>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="652"/>
@@ -19606,7 +19851,7 @@ Do you want to delete the save state and boot the game anyway?</source>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="655"/>
         <source>Record</source>
-        <translation type="unfinished"></translation>
+        <translation>Запись</translation>
     </message>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="656"/>
@@ -19708,7 +19953,7 @@ Do you want to delete the save state and boot the game anyway?</source>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="678"/>
         <source>Repeats the sequence while the macro is active, instead of playing it once for each press. The current repeat is always finished.</source>
-        <translation type="unfinished"></translation>
+        <translation>Повторяет последовательность, пока макрос активен, вместо одиночного срабатывания при нажатии. Начатый повтор всегда выполняется до конца.</translation>
     </message>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="680"/>
@@ -19736,17 +19981,17 @@ Do you want to delete the save state and boot the game anyway?</source>
         <translation>Сброс к значениям по умолчанию</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1342"/>
+        <location filename="../../core/android_strings.h" line="1372"/>
         <source>Rewind</source>
         <translation>Перемотка назад</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1343"/>
+        <location filename="../../core/android_strings.h" line="1373"/>
         <source>Rewind Buffer Size</source>
         <translation>Размер буфера перемотки назад</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1346"/>
+        <location filename="../../core/android_strings.h" line="1376"/>
         <source>Rewind states could not be allocated.</source>
         <translation>Не удалось выделить память для состояний перемотки назад.</translation>
     </message>
@@ -19800,7 +20045,7 @@ Do you want to delete the save state and boot the game anyway?</source>
         <translation>Запускает приложение в режиме Big Picture вместо интерфейса рабочего стола.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1344"/>
+        <location filename="../../core/android_strings.h" line="1374"/>
         <source>State {0} of {1} (frame {2})</source>
         <translation>Состояние {0} из {1} (кадр {2})</translation>
     </message>
@@ -19810,7 +20055,7 @@ Do you want to delete the save state and boot the game anyway?</source>
         <translation>Файл BIOS «{}» уже установлен. Перезаписать его?</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1345"/>
+        <location filename="../../core/android_strings.h" line="1375"/>
         <source>The rewind buffer is too small to hold a single state.</source>
         <translation>Буфер перемотки назад слишком мал, чтобы вместить хотя бы одно состояние.</translation>
     </message>
@@ -19862,7 +20107,7 @@ Do you want to delete the save state and boot the game anyway?</source>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="979"/>
         <source>Web Cache Size: {0} ({1} in {2} objects)</source>
-        <translation type="unfinished"></translation>
+        <translation>Размер веб-кэша: {0} ({1} в {2} объектах)</translation>
     </message>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="987"/>
@@ -19877,12 +20122,12 @@ Do you want to delete the save state and boot the game anyway?</source>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="1005"/>
         <source>{0} inputs, {1} frames</source>
-        <translation type="unfinished"></translation>
+        <translation>{0} действий, {1} кадров</translation>
     </message>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="1008"/>
         <source>{} frames</source>
-        <translation type="unfinished"></translation>
+        <translation>{} кадров</translation>
     </message>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="1011"/>
@@ -20121,7 +20366,7 @@ Do you want to delete the save state and boot the game anyway?</source>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="782"/>
         <source>Sequence</source>
-        <translation type="unfinished"></translation>
+        <translation>Последовательность</translation>
     </message>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="783"/>
@@ -20349,7 +20594,7 @@ Do you want to delete the save state and boot the game anyway?</source>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="848"/>
         <source>Skips over the busy loop that games use to wait for vertical blank.</source>
-        <translation type="unfinished"></translation>
+        <translation>Пропускает в играх цикл активного ожидания кадрового гасящего импульса.</translation>
     </message>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="849"/>
@@ -20437,12 +20682,12 @@ Do you want to delete the save state and boot the game anyway?</source>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="879"/>
         <source>Stop</source>
-        <translation type="unfinished">Остановить</translation>
+        <translation>Остановить</translation>
     </message>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="880"/>
         <source>Stops games from timing out while waiting for vertical blank when overclocking.</source>
-        <translation type="unfinished"></translation>
+        <translation>При включени разгона не даёт играм превысить тайм-аут ожидания кадрового гасящего импульса.</translation>
     </message>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="882"/>
@@ -20488,7 +20733,7 @@ Do you want to delete the save state and boot the game anyway?</source>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="893"/>
         <source>Texture Cache Size</source>
-        <translation type="unfinished"></translation>
+        <translation>Размер текстурного кэша</translation>
     </message>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="894"/>
@@ -20518,12 +20763,12 @@ Do you want to delete the save state and boot the game anyway?</source>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="901"/>
         <source>The button to hold or toggle.</source>
-        <translation type="unfinished"></translation>
+        <translation>Кнопка для удержания или переключения.</translation>
     </message>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="902"/>
         <source>The inputs this macro plays, recorded or set up from a single button.</source>
-        <translation type="unfinished"></translation>
+        <translation>Действия, которые воспроизводит макрос, записанные или настроенные для одной кнопки.</translation>
     </message>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="903"/>
@@ -20569,7 +20814,7 @@ Do you want to delete the save state and boot the game anyway?</source>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="921"/>
         <source>Track Unpromoted Achievements</source>
-        <translation type="unfinished"></translation>
+        <translation>Неутверждённые достижения</translation>
     </message>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="924"/>
@@ -20618,12 +20863,12 @@ Do you want to delete the save state and boot the game anyway?</source>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="933"/>
         <source>Unpromoted achievement unlock reset.</source>
-        <translation type="unfinished"></translation>
+        <translation>Разблокировка неутверждённого достижения сброшена.</translation>
     </message>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="934"/>
         <source>Unpromoted achievement unlocks reset.</source>
-        <translation type="unfinished"></translation>
+        <translation>Разблокировка неутверждённого достижения сброшена.</translation>
     </message>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="938"/>
@@ -20748,7 +20993,7 @@ Do you want to delete the save state and boot the game anyway?</source>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="973"/>
         <source>View</source>
-        <translation type="unfinished"></translation>
+        <translation>Вид</translation>
     </message>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="974"/>
@@ -20802,7 +21047,7 @@ Do you want to {0} anyway?</source>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="984"/>
         <source>When enabled, DuckStation will track unpromoted achievements. Unlocks will be saved locally and not sent to RetroAchievements.</source>
-        <translation type="unfinished"></translation>
+        <translation>Если включено, DuckStation будет отслеживать неутверждённые достижения. Они сохраняются локально и не передаются в RetroAchievements.</translation>
     </message>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="985"/>
@@ -20916,10 +21161,10 @@ Do you want to {0} anyway?</source>
     <message numerus="yes">
         <location filename="../../core/fullscreenui_settings.cpp" line="5017"/>
         <source>%n button(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n кнопка</numerusform>
+            <numerusform>%n кнопки</numerusform>
+            <numerusform>%n кнопок</numerusform>
         </translation>
     </message>
     <message numerus="yes">
@@ -21092,7 +21337,7 @@ Do you want to {0} anyway?</source>
     <message>
         <location filename="../../core/fullscreenui_strings.h" line="878"/>
         <source>Step {} of {}</source>
-        <translation>Step {} из {}</translation>
+        <translation>Шаг {} из {}</translation>
     </message>
 </context>
 <context>
@@ -21339,7 +21584,7 @@ Do you want to {0} anyway?</source>
     <message>
         <location filename="../gamecheatcodeeditordialog.ui" line="23"/>
         <source>Name:</source>
-        <translation>Имя:</translation>
+        <translation>Название:</translation>
     </message>
     <message>
         <location filename="../gamecheatcodeeditordialog.ui" line="33"/>
@@ -21410,17 +21655,17 @@ Do you want to {0} anyway?</source>
     <message>
         <location filename="../gamecheatcodeeditordialog.ui" line="173"/>
         <source>RAM Size:</source>
-        <translation>Объём ОЗУ:</translation>
+        <translation>Объём RAM:</translation>
     </message>
     <message>
         <location filename="../gamecheatcodeeditordialog.ui" line="183"/>
         <source>VRAM Size:</source>
-        <translation type="unfinished"></translation>
+        <translation>Объём VRAM:</translation>
     </message>
     <message>
         <location filename="../gamecheatcodeeditordialog.ui" line="195"/>
         <source>Disable Widescreen Rendering</source>
-        <translation>Отключать широкоэкранный рендеринг</translation>
+        <translation>Откл. широкоэкранный рендеринг</translation>
     </message>
     <message>
         <location filename="../gamecheatcodeeditordialog.ui" line="202"/>
@@ -21430,7 +21675,7 @@ Do you want to {0} anyway?</source>
     <message>
         <location filename="../gamecheatcodeeditordialog.ui" line="209"/>
         <source>Force PGXP Preserve Projection Precision</source>
-        <translation>Принудительное сохранение точности проекции PGXP</translation>
+        <translation>Принуд. сохранение точности проекции PGXP</translation>
     </message>
     <message>
         <source>Force Full RAM Mapping</source>
@@ -21637,28 +21882,27 @@ Are you sure you want to continue?</source>
     <message>
         <location filename="../../core/game_database.cpp" line="604"/>
         <source>CPU recompiler disabled.</source>
-        <translatorcomment>*Перекомпилятор *Рекомпилятор</translatorcomment>
-        <translation>Перекомпилятор процессора отключен.</translation>
+        <translation>CPU-рекомпилятор отключен.</translation>
     </message>
     <message>
         <location filename="../../core/game_database.cpp" line="620"/>
         <source>Multitap disabled.</source>
-        <translation>Мультитап отключен.</translation>
+        <translation>Multitap отключен.</translation>
     </message>
     <message>
         <location filename="../../core/game_database.cpp" line="696"/>
         <source>Hardware rendering disabled.</source>
-        <translation>Аппаратная отрисовка отключена.</translation>
+        <translation>Аппаратный рендеринг отключен.</translation>
     </message>
     <message>
         <location filename="../../core/game_database.cpp" line="704"/>
         <source>Software renderer readbacks enabled.</source>
-        <translation>Считывание данных с программной отрисовки включено.</translation>
+        <translation>Чтение в программном рендерере включено.</translation>
     </message>
     <message>
         <location filename="../../core/game_database.cpp" line="809"/>
         <source>Upscaling disabled.</source>
-        <translation>Масштабирование отключено.</translation>
+        <translation>Повышение разрешения отключено.</translation>
     </message>
     <message>
         <location filename="../../core/game_database.cpp" line="824"/>
@@ -21668,7 +21912,7 @@ Are you sure you want to continue?</source>
     <message>
         <location filename="../../core/game_database.cpp" line="855"/>
         <source>Widescreen rendering disabled.</source>
-        <translation>Широкоэкранная отрисовка отключена.</translation>
+        <translation>Широкоэкранный рендеринг отключен.</translation>
     </message>
     <message>
         <location filename="../../core/game_database.cpp" line="864"/>
@@ -21762,13 +22006,13 @@ Are you sure you want to continue?</source>
         <location filename="../../core/game_database.cpp" line="115"/>
         <source>Crashes In Intro</source>
         <comment>CompatibilityRating</comment>
-        <translation>Сбои во вступлении</translation>
+        <translation>Вылетает во время интро</translation>
     </message>
     <message>
         <location filename="../../core/game_database.cpp" line="116"/>
         <source>Crashes In-Game</source>
         <comment>CompatibilityRating</comment>
-        <translation>Сбои в игре</translation>
+        <translation>Вылетает во время игры</translation>
     </message>
     <message>
         <location filename="../../core/game_database.cpp" line="117"/>
@@ -21840,7 +22084,7 @@ Are you sure you want to continue?</source>
         <location filename="../../core/game_database.cpp" line="176"/>
         <source>Disable Fast Forward While Loading</source>
         <comment>GameDatabase::Trait</comment>
-        <translation type="unfinished"></translation>
+        <translation>Отключать ускорение во время загрузок</translation>
     </message>
     <message>
         <location filename="../../core/game_database.cpp" line="177"/>
@@ -22000,7 +22244,7 @@ Are you sure you want to continue?</source>
     <message>
         <location filename="../../core/game_database.cpp" line="636"/>
         <source>Fast forward while loading disabled.</source>
-        <translation type="unfinished"></translation>
+        <translation>Ускорение во время загрузок отключено.</translation>
     </message>
     <message>
         <location filename="../../core/game_database.cpp" line="644"/>
@@ -22474,7 +22718,7 @@ Are you sure you want to continue?</source>
         <translation>RetroAchievements</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1347"/>
+        <location filename="../../core/android_strings.h" line="1377"/>
         <source>Automatic</source>
         <comment>IconSource</comment>
         <translation>Автоматически</translation>
@@ -22508,7 +22752,7 @@ Are you sure you want to continue?</source>
     <message>
         <location filename="../gamelistsettingswidget.cpp" line="99"/>
         <source>Search Directory</source>
-        <translation>Поиск в каталоге</translation>
+        <translation>Папка поиска</translation>
     </message>
     <message>
         <location filename="../gamelistsettingswidget.cpp" line="101"/>
@@ -22564,32 +22808,32 @@ Are you sure you want to continue?</source>
     <message>
         <location filename="../gamelistsettingswidget.cpp" line="360"/>
         <source>Search Directories</source>
-        <translation type="unfinished">Поиск в каталогах</translation>
+        <translation>Папки поиска</translation>
     </message>
     <message>
         <location filename="../gamelistsettingswidget.cpp" line="361"/>
         <source>Directories which will be scanned for games. Enable Scan Recursively to also search subdirectories, which takes longer but finds games stored in nested folders. Folders can also be dragged here from your file manager.</source>
-        <translation type="unfinished"></translation>
+        <translation>Папки, в которых будет выполняться поиск игр. Включите параметр «Сканировать рекурсивно», чтобы добавить в поиск подпапки (занимает больше времени). Папки можно перетаскивать прямо из проводника.</translation>
     </message>
     <message>
         <location filename="../gamelistsettingswidget.cpp" line="365"/>
         <source>Excluded Paths</source>
-        <translation type="unfinished">Скрытые пути</translation>
+        <translation>Скрытые пути</translation>
     </message>
     <message>
         <location filename="../gamelistsettingswidget.cpp" line="366"/>
         <source>Files and directories which will be skipped when scanning for games, for example images you do not want to appear in the game list. Files and folders can also be dragged here from your file manager.</source>
-        <translation type="unfinished"></translation>
+        <translation>Файлы и папки, которые будут пропущены при поиске игр . Напр., образы, которые вы хотите скрыть из списка игр. Файлы и папки можно перетаскивать прямо из файлового менеджера.</translation>
     </message>
     <message>
         <location filename="../gamelistsettingswidget.cpp" line="369"/>
         <source>Scans the search directories for files which are not already in the game list. Previously-scanned games are loaded from the cache, so this is usually quick.</source>
-        <translation type="unfinished"></translation>
+        <translation>Ищет в указанных папках файлы, которых ещё нет в списке игр. Ранее просканированные игры загружаются из кэша, поэтому процесс обычно проходит быстро.</translation>
     </message>
     <message>
         <location filename="../gamelistsettingswidget.cpp" line="373"/>
         <source>Discards the game list cache and scans every file in the search directories again. Use this if game details such as titles or serials are incorrect. May take a while for large collections.</source>
-        <translation type="unfinished"></translation>
+        <translation>Сбрасывает кэш списка игр и повторно сканирует все файлы в указанных папках. Используйте при неправильном отображении сведений об играх (напр., названия или серийные номера). Для больших коллекций это может занять некоторое время.</translation>
     </message>
     <message>
         <location filename="../gamelistsettingswidget.cpp" line="436"/>
@@ -22599,12 +22843,12 @@ Are you sure you want to continue?</source>
     <message>
         <location filename="../gamelistsettingswidget.cpp" line="449"/>
         <source>No search directories. Add a folder, or drag one here, to choose where your games are stored.</source>
-        <translation type="unfinished"></translation>
+        <translation>Нет папок для поиска. Добавьте или перетащите папку в эту область, чтобы указать расположение ваших игр.</translation>
     </message>
     <message>
         <location filename="../gamelistsettingswidget.cpp" line="457"/>
         <source>No excluded paths. Files or folders added here will be skipped when scanning.</source>
-        <translation type="unfinished"></translation>
+        <translation>Нет исключённых путей. Добавленные файлы или папки будут пропускаться при сканировании.</translation>
     </message>
     <message>
         <location filename="../gamelistsettingswidget.cpp" line="470"/>
@@ -23550,7 +23794,7 @@ Scanning recursively takes more time, but will identify files in subdirectories.
     <message>
         <location filename="../graphicssettingswidget.ui" line="1057"/>
         <source>More Options</source>
-        <translation type="unfinished"></translation>
+        <translation>Другие настройки</translation>
     </message>
     <message>
         <location filename="../graphicssettingswidget.ui" line="1099"/>
@@ -24631,32 +24875,32 @@ Scanning recursively takes more time, but will identify files in subdirectories.
     <message>
         <location filename="../../util/translation.cpp" line="321"/>
         <source>{:.1f} GB</source>
-        <translation type="unfinished"></translation>
+        <translation>{:.1f} ГБ</translation>
     </message>
     <message>
         <location filename="../../util/translation.cpp" line="323"/>
         <source>{:.1f} MB</source>
-        <translation type="unfinished"></translation>
+        <translation>{:.1f} МБ</translation>
     </message>
     <message>
         <location filename="../../util/translation.cpp" line="325"/>
         <source>{} MB</source>
-        <translation type="unfinished"></translation>
+        <translation>{} МБ</translation>
     </message>
     <message>
         <location filename="../../util/translation.cpp" line="327"/>
         <source>{:.1f} KB</source>
-        <translation type="unfinished"></translation>
+        <translation>{:.1f} КБ</translation>
     </message>
     <message>
         <location filename="../../util/translation.cpp" line="329"/>
         <source>{} KB</source>
-        <translation type="unfinished"></translation>
+        <translation>{} КБ</translation>
     </message>
     <message>
         <location filename="../../util/translation.cpp" line="331"/>
         <source>{} B</source>
-        <translation type="unfinished"></translation>
+        <translation>{} Б</translation>
     </message>
 </context>
 <context>
@@ -25651,12 +25895,12 @@ Shift-click to set multiple bindings.</source>
     <message>
         <location filename="../../util/input_manager.cpp" line="1961"/>
         <source>System resumed by controller.</source>
-        <translation type="unfinished"></translation>
+        <translation>Эмуляция возобновлена контроллером.</translation>
     </message>
     <message>
         <location filename="../../util/input_manager.cpp" line="1962"/>
         <source>{} was reconnected.</source>
-        <translation type="unfinished"></translation>
+        <translation>{} подключен повторно.</translation>
     </message>
     <message>
         <location filename="../../util/input_manager.cpp" line="1967"/>
@@ -25666,7 +25910,7 @@ Shift-click to set multiple bindings.</source>
     <message>
         <location filename="../../util/input_manager.cpp" line="2013"/>
         <source>System paused by controller.</source>
-        <translation type="unfinished"></translation>
+        <translation>Эмуляция приостановлена контроллером.</translation>
     </message>
     <message>
         <source>System paused because controller {} was disconnected.</source>
@@ -25706,7 +25950,7 @@ Shift-click to set multiple bindings.</source>
         <location filename="../interfacesettingswidget.ui" line="49"/>
         <location filename="../interfacesettingswidget.cpp" line="181"/>
         <source>Inhibit Screensaver</source>
-        <translation>Запретить заставку</translation>
+        <translation>Блокировать заставку</translation>
     </message>
     <message>
         <location filename="../interfacesettingswidget.ui" line="84"/>
@@ -25724,13 +25968,13 @@ Shift-click to set multiple bindings.</source>
         <location filename="../interfacesettingswidget.ui" line="35"/>
         <location filename="../interfacesettingswidget.cpp" line="175"/>
         <source>Confirm Game Close</source>
-        <translation>Подтверждать закрытие игры</translation>
+        <translation>Подтверждать выход из игры</translation>
     </message>
     <message>
         <location filename="../interfacesettingswidget.ui" line="42"/>
         <location filename="../interfacesettingswidget.cpp" line="177"/>
         <source>Save State On Game Close</source>
-        <translation>Сохранение состояния при закрытии игры</translation>
+        <translation>Сохранять состояние при выходе из игры</translation>
     </message>
     <message>
         <location filename="../interfacesettingswidget.ui" line="70"/>
@@ -25742,7 +25986,7 @@ Shift-click to set multiple bindings.</source>
         <location filename="../interfacesettingswidget.ui" line="77"/>
         <location filename="../interfacesettingswidget.cpp" line="191"/>
         <source>Start In Big Picture Mode</source>
-        <translation>Запускать в режиме Big Picture</translation>
+        <translation>Запуск в режиме Big Picture</translation>
     </message>
     <message>
         <location filename="../interfacesettingswidget.ui" line="94"/>
@@ -25753,37 +25997,37 @@ Shift-click to set multiple bindings.</source>
         <location filename="../interfacesettingswidget.ui" line="100"/>
         <location filename="../interfacesettingswidget.cpp" line="196"/>
         <source>Start Fullscreen</source>
-        <translation>Запускать в полноэкранном режиме</translation>
+        <translation>Запуск в полноэкранном режиме</translation>
     </message>
     <message>
         <location filename="../interfacesettingswidget.ui" line="107"/>
         <location filename="../interfacesettingswidget.cpp" line="198"/>
         <source>Double-Click Toggles Fullscreen</source>
-        <translation>Двойной щелчок переключает полноэкранный режим</translation>
+        <translation>Полноэкранный режим двойным кликом</translation>
     </message>
     <message>
         <location filename="../interfacesettingswidget.ui" line="114"/>
         <location filename="../interfacesettingswidget.cpp" line="201"/>
         <source>Render To Separate Window</source>
-        <translation>Отрисовка в отдельном окне</translation>
+        <translation>Рендеринг в отдельном окне</translation>
     </message>
     <message>
         <location filename="../interfacesettingswidget.ui" line="128"/>
         <location filename="../interfacesettingswidget.cpp" line="207"/>
         <source>Hide Main Window When Running</source>
-        <translation>Скрыть главное окно во время работы</translation>
+        <translation>Скрывать главное окно во время игры</translation>
     </message>
     <message>
         <location filename="../interfacesettingswidget.ui" line="135"/>
         <location filename="../interfacesettingswidget.cpp" line="209"/>
         <source>Display System Log In Main Window</source>
-        <translation>Отобразить системный журнал в главном окне</translation>
+        <translation>Отображать системный журнал в главном окне</translation>
     </message>
     <message>
         <location filename="../interfacesettingswidget.ui" line="142"/>
         <location filename="../interfacesettingswidget.cpp" line="211"/>
         <source>Disable Window Resizing</source>
-        <translation>Отключить изменение размера окна</translation>
+        <translation>Отключить изменение размеров окна</translation>
     </message>
     <message>
         <location filename="../interfacesettingswidget.ui" line="121"/>
@@ -25795,7 +26039,7 @@ Shift-click to set multiple bindings.</source>
         <location filename="../interfacesettingswidget.ui" line="149"/>
         <location filename="../interfacesettingswidget.cpp" line="213"/>
         <source>Automatically Resize Window</source>
-        <translation>Автоматическое изменение размера окна</translation>
+        <translation>Автоматическое изменение размеров окна</translation>
     </message>
     <message>
         <location filename="../interfacesettingswidget.ui" line="159"/>
@@ -25831,7 +26075,7 @@ Shift-click to set multiple bindings.</source>
         <location filename="../interfacesettingswidget.ui" line="220"/>
         <location filename="../interfacesettingswidget.cpp" line="252"/>
         <source>Enable Automatic Update Check</source>
-        <translation>Включить автоматическую проверку обновлений</translation>
+        <translation>Автоматическая проверка обновлений</translation>
     </message>
     <message>
         <location filename="../interfacesettingswidget.ui" line="240"/>
@@ -25886,7 +26130,7 @@ Shift-click to set multiple bindings.</source>
         <location filename="../interfacesettingswidget.cpp" line="90"/>
         <location filename="../interfacesettingswidget.cpp" line="219"/>
         <source>Disable Window Rounded Corners</source>
-        <translation>Отключить скругленные углы окон</translation>
+        <translation>Отключить скругление окон</translation>
     </message>
     <message>
         <location filename="../interfacesettingswidget.cpp" line="96"/>
@@ -25934,7 +26178,7 @@ Shift-click to set multiple bindings.</source>
     <message>
         <location filename="../interfacesettingswidget.cpp" line="184"/>
         <source>Prevents inputs from being processed when another application is active.</source>
-        <translation>Предотвращает обработку ввода, когда другое приложение находится в активном состоянии.</translation>
+        <translation>Предотвращает обработку нажатий, когда активно другое приложение.</translation>
     </message>
     <message>
         <location filename="../interfacesettingswidget.cpp" line="186"/>
@@ -25945,7 +26189,7 @@ Shift-click to set multiple bindings.</source>
     <message>
         <location filename="../interfacesettingswidget.cpp" line="190"/>
         <source>Pauses the emulator when a controller with bindings is disconnected.</source>
-        <translation>Останавливает эмуляцию при отключении настроенного геймпада.</translation>
+        <translation>Приостанавливает эмуляцию при отключении настроенного геймпада.</translation>
     </message>
     <message>
         <location filename="../interfacesettingswidget.cpp" line="194"/>
@@ -26720,7 +26964,7 @@ Shift-click to set multiple bindings.</source>
     <message>
         <location filename="../mainwindow.ui" line="627"/>
         <source>&amp;Fullscreen</source>
-        <translation>&amp;Полноэкранный режим</translation>
+        <translation>&amp;На весь экран</translation>
     </message>
     <message>
         <location filename="../mainwindow.ui" line="630"/>
@@ -26795,7 +27039,7 @@ Shift-click to set multiple bindings.</source>
     <message>
         <location filename="../mainwindow.ui" line="786"/>
         <source>&amp;Folders</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Папки</translation>
     </message>
     <message>
         <location filename="../mainwindow.ui" line="795"/>
@@ -27185,12 +27429,12 @@ Shift-click to set multiple bindings.</source>
     <message>
         <location filename="../mainwindow.ui" line="687"/>
         <source>About &amp;Qt...</source>
-        <translation>Про &amp;Qt...</translation>
+        <translation>Информация о &amp;Qt...</translation>
     </message>
     <message>
         <location filename="../mainwindow.ui" line="698"/>
         <source>&amp;About DuckStation...</source>
-        <translation>Про &amp;DuckStation...</translation>
+        <translation>Информация о &amp;DuckStation...</translation>
     </message>
     <message>
         <location filename="../mainwindow.ui" line="773"/>
@@ -28067,32 +28311,32 @@ This action cannot be undone.</source>
     <message>
         <location filename="../interfacesettingswidget.cpp" line="22"/>
         <source>Native</source>
-        <translation>Нативно</translation>
+        <translation>Нативная</translation>
     </message>
     <message>
         <location filename="../interfacesettingswidget.cpp" line="24"/>
         <source>Classic Windows</source>
-        <translation>Классический Windows</translation>
+        <translation>Классическая Windows</translation>
     </message>
     <message>
         <location filename="../interfacesettingswidget.cpp" line="26"/>
         <source>Fusion</source>
-        <translation>Слияние</translation>
+        <translation>Fusion</translation>
     </message>
     <message>
         <location filename="../interfacesettingswidget.cpp" line="27"/>
         <source>Dark Fusion (Gray)</source>
-        <translation>Тёмное слияние (Серый)</translation>
+        <translation>Dark Fusion (серая)</translation>
     </message>
     <message>
         <location filename="../interfacesettingswidget.cpp" line="28"/>
         <source>Dark Fusion (Blue)</source>
-        <translation>Тёмное слияние (Синий)</translation>
+        <translation>Dark Fusion (синяя)</translation>
     </message>
     <message>
         <location filename="../interfacesettingswidget.cpp" line="29"/>
         <source>Darker Fusion</source>
-        <translation>Более темное слияние</translation>
+        <translation>Darker Fusion</translation>
     </message>
     <message>
         <location filename="../interfacesettingswidget.cpp" line="30"/>
@@ -28102,42 +28346,42 @@ This action cannot be undone.</source>
     <message>
         <location filename="../interfacesettingswidget.cpp" line="31"/>
         <source>Cobalt Sky</source>
-        <translation>Кобальтовое небо</translation>
+        <translation>Cobalt Sky</translation>
     </message>
     <message>
         <location filename="../interfacesettingswidget.cpp" line="32"/>
         <source>Grey Matter</source>
-        <translation>Серая материя</translation>
+        <translation>Grey Matter</translation>
     </message>
     <message>
         <location filename="../interfacesettingswidget.cpp" line="33"/>
         <source>Green Giant</source>
-        <translation>Зелёный гигант</translation>
+        <translation>Green Giant</translation>
     </message>
     <message>
         <location filename="../interfacesettingswidget.cpp" line="34"/>
         <source>Pinky Pals</source>
-        <translation>Пинки Палс</translation>
+        <translation>Pinky Pals</translation>
     </message>
     <message>
         <location filename="../interfacesettingswidget.cpp" line="35"/>
         <source>Dark Ocean</source>
-        <translation>Тёмный океан</translation>
+        <translation>Dark Ocean</translation>
     </message>
     <message>
         <location filename="../interfacesettingswidget.cpp" line="36"/>
         <source>Dark Ruby</source>
-        <translation>Темный Рубин</translation>
+        <translation>Dark Ruby</translation>
     </message>
     <message>
         <location filename="../interfacesettingswidget.cpp" line="37"/>
         <source>Purple Rain</source>
-        <translation>Фиолетовый дождь</translation>
+        <translation>Purple Rain</translation>
     </message>
     <message>
         <location filename="../interfacesettingswidget.cpp" line="38"/>
         <source>Midnight Amber</source>
-        <translation type="unfinished"></translation>
+        <translation>Midnight Amber</translation>
     </message>
     <message>
         <location filename="../interfacesettingswidget.cpp" line="39"/>
@@ -28964,7 +29208,7 @@ Error: {1}</source>
         <location filename="../memorycardsettingswidget.cpp" line="87"/>
         <location filename="../memorycardsettingswidget.cpp" line="111"/>
         <source>More Options</source>
-        <translation type="unfinished"></translation>
+        <translation>Другие настройки</translation>
     </message>
     <message>
         <location filename="../memorycardsettingswidget.cpp" line="165"/>
@@ -30689,12 +30933,12 @@ Error: {1}</source>
     <message>
         <location filename="../postprocessingoverlayconfigwidget.ui" line="62"/>
         <source>Overlays Directory:</source>
-        <translation type="unfinished"></translation>
+        <translation>Папка оверлеев:</translation>
     </message>
     <message>
         <location filename="../postprocessingoverlayconfigwidget.ui" line="88"/>
         <source>More Options</source>
-        <translation type="unfinished"></translation>
+        <translation>Другие настройки</translation>
     </message>
     <message>
         <location filename="../postprocessingoverlayconfigwidget.ui" line="135"/>
@@ -30761,22 +31005,22 @@ Error: {1}</source>
     <message>
         <location filename="../postprocessingsettingswidget.cpp" line="629"/>
         <source>Select Overlays Directory</source>
-        <translation type="unfinished"></translation>
+        <translation>Выберите папку оверлеев</translation>
     </message>
     <message>
         <location filename="../postprocessingsettingswidget.cpp" line="674"/>
         <source>Overlays Directory</source>
-        <translation type="unfinished"></translation>
+        <translation>Папка оверлеев</translation>
     </message>
     <message>
         <location filename="../postprocessingsettingswidget.cpp" line="674"/>
         <source>Default</source>
-        <translation type="unfinished">По умолчанию</translation>
+        <translation>По умолчанию</translation>
     </message>
     <message>
         <location filename="../postprocessingsettingswidget.cpp" line="675"/>
         <source>Stores additional border overlay presets. Use Refresh Overlay List to find presets after changing this directory.</source>
-        <translation type="unfinished"></translation>
+        <translation>Содержит дополнительные пресеты оверлеев рамок. После изменения папки нажмите «Обновить список оверлеев».</translation>
     </message>
     <message>
         <location filename="../postprocessingsettingswidget.cpp" line="677"/>
@@ -31116,7 +31360,7 @@ Would you like to update the shortcut to point to the current location?</source>
     <message>
         <location filename="../../util/input_manager.cpp" line="2014"/>
         <source>{} was disconnected.</source>
-        <translation type="unfinished"></translation>
+        <translation>{} был отключен.</translation>
     </message>
     <message>
         <location filename="../../util/input_manager.cpp" line="2019"/>
@@ -31617,17 +31861,17 @@ Would you like to update the shortcut to point to the current location?</source>
     <message>
         <location filename="../../core/imgui_overlays.cpp" line="1251"/>
         <source>Empty</source>
-        <translation type="unfinished">Пусто</translation>
+        <translation>Пусто</translation>
     </message>
     <message>
         <location filename="../../core/imgui_overlays.cpp" line="1363"/>
         <source>Save States</source>
-        <translation type="unfinished"></translation>
+        <translation>Сохранения состояний</translation>
     </message>
     <message>
         <location filename="../../core/imgui_overlays.cpp" line="1372"/>
         <source>{} of {} slots in use</source>
-        <translation type="unfinished"></translation>
+        <translation>Используется {} из {} слотов</translation>
     </message>
     <message>
         <location filename="../../core/imgui_overlays.cpp" line="1610"/>
@@ -31735,12 +31979,12 @@ Would you like to update the shortcut to point to the current location?</source>
     <message>
         <location filename="../settingwidgetbinder.h" line="1357"/>
         <source>Open Folder</source>
-        <translation type="unfinished"></translation>
+        <translation>Открыть папку</translation>
     </message>
     <message>
         <location filename="../settingwidgetbinder.h" line="1363"/>
         <source>Reset to Default</source>
-        <translation type="unfinished">Сброс настройки</translation>
+        <translation>Сброс настройки</translation>
     </message>
     <message>
         <location filename="../settingwidgetbinder.h" line="1386"/>
@@ -31905,61 +32149,61 @@ Do you want to create this directory?</source>
         <location filename="../../core/settings.cpp" line="1568"/>
         <source>2MB (Standard)</source>
         <comment>CPURAMSize</comment>
-        <translation type="unfinished"></translation>
+        <translation>2 МБ (стандартный)</translation>
     </message>
     <message>
         <location filename="../../core/settings.cpp" line="1569"/>
         <source>4MB</source>
         <comment>CPURAMSize</comment>
-        <translation type="unfinished"></translation>
+        <translation>4 МБ</translation>
     </message>
     <message>
         <location filename="../../core/settings.cpp" line="1570"/>
         <source>4MB (Forced)</source>
         <comment>CPURAMSize</comment>
-        <translation type="unfinished"></translation>
+        <translation>4 МБ (принудительно)</translation>
     </message>
     <message>
         <location filename="../../core/settings.cpp" line="1571"/>
         <source>8MB</source>
         <comment>CPURAMSize</comment>
-        <translation type="unfinished"></translation>
+        <translation>8 МБ</translation>
     </message>
     <message>
         <location filename="../../core/settings.cpp" line="1572"/>
         <source>8MB (Forced)</source>
         <comment>CPURAMSize</comment>
-        <translation type="unfinished"></translation>
+        <translation>8 МБ (принудительно)</translation>
     </message>
     <message>
         <location filename="../../core/settings.cpp" line="1573"/>
         <source>16MB</source>
         <comment>CPURAMSize</comment>
-        <translation type="unfinished"></translation>
+        <translation>16 МБ</translation>
     </message>
     <message>
         <location filename="../../core/settings.cpp" line="1574"/>
         <source>16MB (Forced)</source>
         <comment>CPURAMSize</comment>
-        <translation type="unfinished"></translation>
+        <translation>16 МБ (принудительно)</translation>
     </message>
     <message>
         <location filename="../../core/settings.cpp" line="1646"/>
         <source>1MB (Standard)</source>
         <comment>GPUVRAMSize</comment>
-        <translation type="unfinished"></translation>
+        <translation>1 МБ (стандартный)</translation>
     </message>
     <message>
         <location filename="../../core/settings.cpp" line="1647"/>
         <source>2MB</source>
         <comment>GPUVRAMSize</comment>
-        <translation type="unfinished"></translation>
+        <translation>2 МБ</translation>
     </message>
     <message>
         <location filename="../../core/settings.cpp" line="1648"/>
         <source>2MB (Forced)</source>
         <comment>GPUVRAMSize</comment>
-        <translation type="unfinished"></translation>
+        <translation>2 МБ (принудительно)</translation>
     </message>
     <message>
         <location filename="../../core/settings.cpp" line="1683"/>
@@ -32827,19 +33071,19 @@ Do you want to create this directory?</source>
         <translation>Растяжение времени (изменение темпа, лучший звук)</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1348"/>
+        <location filename="../../core/android_strings.h" line="1378"/>
         <source>Off</source>
         <comment>AudioStretchMode</comment>
         <translation>Откл.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1349"/>
+        <location filename="../../core/android_strings.h" line="1379"/>
         <source>Resampling</source>
         <comment>AudioStretchMode</comment>
         <translation>Передискретизация</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1350"/>
+        <location filename="../../core/android_strings.h" line="1380"/>
         <source>Time Stretch</source>
         <comment>AudioStretchMode</comment>
         <translation>Растяжение времени</translation>
@@ -32991,7 +33235,7 @@ Do you want to create this directory?</source>
     <message>
         <location filename="../settingswindow.cpp" line="113"/>
         <source>&lt;strong&gt;Game List Settings&lt;/strong&gt;&lt;hr&gt;These options control which directories are scanned to populate the game list.&lt;br&gt;&lt;br&gt;Mouse over an option for additional information.</source>
-        <translation type="unfinished"></translation>
+        <translation>&lt;strong&gt;Настройки списка игр&lt;/strong&gt;&lt;hr&gt;Эти параметры определяют, какие папки сканируются для заполнения списка игр.&lt;br&gt;&lt;br&gt;Наведите указатель мыши на параметр, чтобы получить дополнительную информацию.</translation>
     </message>
     <message>
         <location filename="../settingswindow.cpp" line="128"/>
@@ -33032,8 +33276,7 @@ Do you want to create this directory?</source>
         <location filename="../settingswindow.cpp" line="158"/>
         <source>On-Screen Display</source>
         <extracomment>Translators may want to shorten On-Screen Display to &quot;OSD&quot;.</extracomment>
-        <translatorcomment>*всплывающие</translatorcomment>
-        <translation>Экранные подсказки</translation>
+        <translation>Экранная индикация</translation>
     </message>
     <message>
         <location filename="../settingswindow.cpp" line="160"/>
@@ -33063,12 +33306,12 @@ Do you want to create this directory?</source>
     <message>
         <location filename="../settingswindow.cpp" line="190"/>
         <source>Folders</source>
-        <translation type="unfinished">Папки</translation>
+        <translation>Папки</translation>
     </message>
     <message>
         <location filename="../settingswindow.cpp" line="192"/>
         <source>&lt;strong&gt;Folder Settings&lt;/strong&gt;&lt;hr&gt;These options control where DuckStation reads and stores its files.&lt;br&gt;&lt;br&gt;Mouse over an option for additional information, and Shift+Wheel to scroll this panel.</source>
-        <translation type="unfinished"></translation>
+        <translation>&lt;strong&gt;Настройки папок&lt;/strong&gt;&lt;hr&gt;Эти параметры определяют, откуда DuckStation считывает и где хранит свои файлы.&lt;br&gt;&lt;br&gt;Наведите указатель мыши для получения дополнительной информации или используйте Shift + колёсико мыши для прокрутки этой панели.</translation>
     </message>
     <message>
         <location filename="../settingswindow.cpp" line="196"/>
@@ -33122,7 +33365,7 @@ You cannot undo this action.</source>
     <message>
         <location filename="../settingswindow.cpp" line="170"/>
         <source>Audio</source>
-        <translation>Звук</translation>
+        <translation>Аудио</translation>
     </message>
     <message>
         <location filename="../settingswindow.cpp" line="171"/>
@@ -33137,8 +33380,7 @@ You cannot undo this action.</source>
     <message>
         <location filename="../settingswindow.cpp" line="194"/>
         <source>Advanced</source>
-        <translatorcomment>**Расширенные</translatorcomment>
-        <translation>Дополнительные</translation>
+        <translation>Расширенные</translation>
     </message>
     <message>
         <location filename="../settingswindow.cpp" line="212"/>
@@ -33318,7 +33560,7 @@ Do you want to continue?</source>
     <message>
         <location filename="../setupwizarddialog.ui" line="382"/>
         <source>More Options</source>
-        <translation type="unfinished"></translation>
+        <translation>Другие настройки</translation>
     </message>
     <message>
         <location filename="../setupwizarddialog.ui" line="510"/>
@@ -33677,7 +33919,7 @@ Any changes have been saved, and the wizard will run again next time you start D
     <message>
         <location filename="../setupwizarddialog.cpp" line="321"/>
         <source>No search directories. Add a folder, or drag one here, to choose where your games are stored.</source>
-        <translation type="unfinished"></translation>
+        <translation>Нет папок для поиска. Добавьте или перетащите папку в эту область, чтобы выбрать место хранения ваших игр.</translation>
     </message>
     <message>
         <location filename="../setupwizarddialog.cpp" line="341"/>
@@ -34045,22 +34287,22 @@ Configuration: {1}%</source>
 Конфигурация: {1}%</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1351"/>
+        <location filename="../../core/android_strings.h" line="1381"/>
         <source>Runahead Disabled</source>
         <translation>Опережение отключено</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1352"/>
+        <location filename="../../core/android_strings.h" line="1382"/>
         <source>Failed to allocate runahead states: {}</source>
         <translation>Не удалось выделить память для состояний опережения: {}</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1353"/>
+        <location filename="../../core/android_strings.h" line="1383"/>
         <source>Rewind Disabled</source>
         <translation>Перемотка назад отключена</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1354"/>
+        <location filename="../../core/android_strings.h" line="1384"/>
         <source>Failed to allocate rewind states: {}</source>
         <translation>Не удалось выделить память для состояний перемотки назад: {}</translation>
     </message>
@@ -34159,12 +34401,12 @@ Using current CD image, this may result in instability.</source>
         <location filename="../../core/system.cpp" line="4690"/>
         <location filename="../../core/system.cpp" line="4702"/>
         <source>Physical Disc</source>
-        <translation type="unfinished"></translation>
+        <translation>Физический диск</translation>
     </message>
     <message>
         <location filename="../../core/system.cpp" line="5490"/>
         <source>2MB VRAM disabled.</source>
-        <translation type="unfinished"></translation>
+        <translation>2 МБ видеопамяти отключено.</translation>
     </message>
     <message>
         <location filename="../../core/system.cpp" line="5500"/>
@@ -34274,12 +34516,12 @@ Using current CD image, this may result in instability.</source>
     <message>
         <location filename="../../core/system.cpp" line="5588"/>
         <source>RAM size is set to {}, this may be incompatible with some games.</source>
-        <translation type="unfinished"></translation>
+        <translation>Установлен объём ОЗУ {}, это может быть несовместимо с некоторыми играми.</translation>
     </message>
     <message>
         <location filename="../../core/system.cpp" line="5593"/>
         <source>VRAM size is set to {}, this may be incompatible with some games.</source>
-        <translation type="unfinished"></translation>
+        <translation>Установлен объём видеопамяти {}, это может быть несовместимо с некоторыми играми.</translation>
     </message>
     <message>
         <location filename="../../core/system.cpp" line="5618"/>
@@ -34292,17 +34534,17 @@ Using current CD image, this may result in instability.</source>
         <translation>Включена одна или несколько небезопасных настроек.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1355"/>
+        <location filename="../../core/android_strings.h" line="1385"/>
         <source>Rewind buffer size is too small to hold a single save state.</source>
         <translation>Буфер перемотки назад слишком мал, чтобы вместить хотя бы одно сохранение состояния.</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1356"/>
+        <location filename="../../core/android_strings.h" line="1386"/>
         <source>Failed to load rewind state</source>
         <translation>Не удалось загрузить состояние перемотки назад</translation>
     </message>
     <message>
-        <location filename="../../core/android_strings.h" line="1357"/>
+        <location filename="../../core/android_strings.h" line="1387"/>
         <source>Invalid rewind slot {}.</source>
         <translation>Недопустимый слот перемотки назад {}.</translation>
     </message>
@@ -34342,12 +34584,12 @@ Using current CD image, this may result in instability.</source>
         <location filename="../../core/system.cpp" line="474"/>
         <source>Expanded VRAM</source>
         <comment>Taint</comment>
-        <translation type="unfinished"></translation>
+        <translation>Расширение видеопамяти</translation>
     </message>
     <message>
         <location filename="../../core/system.cpp" line="3099"/>
         <source>Unknown BIOS</source>
-        <translation type="unfinished"></translation>
+        <translation>Неизвестный BIOS</translation>
     </message>
     <message>
         <location filename="../../core/system.cpp" line="6192"/>
